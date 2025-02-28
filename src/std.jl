@@ -406,59 +406,59 @@ function reshape(term::KrD, indices::LowerOrUpperIndex...)
 end
 
 function to_standard(
-    term::Op,
-    upper_index = nothing,
-    lower_index = nothing,
+    term::Op;
+    upper_letter = nothing,
+    lower_letter = nothing,
 ) where {Op<:UnaryOperation}
-    return Op(to_standard(term.arg, upper_index, lower_index))
+    return Op(to_standard(term.arg; upper_letter, lower_letter))
 end
 
-function to_standard(term, upper_index = nothing, lower_index = nothing)
+function to_standard(term; upper_letter = nothing, lower_letter = nothing)
     ids = get_free_indices(term)
 
     if length(ids) == 2
-        if isnothing(upper_index) && isnothing(lower_index)
+        if isnothing(upper_letter) && isnothing(lower_letter)
             return reshape(term, Upper(ids[1].letter), Lower(ids[2].letter))
         end
 
-        if isnothing(upper_index)
-            if ids[2].letter == lower_index
+        if isnothing(upper_letter)
+            if ids[2].letter == lower_letter
                 return reshape(term, Upper(ids[1].letter), Lower(ids[2].letter))
             end
 
-            if ids[1].letter == lower_index
+            if ids[1].letter == lower_letter
                 return reshape(term, Lower(ids[1].letter), Upper(ids[2].letter))
             end
         end
 
-        if isnothing(lower_index)
-            if ids[2].letter == upper_index
+        if isnothing(lower_letter)
+            if ids[2].letter == upper_letter
                 return reshape(term, Lower(ids[1].letter), Upper(ids[2].letter))
             end
 
-            if ids[1].letter == upper_index
+            if ids[1].letter == upper_letter
                 return reshape(term, Upper(ids[1].letter), Lower(ids[2].letter))
             end
         end
 
-        if upper_index == ids[1].letter && lower_index == ids[2].letter
+        if upper_letter == ids[1].letter && lower_letter == ids[2].letter
             return reshape(term, Upper(ids[1].letter), Lower(ids[2].letter))
         end
 
-        if upper_index == ids[2].letter && lower_index == ids[1].letter
+        if upper_letter == ids[2].letter && lower_letter == ids[1].letter
             return reshape(term, Lower(ids[1].letter), Upper(ids[2].letter))
         end
     elseif length(ids) == 1
-        @assert !(!isnothing(upper_index) && !isnothing(lower_index))
-        if isnothing(upper_index) && isnothing(lower_index)
+        @assert !(!isnothing(upper_letter) && !isnothing(lower_letter))
+        if isnothing(upper_letter) && isnothing(lower_letter)
             return reshape(term, Upper(ids[1].letter))
         end
 
-        if isnothing(upper_index) && ids[1].letter == lower_index
+        if isnothing(upper_letter) && ids[1].letter == lower_letter
             return reshape(term, Lower(ids[1].letter))
         end
 
-        if isnothing(lower_index) && ids[1].letter == upper_index
+        if isnothing(lower_letter) && ids[1].letter == upper_letter
             return reshape(term, Upper(ids[1].letter))
         end
     elseif isempty(ids)
@@ -482,17 +482,17 @@ function to_standard(term, upper_index = nothing, lower_index = nothing)
 end
 
 function to_standard(
-    arg::BinaryOperation{Op},
-    upper_index = nothing,
-    lower_index = nothing,
+    arg::BinaryOperation{Op};
+    upper_letter = nothing,
+    lower_letter = nothing,
 ) where {Op<:AdditiveOperation}
     return BinaryOperation{Op}(
-        to_standard(arg.arg1, upper_index, lower_index),
-        to_standard(arg.arg2, upper_index, lower_index),
+        to_standard(arg.arg1; upper_letter, lower_letter),
+        to_standard(arg.arg2; upper_letter, lower_letter),
     )
 end
 
-function to_standard(arg::Real, upper_index = nothing, lower_index = nothing)
+function to_standard(arg::Real; upper_letter = nothing, lower_letter = nothing)
     return arg
 end
 
@@ -522,9 +522,9 @@ function was_flipped(index, flips)
 end
 
 function to_standard(
-    arg::BinaryOperation{Mult},
-    upper_index = nothing,
-    lower_index = nothing,
+    arg::BinaryOperation{Mult};
+    upper_letter = nothing,
+    lower_letter = nothing,
 )
     target_indices = unique(get_free_indices(arg))
 
@@ -536,18 +536,18 @@ function to_standard(
         upper = nothing
         lower = nothing
         if !isempty(target_indices)
-            if target_indices[1].letter == upper_index
+            if target_indices[1].letter == upper_letter
                 upper = target_indices[1].letter
             end
-            if target_indices[1].letter == lower_index
+            if target_indices[1].letter == lower_letter
                 lower = target_indices[1].letter
             end
         end
         if length(target_indices) > 1
-            if target_indices[2].letter == upper_index
+            if target_indices[2].letter == upper_letter
                 upper = target_indices[2].letter
             end
-            if target_indices[2].letter == lower_index
+            if target_indices[2].letter == lower_letter
                 lower = target_indices[2].letter
             end
         end
@@ -559,45 +559,45 @@ function to_standard(
 
         if is_trace(arg.arg1) && typeof(arg.arg2) == KrD
             return BinaryOperation{Mult}(
-                to_standard(arg.arg1, upper, lower),
-                to_standard(arg.arg2, upper, lower),
+                to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+                to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
             )
         end
 
         if is_trace(arg.arg2) && typeof(arg.arg1) == KrD
             return BinaryOperation{Mult}(
-                to_standard(arg.arg1, upper, lower),
-                to_standard(arg.arg2, upper, lower),
+                to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+                to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
             )
         end
 
         if length(arg1_indices) == length(arg2_indices)
             return BinaryOperation{Mult}(
-                to_standard(arg.arg1, upper, lower),
-                to_standard(arg.arg2, upper, lower),
+                to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+                to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
             )
         elseif length(arg1_indices) == 1 && length(arg2_indices) == 2
             if typeof(arg1_indices[1]) == Upper
                 return BinaryOperation{Mult}(
-                    to_standard(arg.arg1, upper),
-                    to_standard(arg.arg2, upper, lower),
+                    to_standard(arg.arg1; upper_letter = upper),
+                    to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
                 )
             else # typeof(arg1_indices[1]) == Lower
                 return BinaryOperation{Mult}(
-                    to_standard(arg.arg1, nothing, lower),
-                    to_standard(arg.arg2, upper, lower),
+                    to_standard(arg.arg1; lower_letter = lower),
+                    to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
                 )
             end
         elseif length(arg1_indices) == 2 && length(arg2_indices) == 1
             if typeof(arg2_indices[1]) == Upper
                 return BinaryOperation{Mult}(
-                    to_standard(arg.arg1, upper, lower),
-                    to_standard(arg.arg2, upper),
+                    to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+                    to_standard(arg.arg2; upper_letter = upper),
                 )
             elseif typeof(arg2_indices[1]) == Lower
                 return BinaryOperation{Mult}(
-                    to_standard(arg.arg1, upper, lower),
-                    to_standard(arg.arg2, nothing, lower),
+                    to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+                    to_standard(arg.arg2; lower_letter = lower),
                 )
             end
         end
@@ -625,27 +625,35 @@ function to_standard(
         term = remaining[i]
         ids = get_free_indices(term)
         if length(ids) == 2
-            if ids[1].letter == upper_index || ids[2].letter == lower_index
+            if ids[1].letter == upper_letter || ids[2].letter == lower_letter
                 std_term = nothing
-                if !isnothing(upper_index) && !isnothing(lower_index)
-                    std_term = to_standard(term, ids[1].letter, ids[2].letter)
-                elseif isnothing(upper_index)
-                    std_term = to_standard(term, nothing, ids[2].letter)
+                if !isnothing(upper_letter) && !isnothing(lower_letter)
+                    std_term = to_standard(
+                        term;
+                        upper_letter = ids[1].letter,
+                        lower_letter = ids[2].letter,
+                    )
+                elseif isnothing(upper_letter)
+                    std_term = to_standard(term; lower_letter = ids[2].letter)
                 else
-                    std_term = to_standard(term, ids[1].letter)
+                    std_term = to_standard(term; upper_letter = ids[1].letter)
                 end
                 flipped_indices[std_term] = get_flipped(std_term, term)
                 push!(ordered_args, std_term)
                 remaining[i] = nothing
                 break
-            elseif ids[1].letter == lower_index || ids[2].letter == upper_index
+            elseif ids[1].letter == lower_letter || ids[2].letter == upper_letter
                 std_term = nothing
-                if !isnothing(upper_index) && !isnothing(lower_index)
-                    std_term = to_standard(term, ids[2].letter, ids[1].letter)
-                elseif isnothing(upper_index)
-                    std_term = to_standard(term, nothing, ids[1].letter)
+                if !isnothing(upper_letter) && !isnothing(lower_letter)
+                    std_term = to_standard(
+                        term;
+                        upper_letter = ids[2].letter,
+                        lower_letter = ids[1].letter,
+                    )
+                elseif isnothing(upper_letter)
+                    std_term = to_standard(term; lower_letter = ids[1].letter)
                 else
-                    std_term = to_standard(term, ids[2].letter)
+                    std_term = to_standard(term; upper_letter = ids[2].letter)
                 end
                 flipped_indices[std_term] = get_flipped(std_term, term)
                 push!(ordered_args, std_term)
@@ -654,10 +662,10 @@ function to_standard(
             end
         elseif length(ids) == 1
             std_term = nothing
-            if ids[1].letter == lower_index
-                std_term = to_standard(term, nothing, ids[1].letter)
-            elseif ids[1].letter == upper_index
-                std_term = to_standard(term, ids[1].letter)
+            if ids[1].letter == lower_letter
+                std_term = to_standard(term; lower_letter = ids[1].letter)
+            elseif ids[1].letter == upper_letter
+                std_term = to_standard(term; upper_letter = ids[1].letter)
             end
             if !isnothing(std_term)
                 flipped_indices[std_term] = get_flipped(std_term, term)
@@ -672,7 +680,7 @@ function to_standard(
         end
     end
 
-    if isnothing(upper_index) && isnothing(lower_index)
+    if isnothing(upper_letter) && isnothing(lower_letter)
         @assert isempty(ordered_args)
 
         std_term = to_standard(remaining[1])
@@ -723,7 +731,7 @@ function to_standard(
                 ################
                 if typeof(term_indices[end]) == Lower &&
                    flip(term_indices[end]) == fixed_indices[1]
-                    std_term = to_standard(term, nothing, term_indices[end].letter)
+                    std_term = to_standard(term; lower_letter = term_indices[end].letter)
                     flipped_indices[std_term] = get_flipped(std_term, term)
                     pushfirst!(ordered_args, std_term)
                     remaining[i] = nothing
@@ -733,7 +741,7 @@ function to_standard(
 
                 if typeof(term_indices[end]) == Upper &&
                    flip(term_indices[end]) == fixed_indices[1]
-                    std_term = to_standard(term, term_indices[end].letter)
+                    std_term = to_standard(term; upper_letter = term_indices[end].letter)
                     flipped_indices[std_term] = get_flipped(std_term, term)
                     push!(ordered_args, std_term)
                     remaining[i] = nothing
@@ -743,7 +751,7 @@ function to_standard(
 
                 if typeof(term_indices[1]) == Upper &&
                    flip(term_indices[1]) == fixed_indices[end]
-                    std_term = to_standard(term, term_indices[1].letter)
+                    std_term = to_standard(term; upper_letter = term_indices[1].letter)
                     flipped_indices[std_term] = get_flipped(std_term, term)
                     push!(ordered_args, std_term)
                     remaining[i] = nothing
@@ -753,7 +761,7 @@ function to_standard(
 
                 if typeof(term_indices[1]) == Lower &&
                    flip(term_indices[1]) == fixed_indices[end]
-                    std_term = to_standard(term, nothing, term_indices[1].letter)
+                    std_term = to_standard(term; lower_letter = term_indices[1].letter)
                     flipped_indices[std_term] = get_flipped(std_term, term)
                     pushfirst!(ordered_args, std_term)
                     remaining[i] = nothing
@@ -763,7 +771,7 @@ function to_standard(
 
                 if typeof(term_indices[end]) == Upper &&
                    flip(term_indices[end]) == fixed_indices[end]
-                    std_term = to_standard(term, term_indices[end].letter)
+                    std_term = to_standard(term; upper_letter = term_indices[end].letter)
                     flipped_indices[std_term] = get_flipped(std_term, term)
                     push!(ordered_args, std_term)
                     remaining[i] = nothing
@@ -773,7 +781,7 @@ function to_standard(
 
                 if typeof(term_indices[end]) == Lower &&
                    flip(term_indices[end]) == fixed_indices[end]
-                    std_term = to_standard(term, nothing, term_indices[end].letter)
+                    std_term = to_standard(term; lower_letter = term_indices[end].letter)
                     flipped_indices[std_term] = get_flipped(std_term, term)
                     pushfirst!(ordered_args, std_term)
                     remaining[i] = nothing
@@ -783,7 +791,7 @@ function to_standard(
 
                 if typeof(term_indices[1]) == Upper &&
                    flip(term_indices[1]) == fixed_indices[1]
-                    std_term = to_standard(term, term_indices[1].letter)
+                    std_term = to_standard(term; upper_letter = term_indices[1].letter)
                     flipped_indices[std_term] = get_flipped(std_term, term)
                     push!(ordered_args, std_term)
                     remaining[i] = nothing
@@ -793,7 +801,7 @@ function to_standard(
 
                 if typeof(term_indices[1]) == Lower &&
                    flip(term_indices[1]) == fixed_indices[1]
-                    std_term = to_standard(term, nothing, term_indices[1].letter)
+                    std_term = to_standard(term; lower_letter = term_indices[1].letter)
                     flipped_indices[std_term] = get_flipped(std_term, term)
                     pushfirst!(ordered_args, std_term)
                     remaining[i] = nothing
@@ -852,17 +860,25 @@ function to_std_string(arg)
 
     standardized = if length(free_indices) == 2
         if typeof(free_indices[1]) == Upper && typeof(free_indices[2]) == Lower
-            to_standard(arg, free_indices[1].letter, free_indices[2].letter)
+            to_standard(
+                arg;
+                upper_letter = free_indices[1].letter,
+                lower_letter = free_indices[2].letter,
+            )
         elseif typeof(free_indices[1]) == Lower && typeof(free_indices[2]) == Upper
-            to_standard(arg, free_indices[2].letter, free_indices[1].letter)
+            to_standard(
+                arg;
+                upper_letter = free_indices[2].letter,
+                lower_letter = free_indices[1].letter,
+            )
         else
             throw_not_std()
         end
     elseif length(free_indices) == 1
         if typeof(free_indices[1]) == Lower
-            to_standard(arg, nothing, free_indices[1].letter)
+            to_standard(arg; lower_letter = free_indices[1].letter)
         elseif typeof(free_indices[1]) == Upper
-            to_standard(arg, free_indices[1].letter)
+            to_standard(arg; upper_letter = free_indices[1].letter)
         else
             throw_not_std()
         end
