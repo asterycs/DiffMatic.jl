@@ -205,8 +205,9 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
         if isnothing(new_arg)
             new_arg = evaluate(BinaryOperation{Mult}(args[1], args[2]))
         else
-            new_arg = evaluate(
-                BinaryOperation{Mult}(new_arg, BinaryOperation{Mult}(args[1], args[2])),
+            new_arg = BinaryOperation{Mult}(
+                new_arg,
+                evaluate(BinaryOperation{Mult}(args[1], args[2])),
             )
         end
     end

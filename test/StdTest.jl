@@ -148,7 +148,7 @@ end
     @test to_std_string(sum(C, A)) == "Cᵀ + A"
 end
 
-@testset "to_std_string output is correct with vector-matrix elementwise" begin
+@testset "to_std_string output is correct with vector-matrix element wise multiplication" begin
     A = Tensor("A", Upper(1), Lower(2))
     x = Tensor("x", Upper(1))
     y = Tensor("y", Lower(2))
@@ -161,6 +161,26 @@ end
     @test to_std_string(mul(x, A)) == "diag(x)A"
     @test to_std_string(mul(A, y)) == "A diag(yᵀ)"
     @test to_std_string(mul(y, A)) == "A diag(yᵀ)"
+end
+
+@testset "to_std_string output is correct with vector-vector element wise multiplication" begin
+    x = Tensor("x", Upper(1))
+    y = Tensor("y", Upper(1))
+    z = Tensor("z", Upper(1))
+    v = Tensor("v", Upper(1))
+
+    function mul(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    @test to_std_string(mul(x, x)) == "x ⊙ x"
+    @test to_std_string(mul(x, y)) == "x ⊙ y"
+    @test to_std_string(mul(mul(x, y), z)) == "(x ⊙ y) ⊙ z"
+    @test to_std_string(mul(z, mul(x, y))) == "z ⊙ (x ⊙ y)"
+    @test to_std_string(mul(mul(mul(x, y), z), v)) == "((x ⊙ y) ⊙ z) ⊙ v"
+    @test to_std_string(mul(v, mul(mul(x, y), z))) == "v ⊙ ((x ⊙ y) ⊙ z)"
+    @test to_std_string(mul(v, mul(z, mul(x, y)))) == "v ⊙ (z ⊙ (x ⊙ y))"
+    @test to_std_string(mul(mul(z, v), mul(x, y))) == "(z ⊙ v) ⊙ (x ⊙ y)"
 end
 
 @testset "to_std_string output is correct with vector sum" begin

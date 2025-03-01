@@ -296,7 +296,7 @@ end
 
 function _to_std_string(arg::BinaryOperation{Mult})
     if is_elementwise_multiplication(arg.arg1, arg.arg2)
-        arg1_indices, arg2_indices = get_indices.((arg.arg1, arg.arg2))
+        arg1_indices, arg2_indices = unique.(get_indices.((arg.arg1, arg.arg2)))
         target_indices = eliminate_indices([arg1_indices; arg2_indices])
 
         if is_trace(arg.arg1) && length(target_indices) == 1
@@ -555,7 +555,7 @@ function to_standard(
             return arg
         end
 
-        arg1_indices, arg2_indices = get_indices.((arg.arg1, arg.arg2))
+        arg1_indices, arg2_indices = unique.(get_indices.((arg.arg1, arg.arg2)))
 
         if is_trace(arg.arg1) && typeof(arg.arg2) == KrD
             return BinaryOperation{Mult}(
