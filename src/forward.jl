@@ -94,22 +94,15 @@ function evaluate(::Mult, arg1::Real, arg2::BinaryOperation{Mult})
     end
 end
 
-function is_elementwise_multiplication(arg1::TensorExpr, arg2::TensorExpr)
-    arg1_indices = get_indices(arg1)
-    arg2_indices = get_indices(arg2)
-
-    return !isempty(intersect(arg1_indices, arg2_indices))
-end
-
-function is_elementwise_multiplication(arg1, arg2)
-    return false
-end
-
 function indices_in_common(arg1, arg2)
     arg1_indices = get_indices(arg1)
     arg2_indices = get_indices(arg2)
 
     return intersect(arg1_indices, arg2_indices)
+end
+
+function is_elementwise_multiplication(arg1, arg2)
+    return !isempty(indices_in_common(arg1, arg2))
 end
 
 function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
