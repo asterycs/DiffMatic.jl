@@ -418,7 +418,7 @@ function to_standard(term; upper_letter = nothing, lower_letter = nothing)
 
     if length(ids) == 2
         if isnothing(upper_letter) && isnothing(lower_letter)
-            return reshape(term, Upper(ids[1].letter), Lower(ids[2].letter))
+            return term
         end
 
         if isnothing(upper_letter)
@@ -451,7 +451,7 @@ function to_standard(term; upper_letter = nothing, lower_letter = nothing)
     elseif length(ids) == 1
         @assert !(!isnothing(upper_letter) && !isnothing(lower_letter))
         if isnothing(upper_letter) && isnothing(lower_letter)
-            return reshape(term, Upper(ids[1].letter))
+            return term
         end
 
         if isnothing(upper_letter) && ids[1].letter == lower_letter
