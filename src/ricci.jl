@@ -537,11 +537,15 @@ function Base.adjoint(arg::T) where {T<:UnaryOperation}
     return T(arg.arg')
 end
 
-function Base.adjoint(arg::BinaryOperation{Mult})
-    return BinaryOperation{Mult}(adjoint(arg.arg2), adjoint(arg.arg1))
+function Base.adjoint(arg::BinaryOperation{Pow})
+    return BinaryOperation{Pow}(adjoint(arg.arg1), arg.arg2)
 end
 
-function Base.adjoint(arg::BinaryOperation{Op}) where {Op}
+function Base.adjoint(arg::BinaryOperation{Mult})
+    return BinaryOperation{Mult}(adjoint(arg.arg1), adjoint(arg.arg2))
+end
+
+function Base.adjoint(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
     arg1_ids = unique(get_free_indices(arg.arg1))
     arg2_ids = unique(get_free_indices(arg.arg2))
 
