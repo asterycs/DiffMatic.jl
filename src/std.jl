@@ -718,10 +718,19 @@ function to_standard(
                     end
                 end
 
-                if isempty(term_indices) || isempty(fixed_indices)
+                if isempty(term_indices)
                     std_term = to_standard(term)
                     flipped_indices[std_term] = get_flipped(std_term, term)
                     pushfirst!(ordered_args, std_term)
+                    remaining[i] = nothing
+                    term_was_added = true
+                    break
+                end
+
+                if isempty(fixed_indices)
+                    std_term = to_standard(term)
+                    flipped_indices[std_term] = get_flipped(std_term, term)
+                    push!(ordered_args, std_term)
                     remaining[i] = nothing
                     term_was_added = true
                     break

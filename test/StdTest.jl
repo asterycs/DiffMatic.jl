@@ -217,9 +217,9 @@ end
     y = Tensor("y", Upper(2))
     a = Tensor("a")
 
-    @test to_std_string(evaluate(a * sin(x)' * y)) == "yᵀsin(x)a"
-    @test to_std_string(evaluate(sin(x)' * a * y)) == "ayᵀsin(x)"
-    @test to_std_string(evaluate(sin(x)' * y * a)) == "ayᵀsin(x)"
+    @test to_std_string(evaluate(a * sin(x)' * y)) == "asin(xᵀ)y"
+    @test to_std_string(evaluate(sin(x)' * a * y)) == "asin(xᵀ)y"
+    @test to_std_string(evaluate(sin(x)' * y * a)) == "asin(xᵀ)y"
 end
 
 @testset "derivative interface checks" begin
@@ -265,17 +265,17 @@ end
     @test to_std_string(gradient((x .* c)' * x, x)) == "2(x ⊙ c)"
     @test to_std_string(gradient((x + y)' * x, x)) == "2x + y"
     @test to_std_string(gradient((x - y)' * x, x)) == "2x - y"
-    @test to_std_string(gradient(sin(tr(x * x')), x)) == "cos(xᵀx)2x"
-    @test to_std_string(gradient(cos(tr(x * x')), x)) == "-sin(xᵀx)2x"
+    @test to_std_string(gradient(sin(tr(x * x')), x)) == "2cos(xᵀx)x"
+    @test to_std_string(gradient(cos(tr(x * x')), x)) == "-2sin(xᵀx)x"
     @test to_std_string(gradient(tr(A), x)) == "vec(0)"
     @test to_std_string(gradient(x' * B' * A * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std_string(gradient((A' * B * x)' * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std_string(gradient(a * sin(y)' * x, x)) == "asin(y)"
-    @test to_std_string(gradient(a * sin(x)' * y, x)) == "a(y ⊙ cos(x))"
+    @test to_std_string(gradient(a * sin(x)' * y, x)) == "a(cos(x) ⊙ y)"
     @test to_std_string(gradient(sin(y)' * x * a, x)) == "asin(y)"
-    @test to_std_string(gradient(sin(x)' * y * a, x)) == "a(y ⊙ cos(x))"
+    @test to_std_string(gradient(sin(x)' * y * a, x)) == "a(cos(x) ⊙ y)"
     @test to_std_string(gradient(x' * sin(y) * a, x)) == "asin(y)"
-    @test to_std_string(gradient(y' * sin(x) * a, x)) == "a(y ⊙ cos(x))"
+    @test to_std_string(gradient(y' * sin(x) * a, x)) == "a(cos(x) ⊙ y)"
     @test to_std_string(gradient(sum(x), x)) == "vec(1)"
     @test to_std_string(gradient(2 * sum(x), x)) == "2(vec(1))"
     @test to_std_string(gradient(sum(2 * x), x)) == "2(vec(1))"
