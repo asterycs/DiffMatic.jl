@@ -115,30 +115,7 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
 
     contracting_indices = eliminated_indices([arg1_indices; arg2_indices])
 
-    if is_elementwise &&
-       is_diag(arg1) &&
-       !isempty(contracting_indices) &&
-       length(arg2_indices) == 1
-        new_index = setdiff(arg1_indices, contracting_indices)
-        old_index = intersect(arg1_indices, contracting_indices)
-
-        @assert length(new_index) == 1
-        @assert length(old_index) == 1
-        new_index = new_index[1]
-        old_index = old_index[1]
-
-        # Either arg1.arg1 OR arg1.arg2 is a KrD when is_diag is true
-        left_tensor = typeof(arg1.arg1) == KrD ? arg1.arg2 : arg1.arg1
-
-        arg1 = evaluate(
-            update_index(left_tensor, old_index, new_index, allow_shape_change = true),
-        )
-        arg2 = evaluate(
-            update_index(arg2, flip(old_index), new_index, allow_shape_change = true),
-        )
-
-        return BinaryOperation{Mult}(arg1, arg2)
-    elseif can_contract(arg1.arg2, arg2) && !is_elementwise
+    if can_contract(arg1.arg2, arg2) && !is_elementwise
         new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
         return BinaryOperation{Mult}(arg1.arg1, new_arg2)
     elseif can_contract(arg1.arg1, arg2) && !is_elementwise
@@ -215,7 +192,8 @@ end
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     ci = indices_in_common(arg1.arg1, arg1.arg2)
 
-    if !isempty(ci) && !is_trace(arg2)
+    # TODO: Make this redundant
+    if !isempty(ci)
         el = eliminated_indices([ci; arg2.indices[1]])
         er = eliminated_indices([ci; arg2.indices[2]])
 
@@ -238,10 +216,10 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
         end
     end
 
-    if can_contract(arg1.arg2, arg2) && !is_trace(arg2)
+    if can_contract(arg1.arg2, arg2)
         new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
         return BinaryOperation{Mult}(evaluate(arg1.arg1), new_arg2)
-    elseif can_contract(arg1.arg1, arg2) && !is_trace(arg2)
+    elseif can_contract(arg1.arg1, arg2)
         new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
         return BinaryOperation{Mult}(new_arg1, evaluate(arg1.arg2))
     elseif arg1.arg1 isa Real
@@ -318,28 +296,6 @@ function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperati
     return BinaryOperation{Mult}(evaluate(arg2), evaluate(arg1))
 end
 
-function is_diag(arg1::KrD, arg2::TensorExpr)
-    return is_diag(arg2, arg1)
-end
-
-function is_diag(arg1::TensorExpr, arg2::KrD)
-    arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
-
-    return length(arg1_indices) == 1 && !isempty(intersect(arg1_indices, arg2_indices))
-end
-
-function is_diag(arg1::KrD, arg2::KrD)
-    return false
-end
-
-function is_diag(arg::BinaryOperation{Mult})
-    return is_diag(arg.arg1, arg.arg2)
-end
-
-function is_diag(arg1, arg2)
-    return false
-end
-
 function evaluate(::Mult, arg1::Tensor, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
@@ -360,11 +316,7 @@ function _multiply_with_krd(arg1::Union{Tensor,KrD}, arg2::KrD)
         return BinaryOperation{Mult}(arg1, arg2)
     end
 
-    if is_diag(arg1, arg2)
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
-
-    if is_trace(arg1) || is_trace(arg2)
+    if is_elementwise_multiplication(arg1, arg2)
         return BinaryOperation{Mult}(arg1, arg2)
     end
 
