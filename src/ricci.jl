@@ -249,6 +249,7 @@ function tr(arg::TensorExpr)
     return BinaryOperation{Mult}(arg, KrD(flip(free_ids[2]), flip(free_ids[1])))
 end
 
+# TODO: Make this add only one KrD instead
 function Base.sum(arg::TensorExpr)
     free_ids = get_free_indices(arg)
 
