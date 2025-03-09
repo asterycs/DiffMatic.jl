@@ -175,12 +175,12 @@ end
 
     @test to_std_string(mul(x, x)) == "x ⊙ x"
     @test to_std_string(mul(x, y)) == "x ⊙ y"
-    @test to_std_string(mul(mul(x, y), z)) == "(x ⊙ y) ⊙ z"
-    @test to_std_string(mul(z, mul(x, y))) == "z ⊙ (x ⊙ y)"
-    @test to_std_string(mul(mul(mul(x, y), z), v)) == "((x ⊙ y) ⊙ z) ⊙ v"
-    @test to_std_string(mul(v, mul(mul(x, y), z))) == "v ⊙ ((x ⊙ y) ⊙ z)"
-    @test to_std_string(mul(v, mul(z, mul(x, y)))) == "v ⊙ (z ⊙ (x ⊙ y))"
-    @test to_std_string(mul(mul(z, v), mul(x, y))) == "(z ⊙ v) ⊙ (x ⊙ y)"
+    @test to_std_string(mul(mul(x, y), z)) == "x ⊙ y ⊙ z"
+    @test to_std_string(mul(z, mul(x, y))) == "z ⊙ x ⊙ y"
+    @test to_std_string(mul(mul(mul(x, y), z), v)) == "x ⊙ y ⊙ z ⊙ v"
+    @test to_std_string(mul(v, mul(mul(x, y), z))) == "v ⊙ x ⊙ y ⊙ z"
+    @test to_std_string(mul(v, mul(z, mul(x, y)))) == "v ⊙ z ⊙ x ⊙ y"
+    @test to_std_string(mul(mul(z, v), mul(x, y))) == "z ⊙ v ⊙ x ⊙ y"
 end
 
 @testset "to_std_string output is correct with vector sum" begin
@@ -262,7 +262,7 @@ end
     @test to_std_string(gradient(x' * x, x)) == "2x"
     @test to_std_string(gradient(tr(x * x'), x)) == "2x"
     @test to_std_string(gradient((y .* c)' * x, x)) == "y ⊙ c"
-    @test to_std_string(gradient((x .* c)' * x, x)) == "2(x ⊙ c)"
+    @test to_std_string(gradient((x .* c)' * x, x)) == "x ⊙ c + c ⊙ x"
     @test to_std_string(gradient((x + y)' * x, x)) == "2x + y"
     @test to_std_string(gradient((x - y)' * x, x)) == "2x - y"
     @test to_std_string(gradient(sin(tr(x * x')), x)) == "2cos(xᵀx)x"

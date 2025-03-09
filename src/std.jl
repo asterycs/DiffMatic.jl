@@ -295,54 +295,114 @@ function _to_std_string(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
 end
 
 function _to_std_string(arg::BinaryOperation{Mult})
-    if is_elementwise_multiplication(arg.arg1, arg.arg2)
-        arg1_indices, arg2_indices = unique.(get_indices.((arg.arg1, arg.arg2)))
-        target_indices = eliminate_indices([arg1_indices; arg2_indices])
-
-        if is_trace(arg.arg1) && length(target_indices) == 1
-            if typeof(target_indices[1]) == Upper
-                return "vec(1)"
-            else # if typeof(target_indices[1]) == Lower
-                return "vec(1)ᵀ"
-            end
-        elseif is_trace(arg.arg2) && length(target_indices) == 1
-            if typeof(target_indices[1]) == Upper
-                return "vec(1)"
-            else # if typeof(target_indices[1]) == Lower
-                return "vec(1)ᵀ"
-            end
-        end
-
-        if length(arg1_indices) == length(arg2_indices)
-            return parenthesize_std(arg.arg1) * " ⊙ " * parenthesize_std(arg.arg2)
-        elseif length(arg1_indices) == 1 && length(arg2_indices) == 2
-            if is_trace(arg.arg2)
-                return "sum(" * _to_std_string(arg.arg1) * ")"
-            elseif typeof(arg1_indices[1]) == Upper
-                return "diag(" * _to_std_string(arg.arg1) * ")" * parenthesize_std(arg.arg2)
-            else # typeof(arg1_indices[1]) == Lower
-                return parenthesize_std(arg.arg2) *
-                       " diag(" *
-                       _to_std_string(arg.arg1) *
-                       ")"
-            end
-        elseif length(arg1_indices) == 2 && length(arg2_indices) == 1
-            if is_trace(arg.arg1)
-                return "sum(" * _to_std_string(arg.arg2) * ")"
-            elseif typeof(arg2_indices[1]) == Upper
-                return "diag(" * _to_std_string(arg.arg2) * ")" * parenthesize_std(arg.arg1)
-            else # typeof(arg2_indices[1]) == Lower
-                return parenthesize_std(arg.arg1) *
-                       " diag(" *
-                       _to_std_string(arg.arg2) *
-                       ")"
-            end
-        end
-    end
-
     return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
 end
 
+# TODO: Rename to something more descriptive
+struct ElementWise end
+
+function get_indices(arg::BinaryOperation{ElementWise})
+    return [get_indices(arg.arg1); get_indices(arg.arg2)]
+end
+
+function to_string(arg::BinaryOperation{ElementWise})
+    return parenthesize(arg.arg1) * parenthesize(arg.arg2)
+end
+
+function evaluate(arg::BinaryOperation{ElementWise})
+    return arg
+end
+
+function _to_std_string(arg::BinaryOperation{ElementWise})
+    indices = get_indices(arg)
+    target_indices = unique(eliminate_indices(indices))
+    terms = collect_terms(arg)
+
+    # if is_trace(arg.arg1) && length(target_indices) == 1
+    #     if typeof(target_indices[1]) == Upper
+    #         return "vec(1)"
+    #     else # if typeof(target_indices[1]) == Lower
+    #         return "vec(1)ᵀ"
+    #     end
+    # elseif is_trace(arg.arg2) && length(target_indices) == 1
+    #     if typeof(target_indices[1]) == Upper
+    #         return "vec(1)"
+    #     else # if typeof(target_indices[1]) == Lower
+    #         return "vec(1)ᵀ"
+    #     end
+    # end
+
+    # TODO: what about d_i^j d_i^i? Must distinguish here
+    if length(target_indices) == 1
+        if all(length.(get_indices.(terms)) .== 1)
+            return reduce(
+                (l, r) -> l * " ⊙ " * to_std_string(r),
+                terms[2:end];
+                init = to_std_string(terms[1]),
+            )
+        elseif all(typeof.(terms) .== KrD)
+            if typeof(target_indices[1]) == Upper
+                return "vec(1)"
+            else
+                return "vec(1)ᵀ"
+            end
+        else
+            throw_not_std()
+        end
+    end
+
+    if length(terms) == 2 && length(target_indices) == 2
+        arg1_ids, arg2_ids = get_indices.(terms)
+
+        if maximum(length.((arg1_ids, arg2_ids))) == 2 &&
+           minimum(length.((arg1_ids, arg2_ids))) == 1
+            matrix = terms[1]
+            vector = terms[2]
+
+            if length(arg2_ids) == 2
+                matrix, vector = vector, matrix
+            end
+
+            m_ids = get_indices(matrix)
+            v_ids = get_indices(vector)
+
+            if m_ids[1] == v_ids[1]
+                return "diag(" * to_std_string(vector) * ")" * to_std_string(matrix)
+            elseif m_ids[2] == v_ids[1]
+                return to_std_string(matrix) * " diag(" * to_std_string(vector) * ")"
+            end
+        end
+
+        if length(arg1_ids) == length(arg2_ids)
+            if all(arg1_ids .== arg2_ids)
+                return to_std_string(terms[1]) * " ⊙ " * to_std_string(terms[2])
+            else
+                throw_not_std()
+            end
+        end
+
+        throw_not_std()
+    end
+
+    if isempty(target_indices) && length(terms) == 2
+        tensor = nothing
+
+        if isempty(get_free_indices(terms[1])) && typeof(terms[1]) == KrD
+            tensor = terms[2]
+        elseif isempty(get_free_indices(terms[2])) && typeof(terms[2]) == KrD
+            tensor = terms[1]
+        else
+            throw_not_std()
+        end
+
+        # if typeof(tensor) == KrD
+        # ...
+
+        return "sum(" * _to_std_string(tensor) * ")"
+    end
+
+    throw_not_std()
+end
 
 function parenthesize_std(arg)
     return _to_std_string(arg)
@@ -352,12 +412,8 @@ function parenthesize_std(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation
     return "(" * _to_std_string(arg) * ")"
 end
 
-function parenthesize_std(arg::BinaryOperation{Mult})
-    if is_elementwise_multiplication(arg.arg1, arg.arg2)
-        return "(" * _to_std_string(arg) * ")"
-    end
-
-    return _to_std_string(arg)
+function parenthesize_std(arg::BinaryOperation{ElementWise})
+    return "(" * _to_std_string(arg) * ")"
 end
 
 function throw_not_std()
@@ -365,10 +421,10 @@ function throw_not_std()
 end
 
 function collect_terms(arg::BinaryOperation{Mult})
-    if is_elementwise_multiplication(arg.arg1, arg.arg2)
-        return [arg]
-    end
+    return [collect_terms(arg.arg1); collect_terms(arg.arg2)]
+end
 
+function collect_terms(arg::BinaryOperation{ElementWise})
     return [collect_terms(arg.arg1); collect_terms(arg.arg2)]
 end
 
@@ -403,6 +459,10 @@ end
 
 function reshape(term::KrD, indices::LowerOrUpperIndex...)
     return KrD(indices...)
+end
+
+function reshape(term::Op, indices::LowerOrUpperIndex...) where {Op<:UnaryOperation}
+    return Op(reshape(term.arg, indices...))
 end
 
 function to_standard(
@@ -521,6 +581,231 @@ function was_flipped(index, flips)
     return false
 end
 
+function has_letter(tensor, letter)
+    ids = get_indices(tensor)
+    letters = [i.letter for i in ids]
+
+    return letter in letters
+end
+
+function to_binary_operation(terms::AbstractArray)
+    binop = nothing
+
+    for t ∈ terms
+        if isnothing(binop)
+            binop = t
+            continue
+        end
+
+        binop = BinaryOperation{ElementWise}(binop, t)
+    end
+
+    return binop
+end
+
+function to_binary_operation(term)
+    return term
+end
+
+function to_standard(
+    arg::BinaryOperation{ElementWise};
+    upper_letter = nothing,
+    lower_letter = nothing,
+)
+    ids = unique(get_indices(arg))
+    terms = collect_terms(arg)
+
+    reshaped = []
+
+    # TODO: record reshaped indices and reshape all others
+
+    if isempty(eliminate_indices(ids))
+        return arg
+    end
+
+    for t in terms
+        ids = unique(get_indices(t))
+
+        if length(ids) == 1
+            if ids[1].letter == upper_letter || ids[1].letter == lower_letter
+                push!(reshaped, t)
+                continue
+            else
+                throw_not_std()
+            end
+        elseif length(ids) == 2
+            if isnothing(upper_letter) && isnothing(lower_letter)
+                return arg
+            end
+
+            if isnothing(upper_letter)
+                if ids[2].letter == lower_letter
+                    push!(reshaped, reshape(t, Upper(ids[1].letter), Lower(ids[2].letter)))
+                    continue
+                end
+
+                if ids[1].letter == lower_letter
+                    push!(reshaped, reshape(t, Lower(ids[1].letter), Upper(ids[2].letter)))
+                    continue
+                end
+            end
+
+            if isnothing(lower_letter)
+                if ids[2].letter == upper_letter
+                    push!(reshaped, reshape(t, Lower(ids[1].letter), Upper(ids[2].letter)))
+                    continue
+                end
+
+                if ids[1].letter == upper_letter
+                    push!(reshaped, reshape(t, Upper(ids[1].letter), Lower(ids[2].letter)))
+                    continue
+                end
+            end
+
+            if upper_letter == ids[1].letter && lower_letter == ids[2].letter
+                push!(reshaped, reshape(t, Upper(ids[1].letter), Lower(ids[2].letter)))
+                continue
+            end
+
+            if upper_letter == ids[2].letter && lower_letter == ids[1].letter
+                push!(reshaped, reshape(t, Lower(ids[1].letter), Upper(ids[2].letter)))
+                continue
+            end
+
+            # neither upper_letter nor lower_letter is in this term
+            # happens e.g. for sums
+            push!(reshaped, reshape(t, Upper(ids[1].letter), Lower(ids[2].letter)))
+            continue
+        else
+            @assert false && "TODO"
+        end
+    end
+
+    return to_binary_operation(reshaped)
+end
+
+function is_regular_contraction(arg1, arg2)
+    arg1_ids, arg2_ids = get_indices.((arg1, arg2))
+
+    eliminated = eliminated_indices([arg1_ids; arg2_ids])
+
+    return length(eliminated) == 2
+end
+
+# TODO: Treat sums, e.g. A * (B + C) * D
+function group_monomials(monomials::AbstractArray)
+    indices = vcat([get_indices(m) for m in monomials]...)
+    letters = unique([i.letter for i in indices])
+
+    chunked_terms = []
+    remaining = Any[t for t ∈ monomials]
+
+    # Find groups of elementwise multiplications 
+    for letter in letters
+        complex = []
+
+        if all(isnothing.(remaining))
+            break
+        end
+
+        for i in eachindex(remaining)
+            if isnothing(remaining[i])
+                continue
+            end
+            if has_letter(remaining[i], letter)
+                push!(complex, i)
+            end
+        end
+
+        if isempty(complex)
+            continue
+        end
+
+        complex_ids = LowerOrUpperIndex[]
+
+        for ci in complex
+            append!(complex_ids, get_indices(remaining[ci]))
+        end
+
+        target_indices = unique(eliminate_indices(complex_ids))
+        eliminated_ids = eliminated_indices(complex_ids)
+
+        ordered_factors = []
+
+        if length(complex) == 2 &&
+           is_regular_contraction(remaining[first(complex)], remaining[last(complex)])
+            continue
+        elseif isempty(target_indices)
+            push!(chunked_terms, remaining[complex])
+            for ci in complex
+                remaining[ci] = nothing
+            end
+        elseif length(complex) == 1
+            continue
+        elseif isempty(eliminated_ids)
+            push!(chunked_terms, remaining[complex])
+            for ci in complex
+                remaining[ci] = nothing
+            end
+        elseif isempty(target_indices)
+            push!(chunked_terms, remaining[complex])
+            for ci in complex
+                remaining[ci] = nothing
+            end
+        elseif length(target_indices) == 1
+            if all(typeof.(monomials[complex]) .== KrD) # sum
+                if length(complex) != 2
+                    throw_not_std()
+                end
+
+                for di in complex
+                    push!(ordered_factors, to_standard(monomials[di]))
+                    remaining[di] = nothing
+                end
+            else
+                for fi in complex
+                    factor = remaining[fi]
+
+                    if typeof(factor) != KrD
+                        @assert length(get_indices(factor)) == 1 # other orders not implemented
+
+                        push!(ordered_factors, reshape(factor, target_indices...))
+                        remaining[fi] = nothing
+                    elseif isempty(get_indices(factor))
+                        pushfirst!(ordered_factors, factor)
+                        remaining[fi] = nothing
+                    elseif factor isa Real
+                        pushfirst!(ordered_factors, factor)
+                        remaining[fi] = nothing
+                    else
+                        # drop unneeded KrD:s
+                        remaining[fi] = nothing
+                    end
+                end
+            end
+
+            push!(chunked_terms, ordered_factors)
+        else
+            @assert false
+        end
+    end
+
+    for i in eachindex(remaining)
+        if !isnothing(remaining[i])
+            push!(chunked_terms, remaining[i])
+            remaining[i] = nothing
+        end
+    end
+
+    for i in eachindex(chunked_terms)
+        if chunked_terms[i] isa AbstractArray
+            chunked_terms[i] = to_binary_operation(chunked_terms[i])
+        end
+    end
+
+    return chunked_terms
+end
+
 function to_standard(
     arg::BinaryOperation{Mult};
     upper_letter = nothing,
@@ -532,87 +817,89 @@ function to_standard(
         throw_not_std()
     end
 
-    if is_elementwise_multiplication(arg.arg1, arg.arg2)
-        upper = nothing
-        lower = nothing
-        if !isempty(target_indices)
-            if target_indices[1].letter == upper_letter
-                upper = target_indices[1].letter
-            end
-            if target_indices[1].letter == lower_letter
-                lower = target_indices[1].letter
-            end
-        end
-        if length(target_indices) > 1
-            if target_indices[2].letter == upper_letter
-                upper = target_indices[2].letter
-            end
-            if target_indices[2].letter == lower_letter
-                lower = target_indices[2].letter
-            end
-        end
-        if isempty(target_indices) # is a sum
-            return arg
-        end
-
-        arg1_indices, arg2_indices = unique.(get_indices.((arg.arg1, arg.arg2)))
-
-        if is_trace(arg.arg1) && typeof(arg.arg2) == KrD
-            return BinaryOperation{Mult}(
-                to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-                to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-            )
-        end
-
-        if is_trace(arg.arg2) && typeof(arg.arg1) == KrD
-            return BinaryOperation{Mult}(
-                to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-                to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-            )
-        end
-
-        if length(arg1_indices) == length(arg2_indices)
-            return BinaryOperation{Mult}(
-                to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-                to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-            )
-        elseif length(arg1_indices) == 1 && length(arg2_indices) == 2
-            if typeof(arg1_indices[1]) == Upper
-                return BinaryOperation{Mult}(
-                    to_standard(arg.arg1; upper_letter = upper),
-                    to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-                )
-            else # typeof(arg1_indices[1]) == Lower
-                return BinaryOperation{Mult}(
-                    to_standard(arg.arg1; lower_letter = lower),
-                    to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-                )
-            end
-        elseif length(arg1_indices) == 2 && length(arg2_indices) == 1
-            if typeof(arg2_indices[1]) == Upper
-                return BinaryOperation{Mult}(
-                    to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-                    to_standard(arg.arg2; upper_letter = upper),
-                )
-            elseif typeof(arg2_indices[1]) == Lower
-                return BinaryOperation{Mult}(
-                    to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-                    to_standard(arg.arg2; lower_letter = lower),
-                )
-            end
-        end
-
-        throw_not_std()
-    end
-
     terms = collect_terms(arg)
-    remaining = Any[t for t ∈ terms]
 
     for term ∈ terms
         if length(get_free_indices(term)) > 2
             throw_not_std()
         end
     end
+
+    # if length(terms) == 2 && is_elementwise_multiplication(arg.arg1, arg.arg2)
+    #     upper = nothing
+    #     lower = nothing
+    #     if !isempty(target_indices)
+    #         if target_indices[1].letter == upper_letter
+    #             upper = target_indices[1].letter
+    #         end
+    #         if target_indices[1].letter == lower_letter
+    #             lower = target_indices[1].letter
+    #         end
+    #     end
+    #     if length(target_indices) > 1
+    #         if target_indices[2].letter == upper_letter
+    #             upper = target_indices[2].letter
+    #         end
+    #         if target_indices[2].letter == lower_letter
+    #             lower = target_indices[2].letter
+    #         end
+    #     end
+    #     if isempty(target_indices) # is a sum
+    #         return arg
+    #     end
+
+    #     arg1_indices, arg2_indices = unique.(get_indices.((arg.arg1, arg.arg2)))
+
+    #     if is_trace(arg.arg1) && typeof(arg.arg2) == KrD
+    #         return BinaryOperation{Mult}(
+    #             to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+    #             to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
+    #         )
+    #     end
+
+    #     if is_trace(arg.arg2) && typeof(arg.arg1) == KrD
+    #         return BinaryOperation{Mult}(
+    #             to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+    #             to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
+    #         )
+    #     end
+
+    #     if length(arg1_indices) == length(arg2_indices)
+    #         return BinaryOperation{Mult}(
+    #             to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+    #             to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
+    #         )
+    #     elseif length(arg1_indices) == 1 && length(arg2_indices) == 2
+    #         if typeof(arg1_indices[1]) == Upper
+    #             return BinaryOperation{Mult}(
+    #                 to_standard(arg.arg1; upper_letter = upper),
+    #                 to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
+    #             )
+    #         else # typeof(arg1_indices[1]) == Lower
+    #             return BinaryOperation{Mult}(
+    #                 to_standard(arg.arg1; lower_letter = lower),
+    #                 to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
+    #             )
+    #         end
+    #     elseif length(arg1_indices) == 2 && length(arg2_indices) == 1
+    #         if typeof(arg2_indices[1]) == Upper
+    #             return BinaryOperation{Mult}(
+    #                 to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+    #                 to_standard(arg.arg2; upper_letter = upper),
+    #             )
+    #         elseif typeof(arg2_indices[1]) == Lower
+    #             return BinaryOperation{Mult}(
+    #                 to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
+    #                 to_standard(arg.arg2; lower_letter = lower),
+    #             )
+    #         end
+    #     end
+
+    #     throw_not_std()
+    # end
+
+    terms = group_monomials(terms)
+    remaining = Any[t for t ∈ terms]
 
     flipped_indices = Dict()
     ordered_args = []
@@ -624,6 +911,7 @@ function to_standard(
 
         term = remaining[i]
         ids = get_free_indices(term)
+
         if length(ids) == 2
             if ids[1].letter == upper_letter || ids[2].letter == lower_letter
                 std_term = nothing
