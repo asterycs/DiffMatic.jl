@@ -7,7 +7,8 @@
 
 ## Symbolic differentiation of vector/matrix/tensor expressions in Julia
 
-#### This package is still under development - there be dragons. Issues are welcome.
+#### Warning: Not ready for use!
+#### This package is still under development. Issues are welcome.
 
 ### Example
 
