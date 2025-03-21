@@ -106,25 +106,13 @@ end
 
 function _eliminate_indices(arg::IndexList)
     CanBeNothing = Union{Nothing,Lower,Upper}
-    available = CanBeNothing[i for i ∈ unique(arg)]
+    available = CanBeNothing[i for i ∈ arg]
     eliminated = LowerOrUpperIndex[]
 
-    for i ∈ eachindex(available)
-        if isnothing(available[i])
-            continue
-        end
-
-        for j ∈ eachindex(available)
-            if isnothing(available[j])
-                continue
-            end
-
-            if flip(available[j]) == available[i] # contraction
-                push!(eliminated, available[i])
-                push!(eliminated, available[j])
-                available[i] = nothing
-                available[j] = nothing
-            end
+    for i ∈ eachindex(arg)
+        if flip(arg[i]) in arg
+            push!(eliminated, arg[i])
+            available[i] = nothing
         end
     end
 
@@ -138,8 +126,7 @@ function eliminate_indices(arg::IndexList)
 end
 
 function eliminated_indices(arg::IndexList)
-    remaining = first(_eliminate_indices(arg))
-    return setdiff(arg, remaining)
+    return last(_eliminate_indices(arg))
 end
 
 function count_values(input::AbstractArray{T}) where {T}
