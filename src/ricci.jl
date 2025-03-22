@@ -533,51 +533,27 @@ function Base.adjoint(arg::BinaryOperation{Mult})
 end
 
 function Base.adjoint(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    arg1_ids = unique(get_free_indices(arg.arg1))
-    arg2_ids = unique(get_free_indices(arg.arg2))
-
-    @assert length(unique(arg1_ids)) == length(unique(arg2_ids))
-
-    arg1_t = arg.arg1
-    arg2_t = arg.arg2
-
-    for i ∈ arg1_ids
-        tmp_letter = get_next_letter(arg1_t, arg2_t)
-        arg1_t = BinaryOperation{Mult}(
-            BinaryOperation{Mult}(arg1_t, KrD(flip(i), flip_to(i, tmp_letter))),
-            KrD(same_to(i, tmp_letter), flip(i)),
-        )
-    end
-
-    for i ∈ arg2_ids
-        tmp_letter = get_next_letter(arg1_t, arg2_t)
-        arg2_t = BinaryOperation{Mult}(
-            BinaryOperation{Mult}(arg2_t, KrD(flip(i), flip_to(i, tmp_letter))),
-            KrD(same_to(i, tmp_letter), flip(i)),
-        )
-    end
-
-    return BinaryOperation{Op}(arg1_t, arg2_t)
+    return BinaryOperation{Op}(adjoint(arg.arg1), adjoint(arg.arg2))
 end
 
-function Base.adjoint(arg::Union{Tensor,KrD,Zero})
-    free_indices = unique(get_free_indices(arg))
+function Base.adjoint(arg::Tensor)
+    indices = get_indices(arg)
 
-    if length(free_indices) > 2
+    if length(indices) > 2
         throw(DomainError(arg.id, "Adjoint is only defined for vectors and matrices"))
     end
 
-    e = arg
+    return Tensor(arg.id, flip.(indices)...)
+end
 
-    for i ∈ free_indices
-        tmp_letter = get_next_letter(e)
-        e = BinaryOperation{Mult}(
-            BinaryOperation{Mult}(e, KrD(flip(i), flip_to(i, tmp_letter))),
-            KrD(same_to(i, tmp_letter), flip(i)),
-        )
+function Base.adjoint(arg::Union{KrD,Zero})
+    indices = get_indices(arg)
+
+    if length(indices) > 2
+        throw(DomainError(arg.id, "Adjoint is only defined for vectors and matrices"))
     end
 
-    return e
+    return typeof(arg)(flip.(indices)...)
 end
 
 function script(index::Lower)
