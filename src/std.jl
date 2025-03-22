@@ -95,7 +95,7 @@ gradient(x' * x, x)
 
 # output
 
-2x⁴
+2x³
 ```
 """
 function derivative(expr, wrt::Tensor)
@@ -122,7 +122,7 @@ gradient(x' * A * x, x)
 
 # output
 
-x₃A³⁵ + A⁵₄x⁴
+x³A₃⁵ + A⁵⁴x₄
 ```
 """
 function gradient(expr, wrt::Tensor)
