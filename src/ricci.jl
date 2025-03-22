@@ -663,7 +663,7 @@ function parenthesize(arg::BinaryOperation{Sub})
 end
 
 function to_string(arg::BinaryOperation{Pow})
-    return to_string(arg.arg1) * ".^" * parenthesize(arg.arg2)
+    return parenthesize(arg.arg1) * ".^" * to_string(arg.arg2)
 end
 
 function to_string(arg::BinaryOperation{Mult})
