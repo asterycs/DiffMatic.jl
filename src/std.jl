@@ -318,20 +318,6 @@ function _to_std_string(arg::BinaryOperation{ElementWise})
     target_indices = unique(eliminate_indices(indices))
     terms = collect_terms(arg)
 
-    # if is_trace(arg.arg1) && length(target_indices) == 1
-    #     if typeof(target_indices[1]) == Upper
-    #         return "vec(1)"
-    #     else # if typeof(target_indices[1]) == Lower
-    #         return "vec(1)ᵀ"
-    #     end
-    # elseif is_trace(arg.arg2) && length(target_indices) == 1
-    #     if typeof(target_indices[1]) == Upper
-    #         return "vec(1)"
-    #     else # if typeof(target_indices[1]) == Lower
-    #         return "vec(1)ᵀ"
-    #     end
-    # end
-
     # TODO: what about d_i^j d_i^i? Must distinguish here
     if length(target_indices) == 1
         if all(length.(get_indices.(terms)) .== 1)
@@ -824,79 +810,6 @@ function to_standard(
             throw_not_std()
         end
     end
-
-    # if length(terms) == 2 && is_elementwise_multiplication(arg.arg1, arg.arg2)
-    #     upper = nothing
-    #     lower = nothing
-    #     if !isempty(target_indices)
-    #         if target_indices[1].letter == upper_letter
-    #             upper = target_indices[1].letter
-    #         end
-    #         if target_indices[1].letter == lower_letter
-    #             lower = target_indices[1].letter
-    #         end
-    #     end
-    #     if length(target_indices) > 1
-    #         if target_indices[2].letter == upper_letter
-    #             upper = target_indices[2].letter
-    #         end
-    #         if target_indices[2].letter == lower_letter
-    #             lower = target_indices[2].letter
-    #         end
-    #     end
-    #     if isempty(target_indices) # is a sum
-    #         return arg
-    #     end
-
-    #     arg1_indices, arg2_indices = unique.(get_indices.((arg.arg1, arg.arg2)))
-
-    #     if is_trace(arg.arg1) && typeof(arg.arg2) == KrD
-    #         return BinaryOperation{Mult}(
-    #             to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-    #             to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-    #         )
-    #     end
-
-    #     if is_trace(arg.arg2) && typeof(arg.arg1) == KrD
-    #         return BinaryOperation{Mult}(
-    #             to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-    #             to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-    #         )
-    #     end
-
-    #     if length(arg1_indices) == length(arg2_indices)
-    #         return BinaryOperation{Mult}(
-    #             to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-    #             to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-    #         )
-    #     elseif length(arg1_indices) == 1 && length(arg2_indices) == 2
-    #         if typeof(arg1_indices[1]) == Upper
-    #             return BinaryOperation{Mult}(
-    #                 to_standard(arg.arg1; upper_letter = upper),
-    #                 to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-    #             )
-    #         else # typeof(arg1_indices[1]) == Lower
-    #             return BinaryOperation{Mult}(
-    #                 to_standard(arg.arg1; lower_letter = lower),
-    #                 to_standard(arg.arg2; upper_letter = upper, lower_letter = lower),
-    #             )
-    #         end
-    #     elseif length(arg1_indices) == 2 && length(arg2_indices) == 1
-    #         if typeof(arg2_indices[1]) == Upper
-    #             return BinaryOperation{Mult}(
-    #                 to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-    #                 to_standard(arg.arg2; upper_letter = upper),
-    #             )
-    #         elseif typeof(arg2_indices[1]) == Lower
-    #             return BinaryOperation{Mult}(
-    #                 to_standard(arg.arg1; upper_letter = upper, lower_letter = lower),
-    #                 to_standard(arg.arg2; lower_letter = lower),
-    #             )
-    #         end
-    #     end
-
-    #     throw_not_std()
-    # end
 
     terms = group_monomials(terms)
     remaining = Any[t for t ∈ terms]
