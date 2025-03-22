@@ -306,7 +306,7 @@ function Base.broadcasted(
     return Base.broadcasted(f, arg1, P)
 end
 
-function Base.broadcasted(::typeof(^), arg1::Tensor, arg2::Int)
+function Base.broadcasted(::typeof(^), arg1::TensorExpr, arg2::Int)
     return BinaryOperation{Pow}(arg1, arg2)
 end
 
