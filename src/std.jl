@@ -323,7 +323,6 @@ function _to_std_string(arg::BinaryOperation{NonStdCon})
     target_indices = unique(eliminate_indices(indices))
     terms = collect_terms(arg)
 
-    # TODO: what about d_i^j d_i^i? Must distinguish here
     if length(target_indices) == 1
         if all(length.(get_indices.(terms)) .== 1)
             return reduce(
@@ -386,9 +385,6 @@ function _to_std_string(arg::BinaryOperation{NonStdCon})
             throw_not_std()
         end
 
-        # if typeof(tensor) == KrD
-        # ...
-
         return "sum(" * _to_std_string(tensor) * ")"
     end
 
@@ -419,6 +415,7 @@ function collect_terms(arg)
     return [arg]
 end
 
+# TODO: Remove
 function is_trace(arg)
     terms = collect_terms(arg)
 
@@ -510,6 +507,7 @@ function to_standard(term; upper_letter = nothing, lower_letter = nothing)
         end
     elseif isempty(ids)
         # No free indices - check if this is this a trace
+        # TODO: Does this make sense?
         if is_trace(term)
             ids = get_indices(term)
 
