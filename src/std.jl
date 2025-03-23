@@ -206,6 +206,26 @@ function hessian(expr, wrt::Tensor)
     return H
 end
 
+function throw_not_std()
+    throw(DomainError("Cannot write expression in standard notation"))
+end
+
+# This type is for tagging contractions that need special treatment before converting to
+# standard notation (if at all possible).
+struct NonStdCon end
+
+function get_indices(arg::BinaryOperation{NonStdCon})
+    return [get_indices(arg.arg1); get_indices(arg.arg2)]
+end
+
+function to_string(arg::BinaryOperation{NonStdCon})
+    return parenthesize(arg.arg1) * parenthesize(arg.arg2)
+end
+
+function evaluate(arg::BinaryOperation{NonStdCon})
+    return arg
+end
+
 function _to_std_string(arg::Tensor)
     ids = get_indices(arg)
 
@@ -298,22 +318,7 @@ function _to_std_string(arg::BinaryOperation{Mult})
     return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
 end
 
-# TODO: Rename to something more descriptive
-struct ElementWise end
-
-function get_indices(arg::BinaryOperation{ElementWise})
-    return [get_indices(arg.arg1); get_indices(arg.arg2)]
-end
-
-function to_string(arg::BinaryOperation{ElementWise})
-    return parenthesize(arg.arg1) * parenthesize(arg.arg2)
-end
-
-function evaluate(arg::BinaryOperation{ElementWise})
-    return arg
-end
-
-function _to_std_string(arg::BinaryOperation{ElementWise})
+function _to_std_string(arg::BinaryOperation{NonStdCon})
     indices = get_indices(arg)
     target_indices = unique(eliminate_indices(indices))
     terms = collect_terms(arg)
@@ -398,19 +403,15 @@ function parenthesize_std(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation
     return "(" * _to_std_string(arg) * ")"
 end
 
-function parenthesize_std(arg::BinaryOperation{ElementWise})
+function parenthesize_std(arg::BinaryOperation{NonStdCon})
     return "(" * _to_std_string(arg) * ")"
-end
-
-function throw_not_std()
-    throw(DomainError("Cannot write expression in standard notation"))
 end
 
 function collect_terms(arg::BinaryOperation{Mult})
     return [collect_terms(arg.arg1); collect_terms(arg.arg2)]
 end
 
-function collect_terms(arg::BinaryOperation{ElementWise})
+function collect_terms(arg::BinaryOperation{NonStdCon})
     return [collect_terms(arg.arg1); collect_terms(arg.arg2)]
 end
 
@@ -583,7 +584,7 @@ function to_binary_operation(terms::AbstractArray)
             continue
         end
 
-        binop = BinaryOperation{ElementWise}(binop, t)
+        binop = BinaryOperation{NonStdCon}(binop, t)
     end
 
     return binop
@@ -594,7 +595,7 @@ function to_binary_operation(term)
 end
 
 function to_standard(
-    arg::BinaryOperation{ElementWise};
+    arg::BinaryOperation{NonStdCon};
     upper_letter = nothing,
     lower_letter = nothing,
 )
