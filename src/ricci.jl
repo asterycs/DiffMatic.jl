@@ -649,17 +649,11 @@ function create_additive_op(
     arg2_index_map = Dict((old => new for (old, new) ∈ zip(unique(arg2_ids), new_ids)))
 
     for index ∈ unique(arg1_ids)
-        arg1 = BinaryOperation{Mult}(
-            arg1,
-            KrD(flip(index), same_to(index, arg1_index_map[index])),
-        )
+        arg1 = update_index(arg1, index, same_to(index, arg1_index_map[index]))
     end
 
     for index ∈ union(arg2_ids)
-        arg2 = BinaryOperation{Mult}(
-            arg2,
-            KrD(flip(index), same_to(index, arg2_index_map[index])),
-        )
+        arg2 = update_index(arg2, index, same_to(index, arg2_index_map[index]))
     end
 
     return BinaryOperation{Op}(arg1, arg2)
@@ -685,7 +679,7 @@ function update_index(
         end
     end
 
-    return BinaryOperation{Mult}(arg, KrD(flip(from), to))
+    return exec(BinaryOperation{Mult}(arg, KrD(flip(from), to)))
 end
 
 function Base.:(-)(arg::TensorExpr)
