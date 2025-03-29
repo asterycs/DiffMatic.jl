@@ -58,6 +58,162 @@ function diff(arg::BinaryOperation{Op}, wrt::Tensor) where {Op<:AdditiveOperatio
     return BinaryOperation{Op}(diff(arg.arg1, wrt), diff(arg.arg2, wrt))
 end
 
+function is_regular_contraction(arg1, arg2)
+    arg1_ids, arg2_ids = get_indices.((arg1, arg2))
+
+    eliminated = eliminated_indices([arg1_ids; arg2_ids])
+
+    return !isempty(intersect(arg1_ids, eliminated)) && length(eliminated) == 2
+end
+
+# function collect_simplified_terms(arg::BinaryOperation{Mult})
+#     return [collect_simplified_terms(arg.arg1); collect_simplified_terms(arg.arg2)]
+# end
+
+# function collect_simplified_terms(arg::BinaryOperation{NonStdCon})
+#     return [collect_terms(arg.arg1); collect_terms(arg.arg2)]
+# end
+
+# function collect_simplified_terms(arg)
+#     return [arg]
+# end
+
+function collect_factors(arg::BinaryOperation{Mult})
+    return [collect_factors(arg.arg1); collect_factors(arg.arg2)]
+end
+
+function collect_factors(arg)
+    return [arg]
+end
+
+function has_letter(tensor::TensorExpr, letter::Letter)
+    ids = get_indices(tensor)
+    letters = [i.letter for i ∈ ids]
+
+    return letter ∈ letters
+end
+
+function simplify(arg::BinaryOperation{Add})
+    return BinaryOperation{Add}(simplify(arg.arg1), simplify(arg.arg2))
+end
+
+# TODO: Treat sums, e.g. A * (B + C) * D
+function simplify(arg::BinaryOperation{Mult})
+    factors = collect_factors(arg)
+    indices = vcat([get_indices(f) for f ∈ factors]...)
+    letters = unique([i.letter for i ∈ indices])
+
+    chunked_factors = []
+    remaining = Any[f for f ∈ factors]
+
+    # Find groups where contractions happen over more than two indices
+    for letter ∈ letters
+        complex = []
+
+        if all(isnothing.(remaining))
+            break
+        end
+
+        for i ∈ eachindex(remaining)
+            if isnothing(remaining[i])
+                continue
+            end
+            if has_letter(remaining[i], letter)
+                push!(complex, i)
+            end
+        end
+
+        if isempty(complex)
+            continue
+        end
+
+        complex_ids = LowerOrUpperIndex[]
+
+        for ci ∈ complex
+            append!(complex_ids, get_indices(remaining[ci]))
+        end
+
+        target_indices = unique(eliminate_indices(complex_ids))
+        eliminated_ids = eliminated_indices(complex_ids)
+
+        ordered_factors = []
+
+        if length(complex) == 2 &&
+           is_regular_contraction(remaining[first(complex)], remaining[last(complex)])
+            continue
+        elseif isempty(target_indices)
+            push!(chunked_factors, remaining[complex])
+            for ci ∈ complex
+                remaining[ci] = nothing
+            end
+        elseif length(complex) == 1
+            continue
+        elseif isempty(eliminated_ids)
+            push!(chunked_factors, remaining[complex])
+            for ci ∈ complex
+                remaining[ci] = nothing
+            end
+        elseif isempty(target_indices)
+            push!(chunked_factors, remaining[complex])
+            for ci ∈ complex
+                remaining[ci] = nothing
+            end
+        elseif length(target_indices) == 1
+            if all(typeof.(factors[complex]) .== KrD) # sum
+                if length(complex) != 2
+                    throw_not_std()
+                end
+
+                for di ∈ complex
+                    push!(ordered_factors, to_standard(factors[di]))
+                    remaining[di] = nothing
+                end
+            else
+                for fi ∈ complex
+                    factor = remaining[fi]
+
+                    if typeof(factor) != KrD
+                        @assert length(get_indices(factor)) == 1 # other orders not implemented
+
+                        push!(ordered_factors, reshape(factor, target_indices...))
+                        remaining[fi] = nothing
+                    elseif isempty(get_indices(factor))
+                        pushfirst!(ordered_factors, factor)
+                        remaining[fi] = nothing
+                    elseif factor isa Real
+                        pushfirst!(ordered_factors, factor)
+                        remaining[fi] = nothing
+                    else
+                        # drop unneeded KrD:s
+                        remaining[fi] = nothing
+                    end
+                end
+            end
+
+            push!(chunked_factors, ordered_factors)
+        else
+            @show target_indices
+            @assert false
+        end
+    end
+
+    for i ∈ eachindex(remaining)
+        if !isnothing(remaining[i])
+            push!(chunked_factors, remaining[i])
+            remaining[i] = nothing
+        end
+    end
+
+    for i ∈ eachindex(chunked_factors)
+        if chunked_factors[i] isa AbstractArray
+            chunked_factors[i] = to_binary_operation(chunked_factors[i])
+        end
+    end
+
+    return to_binary_operation(chunked_factors)
+end
+
+# TODO: Rename evaluate to e.g. expand. Evaluate does not evaluate anymore in order to retain more context.
 function evaluate(arg::Negate)
     return Negate(evaluate(arg.arg))
 end

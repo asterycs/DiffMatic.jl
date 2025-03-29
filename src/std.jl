@@ -403,16 +403,8 @@ function parenthesize_std(arg::BinaryOperation{NonStdCon})
     return "(" * _to_std_string(arg) * ")"
 end
 
-function collect_terms(arg::BinaryOperation{Mult})
-    return [collect_terms(arg.arg1); collect_terms(arg.arg2)]
-end
-
 function collect_terms(arg::BinaryOperation{NonStdCon})
     return [collect_terms(arg.arg1); collect_terms(arg.arg2)]
-end
-
-function collect_terms(arg)
-    return [arg]
 end
 
 # TODO: Remove
@@ -566,13 +558,6 @@ function was_flipped(index, flips)
     return false
 end
 
-function has_letter(tensor, letter)
-    ids = get_indices(tensor)
-    letters = [i.letter for i ∈ ids]
-
-    return letter ∈ letters
-end
-
 function to_binary_operation(terms::AbstractArray)
     binop = nothing
 
@@ -667,128 +652,6 @@ function to_standard(
     end
 
     return to_binary_operation(reshaped)
-end
-
-function is_regular_contraction(arg1, arg2)
-    arg1_ids, arg2_ids = get_indices.((arg1, arg2))
-
-    eliminated = eliminated_indices([arg1_ids; arg2_ids])
-
-    return length(eliminated) == 2
-end
-
-# TODO: Treat sums, e.g. A * (B + C) * D
-function group_monomials(monomials::AbstractArray)
-    indices = vcat([get_indices(m) for m ∈ monomials]...)
-    letters = unique([i.letter for i ∈ indices])
-
-    chunked_terms = []
-    remaining = Any[t for t ∈ monomials]
-
-    # Find groups of involved contractions that need context when converting to standard notation
-    for letter ∈ letters
-        complex = []
-
-        if all(isnothing.(remaining))
-            break
-        end
-
-        for i ∈ eachindex(remaining)
-            if isnothing(remaining[i])
-                continue
-            end
-            if has_letter(remaining[i], letter)
-                push!(complex, i)
-            end
-        end
-
-        if isempty(complex)
-            continue
-        end
-
-        complex_ids = LowerOrUpperIndex[]
-
-        for ci ∈ complex
-            append!(complex_ids, get_indices(remaining[ci]))
-        end
-
-        target_indices = unique(eliminate_indices(complex_ids))
-        eliminated_ids = eliminated_indices(complex_ids)
-
-        ordered_factors = []
-
-        if length(complex) == 2 &&
-           is_regular_contraction(remaining[first(complex)], remaining[last(complex)])
-            continue
-        elseif isempty(target_indices)
-            push!(chunked_terms, remaining[complex])
-            for ci ∈ complex
-                remaining[ci] = nothing
-            end
-        elseif length(complex) == 1
-            continue
-        elseif isempty(eliminated_ids)
-            push!(chunked_terms, remaining[complex])
-            for ci ∈ complex
-                remaining[ci] = nothing
-            end
-        elseif isempty(target_indices)
-            push!(chunked_terms, remaining[complex])
-            for ci ∈ complex
-                remaining[ci] = nothing
-            end
-        elseif length(target_indices) == 1
-            if all(typeof.(monomials[complex]) .== KrD) # sum
-                if length(complex) != 2
-                    throw_not_std()
-                end
-
-                for di ∈ complex
-                    push!(ordered_factors, to_standard(monomials[di]))
-                    remaining[di] = nothing
-                end
-            else
-                for fi ∈ complex
-                    factor = remaining[fi]
-
-                    if typeof(factor) != KrD
-                        @assert length(get_indices(factor)) == 1 # other orders not implemented
-
-                        push!(ordered_factors, reshape(factor, target_indices...))
-                        remaining[fi] = nothing
-                    elseif isempty(get_indices(factor))
-                        pushfirst!(ordered_factors, factor)
-                        remaining[fi] = nothing
-                    elseif factor isa Real
-                        pushfirst!(ordered_factors, factor)
-                        remaining[fi] = nothing
-                    else
-                        # drop unneeded KrD:s
-                        remaining[fi] = nothing
-                    end
-                end
-            end
-
-            push!(chunked_terms, ordered_factors)
-        else
-            @assert false
-        end
-    end
-
-    for i ∈ eachindex(remaining)
-        if !isnothing(remaining[i])
-            push!(chunked_terms, remaining[i])
-            remaining[i] = nothing
-        end
-    end
-
-    for i ∈ eachindex(chunked_terms)
-        if chunked_terms[i] isa AbstractArray
-            chunked_terms[i] = to_binary_operation(chunked_terms[i])
-        end
-    end
-
-    return chunked_terms
 end
 
 function to_standard(
