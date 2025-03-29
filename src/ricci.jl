@@ -311,6 +311,177 @@ function Base.broadcasted(::typeof(^), arg1::TensorExpr, arg2::Int)
     return BinaryOperation{Pow}(arg1, arg2)
 end
 
+# TODO: exec is a temporary function and should be replaced by simplify.
+# Alternatively: Rename to evaluate after the current evaluate function has been renamed.
+function exec(arg::BinaryOperation{Mult})
+    return exec(Mult(), arg.arg1, arg.arg2)
+end
+
+function exec(arg::Union{Tensor,KrD})
+    return arg
+end
+
+function exec(
+    ::Mult,
+    arg1::BinaryOperation{Op},
+    arg2::Union{Tensor,KrD},
+) where {Op<:AdditiveOperation}
+    return exec(
+        Op(),
+        exec(Mult(), exec(arg1.arg1), exec(arg2)),
+        exec(Mult(), exec(arg1.arg2), exec(arg2)),
+    )
+end
+
+function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
+    ci = indices_in_common(arg1.arg1, arg1.arg2)
+
+    # TODO: Make this redundant
+    if !isempty(ci)
+        el = eliminated_indices([ci; arg2.indices[1]])
+        er = eliminated_indices([ci; arg2.indices[2]])
+
+        if !isempty(el)
+            return exec(
+                BinaryOperation{Mult}(
+                    exec(Mult(), arg1.arg1, arg2), # order of the indices in arg2 determines which one is contracted
+                    exec(Mult(), arg1.arg2, arg2),
+                ),
+            )
+        elseif !isempty(er)
+            rd = KrD(reverse(arg2.indices)...)
+
+            return exec(
+                BinaryOperation{Mult}(
+                    exec(Mult(), arg1.arg1, rd),
+                    exec(Mult(), arg1.arg2, rd),
+                ),
+            )
+        end
+    end
+
+    @assert !(can_contract(arg1.arg1, arg2) && can_contract(arg1.arg2, arg2))
+
+    if can_contract(arg1.arg2, arg2)
+        new_arg2 = exec(Mult(), arg1.arg2, arg2)
+        return BinaryOperation{Mult}(evaluate(arg1.arg1), new_arg2)
+    elseif can_contract(arg1.arg1, arg2)
+        new_arg1 = exec(Mult(), arg1.arg1, arg2)
+        return BinaryOperation{Mult}(new_arg1, evaluate(arg1.arg2))
+    elseif arg1.arg1 isa Real
+        return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
+    end
+
+    return BinaryOperation{Mult}(arg1, arg2)
+end
+
+function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
+    new_args = []
+
+    available1 = Any[arg1.arg1; arg1.arg2]
+    available2 = Any[arg2.arg1; arg2.arg2]
+
+    for i ∈ eachindex(available1)
+        if isnothing(available1[i])
+            continue
+        end
+        for j ∈ eachindex(available2)
+            if isnothing(available2[j]) || isnothing(available1[i])
+                continue
+            end
+
+            if can_contract(available1[i], available2[j])
+                push!(new_args, evaluate(Mult(), available1[i], available2[j]))
+                available1[i] = nothing
+                available2[j] = nothing
+            end
+        end
+    end
+
+    for i ∈ available1
+        if !isnothing(i)
+            push!(new_args, i)
+        end
+    end
+
+    for i ∈ available2
+        if !isnothing(i)
+            push!(new_args, i)
+        end
+    end
+
+    new_arg = nothing
+
+    for args ∈ Iterators.partition(new_args, 2)
+        if length(args) == 1
+            if isnothing(new_arg)
+                return args[1]
+            else
+                return exec(BinaryOperation{Mult}(new_arg, args[1]))
+            end
+        end
+
+        if isnothing(new_arg)
+            new_arg = exec(BinaryOperation{Mult}(args[1], args[2]))
+        else
+            new_arg = BinaryOperation{Mult}(
+                new_arg,
+                exec(BinaryOperation{Mult}(args[1], args[2])),
+            )
+        end
+    end
+
+    return new_arg
+end
+
+function exec(::Op, arg1::Tensor, arg2::Tensor) where {Op<:AdditiveOperation}
+    return BinaryOperation{Op}(exec(arg1), exec(arg2))
+end
+
+function exec(::Mult, arg1::KrD, arg2::Tensor)
+    return exec(Mult(), arg2, arg1)
+end
+
+function exec(::Mult, arg1::Tensor, arg2::Tensor)
+    return BinaryOperation{Mult}(arg1, arg2)
+end
+
+function exec(::Mult, arg1::Union{Tensor,KrD}, arg2::KrD)
+    arg1_indices = get_free_indices(arg1)
+    contracting_index = eliminated_indices([arg1_indices; get_indices(arg2)])
+
+    if isempty(contracting_index) # Is an outer product
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
+
+    if is_elementwise_multiplication(arg1, arg2)
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
+
+    @assert can_contract(arg1, arg2)
+    @assert length(arg2.indices) == 2
+
+    newarg = deepcopy(arg1)
+    empty!(newarg.indices)
+
+    contracted = false
+
+    for i ∈ arg1.indices
+        if flip(i) == arg2.indices[1] && !contracted
+            push!(newarg.indices, arg2.indices[2])
+            contracted = true
+        elseif flip(i) == arg2.indices[2] && !contracted
+            push!(newarg.indices, arg2.indices[1])
+            contracted = true
+        else
+            push!(newarg.indices, i)
+        end
+    end
+
+    return newarg
+end
+
+
 function Base.:(*)(arg1::TensorExpr, arg2::Real)
     return arg2 * arg1
 end
