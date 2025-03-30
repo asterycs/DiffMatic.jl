@@ -105,6 +105,10 @@ function simplify(arg::Real)
     return arg
 end
 
+function simplify(arg::UnaryOp) where {UnaryOp<:UnaryOperation}
+    return UnaryOp(simplify(arg.arg))
+end
+
 function simplify(arg::BinaryOperation{Add})
     return BinaryOperation{Add}(simplify(arg.arg1), simplify(arg.arg2))
 end

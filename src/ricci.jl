@@ -311,14 +311,29 @@ function Base.broadcasted(::typeof(^), arg1::TensorExpr, arg2::Int)
     return BinaryOperation{Pow}(arg1, arg2)
 end
 
-# TODO: exec is a temporary function and should be replaced by simplify.
-# Alternatively: Rename to evaluate after the current evaluate function has been renamed.
+# TODO: exec is a temporary function and should be renamed to 'simplify'.
 function exec(arg::BinaryOperation{Mult})
     return exec(Mult(), arg.arg1, arg.arg2)
 end
 
 function exec(arg::Union{Tensor,KrD})
     return arg
+end
+
+function exec(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperation}
+    if can_contract(arg1, arg2.arg)
+        return UnaryOp(exec(Mult(), arg1, arg2.arg))
+    end
+
+    return BinaryOperation{Mult}(arg2, arg1)
+end
+
+function exec(::Mult, arg1::UnaryOp, arg2::KrD) where {UnaryOp<:UnaryOperation}
+    if can_contract(arg1.arg, arg2)
+        return UnaryOp(exec(Mult(), arg1.arg, arg2))
+    end
+
+    return BinaryOperation{Mult}(arg1, arg2)
 end
 
 function exec(
