@@ -375,6 +375,24 @@ function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
+function exec(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
+    return evaluate(Mult(), arg2, arg1)
+end
+
+function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
+    @assert !(can_contract(arg1.arg1, arg2) && can_contract(arg1.arg2, arg2))
+
+    if can_contract(arg1.arg2, arg2)
+        new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
+        return BinaryOperation{Mult}(arg1.arg1, new_arg2)
+    elseif can_contract(arg1.arg1, arg2)
+        new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
+        return BinaryOperation{Mult}(new_arg1, arg1.arg2)
+    else
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
+end
+
 function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     new_args = []
 
@@ -434,7 +452,9 @@ function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     return new_arg
 end
 
-function exec(::Op, arg1::Tensor, arg2::Tensor) where {Op<:AdditiveOperation}
+function exec(::Op, arg1, arg2) where {Op<:AdditiveOperation}
+    @assert is_permutation(arg1, arg2)
+
     return BinaryOperation{Op}(exec(arg1), exec(arg2))
 end
 
@@ -443,6 +463,10 @@ function exec(::Mult, arg1::KrD, arg2::Tensor)
 end
 
 function exec(::Mult, arg1::Tensor, arg2::Tensor)
+    return BinaryOperation{Mult}(arg1, arg2)
+end
+
+function exec(::Mult, arg1, arg2)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
