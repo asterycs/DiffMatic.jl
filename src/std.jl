@@ -321,7 +321,7 @@ end
 function _to_std_string(arg::BinaryOperation{NonStdCon})
     indices = get_indices(arg)
     target_indices = unique(eliminate_indices(indices))
-    terms = collect_terms(arg)
+    terms = collect_factors(arg)
 
     if length(target_indices) == 1
         if all(length.(get_indices.(terms)) .== 1)
@@ -403,13 +403,13 @@ function parenthesize_std(arg::BinaryOperation{NonStdCon})
     return "(" * _to_std_string(arg) * ")"
 end
 
-function collect_terms(arg::BinaryOperation{NonStdCon})
-    return [collect_terms(arg.arg1); collect_terms(arg.arg2)]
+function collect_factors(arg::BinaryOperation{NonStdCon})
+    return [collect_factors(arg.arg1); collect_factors(arg.arg2)]
 end
 
 # TODO: Remove
 function is_trace(arg)
-    terms = collect_terms(arg)
+    terms = collect_factors(arg)
 
     if length(terms) == 1
         ids = get_indices(arg)
@@ -574,7 +574,7 @@ function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
     return binop
 end
 
-function to_binary_operation(term)
+function to_binary_operation(op::Op, term) where {Op}
     return term
 end
 
@@ -584,7 +584,7 @@ function to_standard(
     lower_letter = nothing,
 )
     ids = unique(get_indices(arg))
-    terms = collect_terms(arg)
+    terms = collect_factors(arg)
 
     reshaped = []
 
@@ -652,7 +652,7 @@ function to_standard(
         end
     end
 
-    return to_binary_operation(reshaped)
+    return to_binary_operation(NonStdCon(), reshaped)
 end
 
 function to_standard(
@@ -666,7 +666,7 @@ function to_standard(
         throw_not_std()
     end
 
-    terms = collect_terms(arg)
+    terms = collect_factors(arg)
 
     for term ∈ terms
         if length(get_free_indices(term)) > 2
@@ -674,7 +674,7 @@ function to_standard(
         end
     end
 
-    terms = group_monomials(terms)
+    terms = collect_factors(simplify(arg))
     remaining = Any[t for t ∈ terms]
 
     flipped_indices = Dict()
