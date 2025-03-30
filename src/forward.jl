@@ -59,11 +59,15 @@ function diff(arg::BinaryOperation{Op}, wrt::Tensor) where {Op<:AdditiveOperatio
 end
 
 function is_regular_contraction(arg1, arg2)
-    arg1_ids, arg2_ids = get_indices.((arg1, arg2))
+    arg1_free_ids, arg2_free_ids = get_free_indices.((arg1, arg2))
 
-    eliminated = eliminated_indices([arg1_ids; arg2_ids])
+    eliminated = eliminated_indices([arg1_free_ids; arg2_free_ids])
 
-    return !isempty(intersect(arg1_ids, eliminated)) && length(eliminated) == 2
+    # TODO: Refactor
+    return !isempty(intersect(arg1_free_ids, eliminated)) &&
+           length(eliminated) == 2 &&
+           length(intersect(get_indices(arg1), eliminated)) == 1 &&
+           length(intersect(get_indices(arg2), eliminated)) == 1
 end
 
 # function collect_simplified_terms(arg::BinaryOperation{Mult})
@@ -86,11 +90,19 @@ function collect_factors(arg)
     return [arg]
 end
 
-function has_letter(tensor::TensorExpr, letter::Letter)
+function has_letter(tensor::Value, letter::Letter)
     ids = get_indices(tensor)
     letters = [i.letter for i ∈ ids]
 
     return letter ∈ letters
+end
+
+function simplify(arg::Union{Tensor,KrD,Zero})
+    return arg
+end
+
+function simplify(arg::Real)
+    return arg
 end
 
 function simplify(arg::BinaryOperation{Add})
@@ -100,6 +112,7 @@ end
 # TODO: Treat sums, e.g. A * (B + C) * D
 function simplify(arg::BinaryOperation{Mult})
     factors = collect_factors(arg)
+    factors = map(simplify, factors) # recursion
     indices = vcat([get_indices(f) for f ∈ factors]...)
     letters = unique([i.letter for i ∈ indices])
 
@@ -136,10 +149,20 @@ function simplify(arg::BinaryOperation{Mult})
         target_indices = unique(eliminate_indices(complex_ids))
         eliminated_ids = eliminated_indices(complex_ids)
 
-        ordered_factors = []
-
-        if length(complex) == 2 &&
-           is_regular_contraction(remaining[first(complex)], remaining[last(complex)])
+        if any(typeof.(factors[complex]) .== Zero)
+            free_indices = unique(eliminate_indices(complex_ids))
+            push!(chunked_factors, Zero(free_indices...))
+            remaining[complex] .= nothing
+        elseif length(complex) == 2 &&
+               is_regular_contraction(remaining[first(complex)], remaining[last(complex)])
+            if typeof(remaining[first(complex)]) == KrD ||
+               typeof(remaining[last(complex)]) == KrD
+                push!(
+                    chunked_factors,
+                    exec(Mult(), remaining[first(complex)], remaining[last(complex)]),
+                )
+                remaining[complex] .= nothing
+            end
             continue
         elseif isempty(target_indices)
             push!(chunked_factors, remaining[complex])
@@ -159,6 +182,8 @@ function simplify(arg::BinaryOperation{Mult})
                 remaining[ci] = nothing
             end
         elseif length(target_indices) == 1
+            ordered_factors = []
+
             if all(typeof.(factors[complex]) .== KrD) # sum
                 if length(complex) != 2
                     throw_not_std()
@@ -206,11 +231,11 @@ function simplify(arg::BinaryOperation{Mult})
 
     for i ∈ eachindex(chunked_factors)
         if chunked_factors[i] isa AbstractArray
-            chunked_factors[i] = to_binary_operation(chunked_factors[i])
+            chunked_factors[i] = to_binary_operation(NonStdCon(), chunked_factors[i])
         end
     end
 
-    return to_binary_operation(chunked_factors)
+    return to_binary_operation(Mult(), chunked_factors)
 end
 
 # TODO: Rename evaluate to e.g. expand. Evaluate does not evaluate anymore in order to retain more context.

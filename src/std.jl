@@ -558,7 +558,8 @@ function was_flipped(index, flips)
     return false
 end
 
-function to_binary_operation(terms::AbstractArray)
+# TODO: Constrain to Mult and NonStdCon
+function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
     binop = nothing
 
     for t ∈ terms
@@ -567,7 +568,7 @@ function to_binary_operation(terms::AbstractArray)
             continue
         end
 
-        binop = BinaryOperation{NonStdCon}(binop, t)
+        binop = BinaryOperation{Op}(binop, t)
     end
 
     return binop
