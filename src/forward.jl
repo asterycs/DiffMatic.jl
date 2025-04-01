@@ -113,7 +113,6 @@ function simplify(arg::BinaryOperation{Add})
     return BinaryOperation{Add}(simplify(arg.arg1), simplify(arg.arg2))
 end
 
-# TODO: Treat sums, e.g. A * (B + C) * D
 function simplify(arg::BinaryOperation{Mult})
     factors = collect_factors(arg)
     factors = map(simplify, factors) # recursion
