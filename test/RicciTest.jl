@@ -371,38 +371,24 @@ end
     x = Tensor("x", Upper(3))
 
     @test dc.update_index(x, Upper(3), Upper(3)) == x
-
-    expected_shift = KrD(Lower(3), Upper(1))
-    @test dc.update_index(x, Upper(3), Upper(1)) ==
-          dc.BinaryOperation{dc.Mult}(x, expected_shift)
-
-    expected_shift = KrD(Lower(3), Upper(2))
-    @test dc.update_index(x, Upper(3), Upper(2)) ==
-          dc.BinaryOperation{dc.Mult}(x, expected_shift)
+    @test dc.update_index(x, Upper(3), Upper(1)) == Tensor("x", Upper(1))
+    @test dc.update_index(x, Upper(3), Upper(2)) == Tensor("x", Upper(2))
 end
 
 @testset "update_index row vector" begin
     x = Tensor("x", Lower(3))
 
     @test dc.update_index(x, Lower(3), Lower(3)) == x
-
-    expected_shift = KrD(Upper(3), Lower(1))
-    @test dc.update_index(x, Lower(3), Lower(1)) ==
-          dc.BinaryOperation{dc.Mult}(x, expected_shift)
-
-    expected_shift = KrD(Upper(3), Lower(2))
-    @test dc.update_index(x, Lower(3), Lower(2)) ==
-          dc.BinaryOperation{dc.Mult}(x, expected_shift)
+    @test dc.update_index(x, Lower(3), Lower(1)) == Tensor("x", Lower(1))
+    @test dc.update_index(x, Lower(3), Lower(2)) == Tensor("x", Lower(2))
 end
 
 @testset "update_index matrix" begin
     A = Tensor("A", Upper(1), Lower(2))
 
     @test dc.update_index(A, Lower(2), Lower(2)) == A
-
-    expected_shift = KrD(Upper(2), Lower(3))
-    @test dc.update_index(A, Lower(2), Lower(3)) ==
-          dc.BinaryOperation{dc.Mult}(A, expected_shift)
+    @test dc.update_index(A, Lower(2), Lower(3)) == Tensor("A", Upper(1), Lower(3))
+    @test dc.update_index(A, Upper(1), Upper(3)) == Tensor("A", Upper(3), Lower(2))
 end
 
 @testset "transpose vector" begin
