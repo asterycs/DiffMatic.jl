@@ -929,6 +929,7 @@ to_std_string(gradient(x' * A * x, x))
 ```
 """
 function to_std_string(arg)
+    arg = simplify(arg)
     free_indices = unique(get_free_indices(arg))
 
     standardized = if length(free_indices) == 2
