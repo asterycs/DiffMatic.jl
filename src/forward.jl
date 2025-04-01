@@ -70,18 +70,6 @@ function is_regular_contraction(arg1, arg2)
            length(intersect(get_indices(arg2), eliminated)) == 1
 end
 
-# function collect_simplified_terms(arg::BinaryOperation{Mult})
-#     return [collect_simplified_terms(arg.arg1); collect_simplified_terms(arg.arg2)]
-# end
-
-# function collect_simplified_terms(arg::BinaryOperation{NonStdCon})
-#     return [collect_terms(arg.arg1); collect_terms(arg.arg2)]
-# end
-
-# function collect_simplified_terms(arg)
-#     return [arg]
-# end
-
 function collect_factors(arg::BinaryOperation{Mult})
     return [collect_factors(arg.arg1); collect_factors(arg.arg2)]
 end
