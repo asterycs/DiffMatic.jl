@@ -508,8 +508,16 @@ function evaluate(::Add, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Sub}
     return _add_to_product(arg1, arg2)
 end
 
+function mirror_add(arg::BinaryOperation{Add})
+    return BinaryOperation{Add}(arg.arg2, arg.arg1)
+end
+
+function mirror_add(arg)
+    return arg
+end
+
 function evaluate(::Add, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Mult})
-    return _add_to_product(arg2, arg1)
+    return mirror_add(_add_to_product(arg2, arg1))
 end
 
 function _add_to_product(arg1::BinaryOperation{Mult}, arg2::Value)
