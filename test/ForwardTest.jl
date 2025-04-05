@@ -446,7 +446,7 @@ end
         dc.BinaryOperation{dc.Mult}(A, d2),
     )
 
-    @test_broken dc.simplify(op) == Tensor("A", Upper(1), Lower(5))
+    @test dc.simplify(op) == Tensor("A", Upper(1), Lower(5))
 end
 
 @testset "evaluate BinaryOperation with outer product" begin
