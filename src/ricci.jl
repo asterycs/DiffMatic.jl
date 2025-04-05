@@ -311,44 +311,39 @@ function Base.broadcasted(::typeof(^), arg1::TensorExpr, arg2::Int)
     return BinaryOperation{Pow}(arg1, arg2)
 end
 
-# TODO: exec is a temporary function and should be renamed to 'simplify'.
-function exec(arg::BinaryOperation{Mult})
-    return exec(Mult(), arg.arg1, arg.arg2)
-end
-
-function exec(arg::Union{Tensor,KrD})
+function simplify(arg::Union{Tensor,KrD})
     return arg
 end
 
-function exec(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperation}
+function simplify(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperation}
     if can_contract(arg1, arg2.arg)
-        return UnaryOp(exec(Mult(), arg1, arg2.arg))
+        return UnaryOp(simplify(Mult(), arg1, arg2.arg))
     end
 
     return BinaryOperation{Mult}(arg2, arg1)
 end
 
-function exec(::Mult, arg1::UnaryOp, arg2::KrD) where {UnaryOp<:UnaryOperation}
+function simplify(::Mult, arg1::UnaryOp, arg2::KrD) where {UnaryOp<:UnaryOperation}
     if can_contract(arg1.arg, arg2)
-        return UnaryOp(exec(Mult(), arg1.arg, arg2))
+        return UnaryOp(simplify(Mult(), arg1.arg, arg2))
     end
 
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function exec(
+function simplify(
     ::Mult,
     arg1::BinaryOperation{Op},
     arg2::Union{Tensor,KrD},
 ) where {Op<:AdditiveOperation}
-    return exec(
+    return simplify(
         Op(),
-        exec(Mult(), exec(arg1.arg1), exec(arg2)),
-        exec(Mult(), exec(arg1.arg2), exec(arg2)),
+        simplify(Mult(), simplify(arg1.arg1), simplify(arg2)),
+        simplify(Mult(), simplify(arg1.arg2), simplify(arg2)),
     )
 end
 
-function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
+function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     ci = indices_in_common(arg1.arg1, arg1.arg2)
 
     # TODO: Make this redundant
@@ -357,20 +352,18 @@ function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
         er = eliminated_indices([ci; arg2.indices[2]])
 
         if !isempty(el)
-            return exec(
-                BinaryOperation{Mult}(
-                    exec(Mult(), arg1.arg1, arg2), # order of the indices in arg2 determines which one is contracted
-                    exec(Mult(), arg1.arg2, arg2),
-                ),
+            return simplify(
+                Mult(),
+                simplify(Mult(), arg1.arg1, arg2), # order of the indices in arg2 determines which one is contracted
+                simplify(Mult(), arg1.arg2, arg2),
             )
         elseif !isempty(er)
             rd = KrD(reverse(arg2.indices)...)
 
-            return exec(
-                BinaryOperation{Mult}(
-                    exec(Mult(), arg1.arg1, rd),
-                    exec(Mult(), arg1.arg2, rd),
-                ),
+            return simplify(
+                Mult(),
+                simplify(Mult(), arg1.arg1, rd),
+                simplify(Mult(), arg1.arg2, rd),
             )
         end
     end
@@ -378,10 +371,10 @@ function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     @assert !(can_contract(arg1.arg1, arg2) && can_contract(arg1.arg2, arg2))
 
     if can_contract(arg1.arg2, arg2)
-        new_arg2 = exec(Mult(), arg1.arg2, arg2)
+        new_arg2 = simplify(Mult(), arg1.arg2, arg2)
         return BinaryOperation{Mult}(evaluate(arg1.arg1), new_arg2)
     elseif can_contract(arg1.arg1, arg2)
-        new_arg1 = exec(Mult(), arg1.arg1, arg2)
+        new_arg1 = simplify(Mult(), arg1.arg1, arg2)
         return BinaryOperation{Mult}(new_arg1, evaluate(arg1.arg2))
     elseif arg1.arg1 isa Real
         return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
@@ -390,11 +383,11 @@ function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function exec(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
+function simplify(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
     return evaluate(Mult(), arg2, arg1)
 end
 
-function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
+function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     @assert !(can_contract(arg1.arg1, arg2) && can_contract(arg1.arg2, arg2))
 
     if can_contract(arg1.arg2, arg2)
@@ -408,7 +401,7 @@ function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     end
 end
 
-function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
+function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     new_args = []
 
     available1 = Any[arg1.arg1; arg1.arg2]
@@ -450,16 +443,16 @@ function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
             if isnothing(new_arg)
                 return args[1]
             else
-                return exec(BinaryOperation{Mult}(new_arg, args[1]))
+                return simplify(BinaryOperation{Mult}(new_arg, args[1]))
             end
         end
 
         if isnothing(new_arg)
-            new_arg = exec(BinaryOperation{Mult}(args[1], args[2]))
+            new_arg = simplify(BinaryOperation{Mult}(args[1], args[2]))
         else
             new_arg = BinaryOperation{Mult}(
                 new_arg,
-                exec(BinaryOperation{Mult}(args[1], args[2])),
+                simplify(BinaryOperation{Mult}(args[1], args[2])),
             )
         end
     end
@@ -467,25 +460,25 @@ function exec(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     return new_arg
 end
 
-function exec(::Op, arg1, arg2) where {Op<:AdditiveOperation}
+function simplify(::Op, arg1, arg2) where {Op<:AdditiveOperation}
     @assert is_permutation(arg1, arg2)
 
-    return BinaryOperation{Op}(exec(arg1), exec(arg2))
+    return BinaryOperation{Op}(simplify(arg1), simplify(arg2))
 end
 
-function exec(::Mult, arg1::KrD, arg2::Tensor)
-    return exec(Mult(), arg2, arg1)
+function simplify(::Mult, arg1::KrD, arg2::Tensor)
+    return simplify(Mult(), arg2, arg1)
 end
 
-function exec(::Mult, arg1::Tensor, arg2::Tensor)
+function simplify(::Mult, arg1::Tensor, arg2::Tensor)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function exec(::Mult, arg1, arg2)
+function simplify(::Mult, arg1, arg2)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function exec(::Mult, arg1::Union{Tensor,KrD}, arg2::KrD)
+function simplify(::Mult, arg1::Union{Tensor,KrD}, arg2::KrD)
     arg1_indices = get_free_indices(arg1)
     contracting_index = eliminated_indices([arg1_indices; get_indices(arg2)])
 
@@ -718,7 +711,7 @@ function update_index(
         end
     end
 
-    return exec(BinaryOperation{Mult}(arg, KrD(flip(from), to)))
+    return simplify(Mult(), arg, KrD(flip(from), to))
 end
 
 function Base.:(-)(arg::TensorExpr)

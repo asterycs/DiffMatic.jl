@@ -150,7 +150,7 @@ function simplify(arg::BinaryOperation{Mult})
                typeof(remaining[last(complex)]) == KrD
                 push!(
                     chunked_factors,
-                    exec(Mult(), remaining[first(complex)], remaining[last(complex)]),
+                    simplify(Mult(), remaining[first(complex)], remaining[last(complex)]),
                 )
                 remaining[complex] .= nothing
             end
