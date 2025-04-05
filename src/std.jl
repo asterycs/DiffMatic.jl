@@ -122,7 +122,7 @@ gradient(x' * A * x, x)
 
 # output
 
-x³A₃⁵ + A⁵⁴x₄
+A₃⁵x³ + A⁵⁴x₄
 ```
 """
 function gradient(expr, wrt::Tensor)
