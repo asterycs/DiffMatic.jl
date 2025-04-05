@@ -91,11 +91,11 @@ Compute the derivative of `expr` with respect to `wrt`. Example:
 @matrix A
 @vector x
 
-gradient(x' * x, x)
+derivative(x' * x, x)
 
 # output
 
-2x³
+2x₃
 ```
 """
 function derivative(expr, wrt::Tensor)
