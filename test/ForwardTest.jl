@@ -706,11 +706,11 @@ end
 @testset "Differentiate xx'x" begin
     x = Tensor("x", Upper(1))
 
-    lr = dc.BinaryOperation{dc.Mult}(Tensor("x", Upper(100)), Tensor("x", Lower(101)))
+    lr = dc.BinaryOperation{dc.Mult}(Tensor("x", Lower(101)), Tensor("x", Upper(100)))
     l = dc.BinaryOperation{dc.Mult}(2, lr)
     rr = dc.BinaryOperation{dc.Mult}(
-        dc.BinaryOperation{dc.Mult}(Tensor("x", Lower(1)), KrD(Upper(100), Lower(101))),
-        x,
+        dc.BinaryOperation{dc.Mult}(Tensor("x", Lower(1)), x),
+        KrD(Upper(100), Lower(101)),
     )
     expected = dc.BinaryOperation{dc.Add}(l, rr)
 
