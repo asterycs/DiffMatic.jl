@@ -79,8 +79,6 @@ function simplify(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
 end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
-    @assert !(can_contract(arg1.arg1, arg2) && can_contract(arg1.arg2, arg2))
-
     if can_contract(arg1.arg2, arg2)
         new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
         return BinaryOperation{Mult}(arg1.arg1, new_arg2)
