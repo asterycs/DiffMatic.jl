@@ -107,7 +107,7 @@ function derivative(expr, wrt::Tensor)
 
     D = diff(expr, ∂)
 
-    return evaluate(D)
+    return evaluate(simplify(D))
 end
 
 """
@@ -137,7 +137,7 @@ function gradient(expr, wrt::Tensor)
     end
 
     D = derivative(expr, wrt)
-    gradient = evaluate(D')
+    gradient = evaluate(simplify(D'))
 
     return gradient
 end
@@ -203,7 +203,7 @@ function hessian(expr, wrt::Tensor)
     g = evaluate(D')
     H = derivative(g, wrt)
 
-    return H
+    return evaluate(simplify(H))
 end
 
 function throw_not_std()
