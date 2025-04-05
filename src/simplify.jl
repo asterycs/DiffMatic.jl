@@ -344,5 +344,10 @@ function simplify(arg::BinaryOperation{Mult})
         end
     end
 
-    return to_binary_operation(Mult(), chunked_factors)
+    if length(chunked_factors) == 1
+        return first(chunked_factors)
+    else
+        op = to_binary_operation(Mult(), chunked_factors)
+        return simplify(Mult(), op.arg1, op.arg2)
+    end
 end
