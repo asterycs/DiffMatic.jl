@@ -195,6 +195,8 @@ end
     @test to_std_string(mul(KrD(Upper(1), Lower(1)), x)) == "sum(x)"
     @test to_std_string(mul(y, KrD(Upper(2), Lower(2)))) == "sum(yᵀ)"
     @test to_std_string(mul(KrD(Upper(2), Lower(2)), y)) == "sum(yᵀ)"
+    @test to_std_string(sum(x)) == "sum(x)"
+    @test to_std_string(sum(y)) == "sum(yᵀ)"
 end
 
 @testset "to_std_string output is correct with KrD-KrD and one free index" begin
