@@ -347,7 +347,8 @@ function simplify(arg::BinaryOperation{Mult})
 
     for i ∈ eachindex(grouped_factors)
         if grouped_factors[i] isa AbstractArray
-            grouped_factors[i] = to_binary_operation(Mult(), grouped_factors[i])
+            op = to_binary_operation(Mult(), grouped_factors[i])
+            grouped_factors[i] = simplify(Mult(), op.arg1, op.arg2)
         end
     end
 
