@@ -533,7 +533,7 @@ end
     A = Tensor("A", Upper(1), Lower(2))
     B = Tensor("B", Upper(2), Lower(3))
 
-    @test_broken dc.simplify(tr(A)) == Tensor("A", Upper(2), Lower(2))
+    @test dc.simplify(tr(A)) == Tensor("A", Upper(2), Lower(2))
     @test equivalent(
         dc.simplify(tr(A * B)),
         dc.BinaryOperation{dc.Mult}(A, Tensor("B", Upper(2), Lower(1))),
