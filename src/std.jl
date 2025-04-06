@@ -655,6 +655,21 @@ function to_standard(
     return to_binary_operation(NonStdCon(), reshaped)
 end
 
+function group_non_std_factors(arg::BinaryOperation{Mult})
+    factors = collect_factors(arg)
+    factors = map(simplify, factors) # recursion
+
+    grouped_factors = group_factors(factors)
+
+    for i ∈ eachindex(grouped_factors)
+        if grouped_factors[i] isa AbstractArray
+            grouped_factors[i] = to_binary_operation(NonStdCon(), grouped_factors[i])
+        end
+    end
+
+    return grouped_factors
+end
+
 function to_standard(
     arg::BinaryOperation{Mult};
     upper_letter = nothing,
@@ -674,7 +689,7 @@ function to_standard(
         end
     end
 
-    terms = collect_factors(simplify(arg))
+    terms = group_non_std_factors(arg)
     remaining = Any[t for t ∈ terms]
 
     flipped_indices = Dict()

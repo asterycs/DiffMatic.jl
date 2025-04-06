@@ -219,9 +219,7 @@ function simplify(arg::BinaryOperation{Add})
     return BinaryOperation{Add}(simplify(arg.arg1), simplify(arg.arg2))
 end
 
-function simplify(arg::BinaryOperation{Mult})
-    factors = collect_factors(arg)
-    factors = map(simplify, factors) # recursion
+function group_factors(factors::AbstractArray)
     indices = vcat([get_indices(f) for f ∈ factors]...)
     letters = unique([i.letter for i ∈ indices])
 
@@ -338,16 +336,25 @@ function simplify(arg::BinaryOperation{Mult})
         end
     end
 
-    for i ∈ eachindex(chunked_factors)
-        if chunked_factors[i] isa AbstractArray
-            chunked_factors[i] = to_binary_operation(NonStdCon(), chunked_factors[i])
+    return chunked_factors
+end
+
+function simplify(arg::BinaryOperation{Mult})
+    factors = collect_factors(arg)
+    factors = map(simplify, factors) # recursion
+
+    grouped_factors = group_factors(factors)
+
+    for i ∈ eachindex(grouped_factors)
+        if grouped_factors[i] isa AbstractArray
+            grouped_factors[i] = to_binary_operation(Mult(), grouped_factors[i])
         end
     end
 
-    if length(chunked_factors) == 1
-        return first(chunked_factors)
+    if length(grouped_factors) == 1
+        return first(grouped_factors)
     else
-        op = to_binary_operation(Mult(), chunked_factors)
+        op = to_binary_operation(Mult(), grouped_factors)
         return simplify(Mult(), op.arg1, op.arg2)
     end
 end
