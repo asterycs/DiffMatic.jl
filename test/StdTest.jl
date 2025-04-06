@@ -226,7 +226,7 @@ end
     @matrix A
     @vector x
 
-    @test_broken equivalent(derivative(x' * A * x, A), evaluate(x * x')) # scalar input works
+    @test equivalent(derivative(x' * A * x, A), evaluate(x * x')) # scalar input works
     @test equivalent(derivative(A * x, x), A) # vector input works
 end
 
@@ -259,11 +259,11 @@ end
     @vector x y c
     @matrix A B
 
-    @test_broken to_std_string(gradient(x' * x, x)) == "2x"
+    @test to_std_string(gradient(x' * x, x)) == "2x"
     @test_broken to_std_string(gradient(tr(x * x'), x)) == "2x"
     @test to_std_string(gradient((y .* c)' * x, x)) == "y ⊙ c"
-    @test to_std_string(gradient((x .* c)' * x, x)) == "x ⊙ c + c ⊙ x"
-    @test_broken to_std_string(gradient((x + y)' * x, x)) == "2x + y"
+    @test to_std_string(gradient((x .* c)' * x, x)) == "2(x ⊙ c)"
+    @test to_std_string(gradient((x + y)' * x, x)) == "2x + y"
     @test_broken to_std_string(gradient((x - y)' * x, x)) == "2x - y"
     @test_broken to_std_string(gradient(sin(tr(x * x')), x)) == "2cos(xᵀx)x"
     @test_broken to_std_string(gradient(cos(tr(x * x')), x)) == "-2sin(xᵀx)x"
@@ -271,11 +271,11 @@ end
     @test to_std_string(gradient(x' * B' * A * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std_string(gradient((A' * B * x)' * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std_string(gradient(a * sin(y)' * x, x)) == "asin(y)"
-    @test_broken to_std_string(gradient(a * sin(x)' * y, x)) == "a(cos(x) ⊙ y)"
+    @test to_std_string(gradient(a * sin(x)' * y, x)) == "a(cos(x) ⊙ y)"
     @test to_std_string(gradient(sin(y)' * x * a, x)) == "asin(y)"
-    @test_broken to_std_string(gradient(sin(x)' * y * a, x)) == "a(cos(x) ⊙ y)"
+    @test to_std_string(gradient(sin(x)' * y * a, x)) == "a(cos(x) ⊙ y)"
     @test to_std_string(gradient(x' * sin(y) * a, x)) == "asin(y)"
-    @test_broken to_std_string(gradient(y' * sin(x) * a, x)) == "a(cos(x) ⊙ y)"
+    @test to_std_string(gradient(y' * sin(x) * a, x)) == "a(y ⊙ cos(x))"
     @test_broken to_std_string(gradient(sum(x), x)) == "vec(1)"
     @test_broken to_std_string(gradient(2 * sum(x), x)) == "2(vec(1))"
     @test_broken to_std_string(gradient(sum(2 * x), x)) == "2(vec(1))"
@@ -295,5 +295,5 @@ end
 
     @test to_std_string(hessian(x' * A * x, x)) == "Aᵀ + A"
     @test to_std_string(hessian(2 * x' * A * x, x)) == "2Aᵀ + 2A"
-    @test_broken to_std_string(hessian(2 * x' * x, x)) == "4I"
+    @test to_std_string(hessian(2 * x' * x, x)) == "4I"
 end
