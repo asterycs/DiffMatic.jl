@@ -90,65 +90,6 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     end
 end
 
-function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
-    new_args = []
-
-    available1 = Any[arg1.arg1; arg1.arg2]
-    available2 = Any[arg2.arg1; arg2.arg2]
-
-    for i ∈ eachindex(available1)
-        if isnothing(available1[i])
-            continue
-        end
-        for j ∈ eachindex(available2)
-            if isnothing(available2[j]) || isnothing(available1[i])
-                continue
-            end
-
-            if can_contract(available1[i], available2[j])
-                push!(new_args, evaluate(Mult(), available1[i], available2[j]))
-                available1[i] = nothing
-                available2[j] = nothing
-            end
-        end
-    end
-
-    for i ∈ available1
-        if !isnothing(i)
-            push!(new_args, i)
-        end
-    end
-
-    for i ∈ available2
-        if !isnothing(i)
-            push!(new_args, i)
-        end
-    end
-
-    new_arg = nothing
-
-    for args ∈ Iterators.partition(new_args, 2)
-        if length(args) == 1
-            if isnothing(new_arg)
-                return args[1]
-            else
-                return simplify(BinaryOperation{Mult}(new_arg, args[1]))
-            end
-        end
-
-        if isnothing(new_arg)
-            new_arg = simplify(BinaryOperation{Mult}(args[1], args[2]))
-        else
-            new_arg = BinaryOperation{Mult}(
-                new_arg,
-                simplify(BinaryOperation{Mult}(args[1], args[2])),
-            )
-        end
-    end
-
-    return new_arg
-end
-
 function simplify(::Op, arg1, arg2) where {Op<:AdditiveOperation}
     @assert is_permutation(arg1, arg2)
 
