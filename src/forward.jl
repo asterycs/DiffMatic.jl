@@ -80,6 +80,7 @@ end
 
 function has_letter(tensor, letter::Letter)
     # TODO: Change UnaryOperation parametrization
+    # TODO: This also affects Negate; Remove Negate and replace with BinaryOperation{Mult}(-1, ...)
     ids = if tensor isa UnaryOperation
         get_free_indices(tensor)
     else
@@ -92,6 +93,7 @@ function has_letter(tensor, letter::Letter)
 end
 
 # TODO: Rename evaluate to e.g. expand. Evaluate does not evaluate anymore in order to retain more context.
+# All simplifications should be moved to simplify instead.
 function evaluate(arg::Negate)
     return Negate(evaluate(arg.arg))
 end
@@ -108,7 +110,6 @@ function evaluate(arg::Cos)
     return Cos(evaluate(arg.arg))
 end
 
-# TODO: There is some technical debt here, many evaluate methods could be removed now.
 function evaluate(::Mult, arg1::BinaryOperation{Pow}, arg2::KrD)
     return BinaryOperation{Mult}(arg1, arg2)
 end

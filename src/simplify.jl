@@ -328,7 +328,8 @@ function group_factors(factors::AbstractArray)
 
             push!(chunked_factors, ordered_factors)
         else
-            @show target_indices
+            # TODO: Refactor
+            @show factors[complex]
             @assert false
         end
     end
