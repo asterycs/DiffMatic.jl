@@ -215,8 +215,8 @@ function simplify(arg::UnaryOp) where {UnaryOp<:UnaryOperation}
     return UnaryOp(simplify(arg.arg))
 end
 
-function simplify(arg::BinaryOperation{Add})
-    return BinaryOperation{Add}(simplify(arg.arg1), simplify(arg.arg2))
+function simplify(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
+    return BinaryOperation{Op}(simplify(arg.arg1), simplify(arg.arg2))
 end
 
 function group_factors(factors::AbstractArray)
@@ -341,6 +341,10 @@ function group_factors(factors::AbstractArray)
     end
 
     return chunked_factors
+end
+
+function simplify(arg::BinaryOperation{Pow})
+    return BinaryOperation{Pow}(simplify(arg.arg1), arg.arg2)
 end
 
 function simplify(arg::BinaryOperation{Mult})
