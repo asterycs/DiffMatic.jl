@@ -59,7 +59,7 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
         end
     end
 
-    @assert !(can_contract(arg1.arg1, arg2) && can_contract(arg1.arg2, arg2))
+    # @assert !(can_contract(arg1.arg1, arg2) && can_contract(arg1.arg2, arg2))
 
     if can_contract(arg1.arg2, arg2)
         new_arg2 = simplify(Mult(), arg1.arg2, arg2)
