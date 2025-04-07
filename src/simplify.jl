@@ -322,6 +322,10 @@ function group_factors(factors::AbstractArray)
                 end
             end
 
+            if length(ordered_factors) == 1
+                ordered_factors = first(ordered_factors)
+            end
+
             push!(chunked_factors, ordered_factors)
         else
             @show target_indices
