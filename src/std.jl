@@ -107,7 +107,7 @@ function derivative(expr, wrt::Tensor)
 
     D = diff(expr, ∂)
 
-    return evaluate(simplify(D))
+    return evaluate(simplify(evaluate(D)))
 end
 
 """
