@@ -278,9 +278,9 @@ end
     @test to_std_string(gradient(sin(x)' * y * a, x)) == "a(cos(x) ⊙ y)"
     @test to_std_string(gradient(x' * sin(y) * a, x)) == "asin(y)"
     @test to_std_string(gradient(y' * sin(x) * a, x)) == "a(cos(x) ⊙ y)"
-    @test_broken to_std_string(gradient(sum(x), x)) == "vec(1)"
-    @test_broken to_std_string(gradient(2 * sum(x), x)) == "2(vec(1))"
-    @test_broken to_std_string(gradient(sum(2 * x), x)) == "2(vec(1))"
+    @test to_std_string(gradient(sum(x), x)) == "vec(1)"
+    @test to_std_string(gradient(2 * sum(x), x)) == "2(vec(1))"
+    @test to_std_string(gradient(sum(2 * x), x)) == "2(vec(1))"
 end
 
 @testset "to_std_string of jacobian {A, A'} * x" begin

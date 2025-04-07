@@ -292,10 +292,6 @@ function group_factors(factors::AbstractArray)
             ordered_factors = []
 
             if all(typeof.(factors[complex]) .== KrD) # sum
-                if length(complex) != 2
-                    throw_not_std()
-                end
-
                 for di ∈ complex
                     push!(ordered_factors, to_standard(factors[di]))
                     remaining[di] = nothing
