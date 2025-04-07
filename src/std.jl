@@ -441,6 +441,16 @@ function reshape(term::Op, indices::LowerOrUpperIndex...) where {Op<:UnaryOperat
     return Op(reshape(term.arg, indices...))
 end
 
+function reshape(
+    term::BinaryOperation{Op},
+    indices::LowerOrUpperIndex...,
+) where {Op<:AdditiveOperation}
+    return BinaryOperation{Op}(
+        reshape(term.arg1, indices...),
+        reshape(term.arg2, indices...),
+    )
+end
+
 function to_standard(
     term::Op;
     upper_letter = nothing,
