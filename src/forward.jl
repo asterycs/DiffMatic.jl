@@ -224,23 +224,6 @@ function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperati
     return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
 end
 
-function evaluate(::Mult, arg1::Tensor, arg2::KrD)
-    return _multiply_with_krd(arg1, arg2)
-end
-
-function evaluate(::Mult, arg1::KrD, arg2::Tensor)
-    return _multiply_with_krd(arg2, arg1)
-end
-
-function evaluate(::Mult, arg1::KrD, arg2::KrD)
-    return _multiply_with_krd(arg1, arg2)
-end
-
-# TODO: Delete
-function _multiply_with_krd(arg1::Union{Tensor,KrD}, arg2::KrD)
-    return BinaryOperation{Mult}(arg1, arg2)
-end
-
 function evaluate(
     ::Mult,
     arg1::BinaryOperation{Op},
