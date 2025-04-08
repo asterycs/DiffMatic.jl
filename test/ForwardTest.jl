@@ -583,9 +583,9 @@ end
     A = Tensor("A", Upper(5), Lower(6))
     d = KrD(Upper(1), Lower(2))
 
-    @test dc.diff(d, x) == dc.BinaryOperation{dc.Mult}(d, Zero(Lower(3)))
-    @test dc.diff(d, y) == dc.BinaryOperation{dc.Mult}(d, Zero(Upper(4)))
-    @test dc.diff(d, A) == dc.BinaryOperation{dc.Mult}(d, Zero(Lower(5), Upper(6)))
+    @test dc.diff(d, x) == Zero(Upper(1), Lower(2), Lower(3))
+    @test dc.diff(d, y) == Zero(Upper(1), Lower(2), Upper(4))
+    @test dc.diff(d, A) == Zero(Upper(1), Lower(2), Lower(5), Upper(6))
 end
 
 @testset "diff BinaryOperation{dc.Mult}" begin
@@ -730,21 +730,20 @@ end
     @test equivalent(dc.evaluate(dc.simplify(dc.evaluate(D))), 3 * A)
 end
 
-# TODO: Differentiation w.r.t. to an existing index requires knowledge of the "global"
-# context during evaluation and leads to madness:
-# https://physics.stackexchange.com/questions/252714/indicating-that-indices-are-equal-in-einstein-notation
-# Contextual evaluation is not implemented currently, but it is also not needed for computing
-# gradients or hessians.
 @testset "Differentiate A(x + 2x)" begin
     A = Tensor("A", Upper(1), Lower(2))
     x = Tensor("x", Upper(3))
 
-    D = dc.diff(A * (x + 2 * x), Tensor("x", Upper(3)))
+    # wrt should have the same index as x has in expr
+    expr = A * (x + 2 * x)
+    wrt = Tensor("x", Upper(4))
+
+    D = dc.diff(expr, wrt)
 
     expected = dc.BinaryOperation{dc.Mult}(3, KrD(Upper(3), Lower(3)))
     expected = dc.BinaryOperation{dc.Mult}(expected, Tensor("A", Upper(1), Lower(3)))
 
-    @test_broken equivalent(evaluate(D), expected)
+    @test equivalent(evaluate(D), expected)
 end
 
 @testset "Differentiate A(2x + x)" begin

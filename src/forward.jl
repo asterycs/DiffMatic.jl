@@ -15,13 +15,15 @@ function diff(arg::Tensor, wrt::Tensor)
         return evaluate(D) # evaluate to get rid of the constant factor
     end
 
-    return Zero(eliminate_indices(arg.indices)..., [flip(i) for i ∈ wrt.indices]...)
+    indices = union(arg.indices, [flip(i) for i ∈ wrt.indices])
+
+    return Zero(unique(indices)...)
 end
 
 function diff(arg::KrD, wrt::Tensor)
-    # This is arguably inconsistent with Tensor but the result will be Zero anyway
-    # and this way the double indices are confined to the KrDs.
-    return BinaryOperation{Mult}(arg, Zero([flip(i) for i ∈ wrt.indices]...))
+    indices = union(arg.indices, [flip(i) for i ∈ wrt.indices])
+
+    return Zero(unique(indices)...)
 end
 
 function diff(arg::Real, wrt::Tensor)
