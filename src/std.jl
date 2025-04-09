@@ -445,8 +445,8 @@ function reshape(term::KrD, indices::LowerOrUpperIndex...)
     return KrD(indices...)
 end
 
-function reshape(term::Op, indices::LowerOrUpperIndex...) where {Op<:UnaryOperation}
-    return Op(reshape(term.arg, indices...))
+function reshape(term::UnaryOperation{Op}, indices::LowerOrUpperIndex...) where {Op}
+    return UnaryOperation{Op}(reshape(term.arg, indices...))
 end
 
 function reshape(
