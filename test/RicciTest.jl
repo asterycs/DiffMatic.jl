@@ -76,7 +76,7 @@ end
 
     op = sin(a * b)
 
-    @test typeof(op) == dc.Sin
+    @test typeof(op) == dc.UnaryOperation{dc.Sin}
     @test typeof(op.arg) == dc.BinaryOperation{dc.Mult}
 end
 
@@ -86,7 +86,7 @@ end
 
     op = cos(a * b)
 
-    @test typeof(op) == dc.Cos
+    @test typeof(op) == dc.UnaryOperation{dc.Cos}
     @test typeof(op.arg) == dc.BinaryOperation{dc.Mult}
 end
 
@@ -98,9 +98,9 @@ end
 
     left = sin(inner)
 
-    @test left == dc.Sin(inner)
-    @test left != dc.Cos(inner)
-    @test left != -dc.Sin(inner)
+    @test left == dc.UnaryOperation{dc.Sin}(inner)
+    @test left != dc.UnaryOperation{dc.Cos}(inner)
+    @test left != -dc.UnaryOperation{dc.Sin}(inner)
 end
 
 @testset "is_permutation true positive" begin
@@ -423,12 +423,12 @@ end
     types = (dc.Sin, dc.Cos)
 
     for (op, type) ∈ zip(ops, types)
-        op1 = evaluate(op(y * x)')
-        op2 = evaluate(op(x)')
+        op1 = op(y * x)'
+        op2 = op(x)'
 
-        @test typeof(op1) == type
+        @test typeof(op1) == dc.UnaryOperation{type}
         @test dc.get_free_indices(op1.arg) == dc.get_free_indices(y * x)
-        @test equivalent(evaluate(op2).arg, Tensor("x", Lower(1)))
+        @test equivalent(op2.arg, Tensor("x", Lower(1)))
     end
 end
 

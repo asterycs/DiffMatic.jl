@@ -82,22 +82,19 @@ struct Sub <: AdditiveOperation end
 struct Mult end
 struct Pow end
 
-abstract type UnaryOperation <: TensorExpr end
-
-struct Sin <: UnaryOperation
-    arg::TensorExpr
+struct UnaryOperation{Op} <: TensorExpr where {Op}
+    arg::Value
 end
+
+struct Sin end
+struct Cos end
 
 function Base.sin(arg::TensorExpr)
-    return Sin(arg)
-end
-
-struct Cos <: UnaryOperation
-    arg::TensorExpr
+    return UnaryOperation{Sin}(arg)
 end
 
 function Base.cos(arg::TensorExpr)
-    return Cos(arg)
+    return UnaryOperation{Cos}(arg)
 end
 
 function _eliminate_indices(arg::IndexList)
@@ -169,11 +166,7 @@ function get_indices(arg::Union{Tensor,KrD,Zero})
     return arg.indices
 end
 
-function get_indices(arg::Sin)
-    return get_indices(arg.arg)
-end
-
-function get_indices(arg::Cos)
+function get_indices(arg::UnaryOperation)
     return get_indices(arg.arg)
 end
 
@@ -601,11 +594,11 @@ function to_string(arg::Zero)
     return "0" * join(scripts)
 end
 
-function to_string(arg::Sin)
+function to_string(arg::UnaryOperation{Sin})
     return "sin($(arg.arg))"
 end
 
-function to_string(arg::Cos)
+function to_string(arg::UnaryOperation{Cos})
     return "cos($(arg.arg))"
 end
 

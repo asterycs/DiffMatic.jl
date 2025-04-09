@@ -30,12 +30,12 @@ function diff(arg::Real, wrt::Tensor)
     return Zero([flip(i) for i ∈ wrt.indices]...)
 end
 
-function diff(arg::Sin, wrt::Tensor)
-    return BinaryOperation{Mult}(Cos(arg.arg), diff(arg.arg, wrt))
+function diff(arg::UnaryOperation{Sin}, wrt::Tensor)
+    return BinaryOperation{Mult}(UnaryOperation{Cos}(arg.arg), diff(arg.arg, wrt))
 end
 
-function diff(arg::Cos, wrt::Tensor)
-    return BinaryOperation{Mult}(-Sin(arg.arg), diff(arg.arg, wrt))
+function diff(arg::UnaryOperation{Cos}, wrt::Tensor)
+    return BinaryOperation{Mult}(-UnaryOperation{Sin}(arg.arg), diff(arg.arg, wrt))
 end
 
 function diff(arg::BinaryOperation{Pow}, wrt::Tensor)
@@ -95,12 +95,8 @@ function evaluate(arg::Union{Tensor,KrD,Zero,Real})
     return arg
 end
 
-function evaluate(arg::Sin)
-    return Sin(evaluate(arg.arg))
-end
-
-function evaluate(arg::Cos)
-    return Cos(evaluate(arg.arg))
+function evaluate(arg::UnaryOperation{Op}) where {Op}
+    return UnaryOperation{Op}(evaluate(arg.arg))
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Pow}, arg2::KrD)

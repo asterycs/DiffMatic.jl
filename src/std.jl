@@ -286,11 +286,11 @@ function _to_std_string(arg::Real)
     return to_string(arg)
 end
 
-function _to_std_string(arg::Sin)
+function _to_std_string(arg::UnaryOperation{Sin})
     return "sin(" * _to_std_string(arg.arg) * ")"
 end
 
-function _to_std_string(arg::Cos)
+function _to_std_string(arg::UnaryOperation{Cos})
     return "cos(" * _to_std_string(arg.arg) * ")"
 end
 

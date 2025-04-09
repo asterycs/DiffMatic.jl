@@ -521,7 +521,7 @@ end
     types = (dc.Sin, dc.Cos)
 
     for (op, type) ∈ zip(ops, types)
-        @test typeof(op(A)) == type
+        @test typeof(op(A)) == UnaryOperation{type}
         @test op(A).arg == A
     end
 end
@@ -629,7 +629,10 @@ end
 
     D = dc.diff(op, Tensor("x", Upper(3)))
 
-    @test equivalent(D, dc.BinaryOperation{dc.Mult}(dc.Cos(x), KrD(Upper(2), Lower(3))))
+    @test equivalent(
+        D,
+        dc.BinaryOperation{dc.Mult}(dc.UnaryOperation{dc.Cos}(x), KrD(Upper(2), Lower(3))),
+    )
 end
 
 @testset "diff cos" begin
@@ -639,7 +642,10 @@ end
 
     D = dc.diff(op, Tensor("x", Upper(3)))
 
-    @test equivalent(D, dc.BinaryOperation{dc.Mult}(-dc.Sin(x), KrD(Upper(2), Lower(3))))
+    @test equivalent(
+        D,
+        dc.BinaryOperation{dc.Mult}(-dc.UnaryOperation{dc.Sin}(x), KrD(Upper(2), Lower(3))),
+    )
 end
 
 @testset "diff negated vector" begin
