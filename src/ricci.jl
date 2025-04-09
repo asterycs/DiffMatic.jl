@@ -84,10 +84,6 @@ struct Pow end
 
 abstract type UnaryOperation <: TensorExpr end
 
-struct Negate <: UnaryOperation
-    arg::TensorExpr
-end
-
 struct Sin <: UnaryOperation
     arg::TensorExpr
 end
@@ -178,10 +174,6 @@ function get_indices(arg::Sin)
 end
 
 function get_indices(arg::Cos)
-    return get_indices(arg.arg)
-end
-
-function get_indices(arg::Negate)
     return get_indices(arg.arg)
 end
 
@@ -512,7 +504,7 @@ function update_index(
 end
 
 function Base.:(-)(arg::TensorExpr)
-    return Negate(arg)
+    return BinaryOperation{Mult}(-1, arg)
 end
 
 function Base.adjoint(arg::T) where {T<:UnaryOperation}
@@ -609,10 +601,6 @@ function to_string(arg::Zero)
     return "0" * join(scripts)
 end
 
-function to_string(arg::Negate)
-    return "-$(parenthesize(arg.arg))"
-end
-
 function to_string(arg::Sin)
     return "sin($(arg.arg))"
 end
@@ -638,6 +626,10 @@ function to_string(arg::BinaryOperation{Pow})
 end
 
 function to_string(arg::BinaryOperation{Mult})
+    if arg.arg1 == -1
+        return "-" * parenthesize(arg.arg2)
+    end
+
     return parenthesize(arg.arg1) * parenthesize(arg.arg2)
 end
 

@@ -268,7 +268,7 @@ end
     @test to_std_string(gradient((x + y)' * x, x)) == "2x + y"
     @test to_std_string(gradient((x - y)' * x, x)) == "2x - y"
     @test to_std_string(gradient(sin(tr(x * x')), x)) == "cos(xᵀx)2x"
-    @test to_std_string(gradient(cos(tr(x * x')), x)) == "-sin(xᵀx)2x"
+    @test to_std_string(gradient(cos(tr(x * x')), x)) == "sin(xᵀx)(-2)x"
     @test to_std_string(gradient(tr(A), x)) == "vec(0)"
     @test to_std_string(gradient(x' * B' * A * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std_string(gradient((A' * B * x)' * A * x, x)) == "AᵀAᵀBx + BᵀAAx"

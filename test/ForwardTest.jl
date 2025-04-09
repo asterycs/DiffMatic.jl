@@ -82,7 +82,7 @@ end
     x = Tensor("x", Upper(1))
     y = Tensor("y", Upper(1))
 
-    op = dc.BinaryOperation{dc.Mult}(dc.Negate(x), dc.Negate(y))
+    op = dc.BinaryOperation{dc.Mult}(-x, -y)
     @test evaluate(op) == dc.BinaryOperation{dc.Mult}(x, y)
 end
 
@@ -421,10 +421,8 @@ end
     A = Tensor("A", Upper(1), Lower(2))
     Z = Zero(Upper(2), Lower(3))
 
-    @test evaluate(dc.BinaryOperation{dc.Mult}(Z, dc.Negate(A))) ==
-          dc.Zero(Upper(1), Lower(3))
-    @test evaluate(dc.BinaryOperation{dc.Mult}(dc.Negate(A), Z)) ==
-          dc.Zero(Upper(1), Lower(3))
+    @test evaluate(dc.BinaryOperation{dc.Mult}(Z, -A)) == dc.Zero(Upper(1), Lower(3))
+    @test evaluate(dc.BinaryOperation{dc.Mult}(-A, Z)) == dc.Zero(Upper(1), Lower(3))
 end
 
 @testset "simplify BinaryOperation KrD * KrD" begin
@@ -513,7 +511,7 @@ end
     prod = mul(A, B)
 
     @test dc.evaluate(sub(prod, Z)) == prod
-    @test dc.evaluate(sub(Z, prod)) == dc.Negate(prod)
+    @test dc.evaluate(sub(Z, prod)) == -prod
 end
 
 @testset "evaluate unary operations" begin
@@ -641,10 +639,7 @@ end
 
     D = dc.diff(op, Tensor("x", Upper(3)))
 
-    @test equivalent(
-        D,
-        dc.BinaryOperation{dc.Mult}(dc.Negate(dc.Sin(x)), KrD(Upper(2), Lower(3))),
-    )
+    @test equivalent(D, dc.BinaryOperation{dc.Mult}(-dc.Sin(x), KrD(Upper(2), Lower(3))))
 end
 
 @testset "diff negated vector" begin
@@ -654,7 +649,12 @@ end
 
     D = dc.diff(op, Tensor("x", Upper(3)))
 
-    @test equivalent(D, dc.Negate(KrD(Upper(2), Lower(3))))
+    expected = dc.BinaryOperation{dc.Add}(
+        -KrD(Upper(2), Lower(3)),
+        dc.BinaryOperation{dc.Mult}(dc.Zero(Lower(3)), x),
+    )
+
+    @test equivalent(D, expected)
 end
 
 @testset "free indices constant after evaluate" begin

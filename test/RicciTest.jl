@@ -439,8 +439,8 @@ end
     ops = (A, x, A * x, A + A, sin(x), cos(x), tr(A))
 
     for op ∈ ops
-        @test typeof(-op) == dc.Negate
-        @test (-op).arg == op
+        @test typeof(-op) == dc.BinaryOperation{dc.Mult}
+        @test (-op).arg2 == op
     end
 end
 
@@ -719,7 +719,7 @@ end
     a = Tensor("a")
     c = 2
 
-    @test dc.to_string(dc.Negate(x)) == "-x¹"
-    @test dc.to_string(dc.Negate(a)) == "-a"
-    @test_broken dc.to_string(dc.Negate(c)) == "-2"
+    @test dc.to_string(-x) == "-x¹"
+    @test dc.to_string(-a) == "-a"
+    @test dc.to_string(-c) == "-2"
 end

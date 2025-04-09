@@ -30,16 +30,12 @@ function diff(arg::Real, wrt::Tensor)
     return Zero([flip(i) for i ∈ wrt.indices]...)
 end
 
-function diff(arg::Negate, wrt::Tensor)
-    return Negate(diff(arg.arg, wrt))
-end
-
 function diff(arg::Sin, wrt::Tensor)
     return BinaryOperation{Mult}(Cos(arg.arg), diff(arg.arg, wrt))
 end
 
 function diff(arg::Cos, wrt::Tensor)
-    return BinaryOperation{Mult}(Negate(Sin(arg.arg)), diff(arg.arg, wrt))
+    return BinaryOperation{Mult}(-Sin(arg.arg), diff(arg.arg, wrt))
 end
 
 function diff(arg::BinaryOperation{Pow}, wrt::Tensor)
@@ -82,7 +78,6 @@ end
 
 function has_letter(tensor, letter::Letter)
     # TODO: Change UnaryOperation parametrization
-    # TODO: This also affects Negate; Remove Negate and replace with BinaryOperation{Mult}(-1, ...)
     ids = if tensor isa UnaryOperation
         get_free_indices(tensor)
     else
@@ -96,10 +91,6 @@ end
 
 # TODO: Rename evaluate to e.g. expand. Evaluate does not evaluate anymore in order to retain more context.
 # All simplifications should be moved to simplify instead.
-function evaluate(arg::Negate)
-    return Negate(evaluate(arg.arg))
-end
-
 function evaluate(arg::Union{Tensor,KrD,Zero,Real})
     return arg
 end
@@ -150,6 +141,10 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
+    if arg1.arg1 == -1 && arg2.arg1 == -1
+        return BinaryOperation{Mult}(arg1.arg2, arg2.arg2)
+    end
+
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
@@ -200,22 +195,6 @@ function evaluate(::Mult, arg1::Zero, arg2::KrD)
     return Zero(free_indices...)
 end
 
-function evaluate(::Mult, arg1::Negate, arg2::TensorExpr)
-    return Negate(evaluate(Mult(), arg1.arg, arg2))
-end
-
-function evaluate(::Mult, arg1::TensorExpr, arg2::Negate)
-    return Negate(evaluate(Mult(), arg1, arg2.arg))
-end
-
-function evaluate(::Mult, arg1::Negate, arg2::KrD)
-    return invoke(evaluate, Tuple{Mult,UnaryOperation,KrD}, Mult(), arg1, arg2)
-end
-
-function evaluate(::Mult, arg1::KrD, arg2::Negate)
-    return invoke(evaluate, Tuple{Mult,KrD,UnaryOperation}, Mult(), arg1, arg2)
-end
-
 function evaluate(::Mult, arg1::UnaryOperation, arg2::KrD)
     return evaluate(Mult(), arg2, arg1)
 end
@@ -250,18 +229,6 @@ end
 
 function evaluate(::Mult, arg1::Value, arg2::Value)
     return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
-end
-
-function evaluate(::Mult, arg1::Negate, arg2::Negate)
-    return evaluate(Mult(), arg1.arg, arg2.arg)
-end
-
-function evaluate(::Mult, arg1::Negate, arg2::Zero)
-    return invoke(evaluate, Tuple{Mult,TensorExpr,Zero}, Mult(), arg1, arg2)
-end
-
-function evaluate(::Mult, arg1::Zero, arg2::Negate)
-    return invoke(evaluate, Tuple{Mult,Zero,TensorExpr}, Mult(), arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::TensorExpr, arg2::Real)
@@ -624,7 +591,7 @@ end
 function evaluate(::Sub, arg1::Zero, arg2::Value)
     @assert is_permutation(arg1, arg2)
 
-    return Negate(evaluate(arg2))
+    return -evaluate(arg2)
 end
 
 function evaluate(::Sub, arg1::Value, arg2::Zero)

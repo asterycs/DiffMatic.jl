@@ -286,10 +286,6 @@ function _to_std_string(arg::Real)
     return to_string(arg)
 end
 
-function _to_std_string(arg::Negate)
-    return "-" * _to_std_string(arg.arg)
-end
-
 function _to_std_string(arg::Sin)
     return "sin(" * _to_std_string(arg.arg) * ")"
 end
@@ -315,6 +311,10 @@ function _to_std_string(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
 end
 
 function _to_std_string(arg::BinaryOperation{Mult})
+    if arg.arg1 == -1
+        return "-" * parenthesize_std(arg.arg2)
+    end
+
     return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
 end
 
@@ -392,6 +392,14 @@ function _to_std_string(arg::BinaryOperation{NonStdCon})
 end
 
 function parenthesize_std(arg)
+    return _to_std_string(arg)
+end
+
+function parenthesize_std(arg::Real)
+    if arg < 0
+        return "(" * _to_std_string(arg) * ")"
+    end
+
     return _to_std_string(arg)
 end
 
