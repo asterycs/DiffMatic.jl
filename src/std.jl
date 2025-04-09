@@ -318,6 +318,10 @@ function _to_std_string(arg::BinaryOperation{Mult})
     return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
 end
 
+function _to_std_string(arg::BinaryOperation{Pow})
+    return parenthesize_std(arg.arg1) * script(Upper(arg.arg2))
+end
+
 function _to_std_string(arg::BinaryOperation{NonStdCon})
     indices = get_indices(arg)
     target_indices = unique(eliminate_indices(indices))
@@ -457,6 +461,10 @@ function reshape(
         reshape(term.arg1, indices...),
         reshape(term.arg2, indices...),
     )
+end
+
+function reshape(arg::BinaryOperation{Pow}, indices::LowerOrUpperIndex...)
+    return BinaryOperation{Pow}(reshape(arg.arg1, indices...), arg.arg2)
 end
 
 function to_standard(

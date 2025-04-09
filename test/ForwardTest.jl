@@ -794,6 +794,7 @@ end
         cos(tr(x * x')), #
         tr(sin(x * x')), #
         tr(A), #
+        sum((x + y) .^ 2), #
     )
 
     for expr ∈ exprs
