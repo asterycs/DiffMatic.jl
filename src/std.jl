@@ -467,6 +467,38 @@ function reshape(arg::BinaryOperation{Pow}, indices::LowerOrUpperIndex...)
     return BinaryOperation{Pow}(reshape(arg.arg1, indices...), arg.arg2)
 end
 
+function reshape(arg::BinaryOperation{Mult}, indices::LowerOrUpperIndex...)
+    free_ids = unique(get_free_indices(arg))
+
+    if length(free_ids) != length(indices)
+        @assert false
+    end
+
+    l = arg.arg1
+    r = arg.arg2
+
+    l_to_update = intersect(free_ids, get_free_indices(arg.arg1))
+    r_to_update = intersect(free_ids, get_free_indices(arg.arg2))
+
+    cntr = 1
+
+    if !isempty(l_to_update)
+        for i ∈ l_to_update
+            l = update_index(l, i, indices[cntr]; allow_shape_change = true)
+            cntr += 1
+        end
+    end
+
+    if !isempty(r_to_update)
+        for i ∈ r_to_update
+            r = update_index(r, i, indices[cntr]; allow_shape_change = true)
+            cntr += 1
+        end
+    end
+
+    return BinaryOperation{Mult}(l, r)
+end
+
 function to_standard(
     term::Op;
     upper_letter = nothing,

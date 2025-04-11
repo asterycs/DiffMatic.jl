@@ -15,7 +15,10 @@ function diff(arg::Tensor, wrt::Tensor)
         return evaluate(D) # evaluate to get rid of the constant factor
     end
 
-    indices = union(arg.indices, [flip(i) for i ∈ wrt.indices])
+    l = arg.indices
+    r = [flip(i) for i ∈ wrt.indices]
+    indices = reduce(append!, (l, r), init = LowerOrUpperIndex[])
+    indices = union(eliminate_indices(indices))
 
     return Zero(unique(indices)...)
 end
@@ -148,9 +151,9 @@ function evaluate(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
-    return BinaryOperation{Mult}(arg1, arg2)
-end
+# function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
+#     return BinaryOperation{Mult}(arg1, arg2)
+# end
 
 function evaluate(::Mult, arg1::Zero, arg2::UnaryOperation)
     return evaluate(Mult(), arg2, arg1)
@@ -251,6 +254,75 @@ end
 
 function evaluate(::Mult, arg1::Real, arg2::Zero)
     return evaluate(arg2)
+end
+
+function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
+    # ci = indices_in_common(arg1.arg1, arg1.arg2)
+
+    # # TODO: Make this redundant
+    # if !isempty(ci)# && is_regular_contraction(arg1, arg2)
+    #     el = eliminated_indices([ci; arg2.indices[1]])
+    #     er = eliminated_indices([ci; arg2.indices[2]])
+
+    #     if !isempty(el)
+    #         return evaluate(
+    #             BinaryOperation{Mult}(
+    #                 evaluate(Mult(), arg1.arg1, arg2), # order of the indices in arg2 determines which one is contracted
+    #                 evaluate(Mult(), arg1.arg2, arg2),
+    #             ),
+    #         )
+    #     elseif !isempty(er)
+    #         rd = KrD(reverse(arg2.indices)...)
+
+    #         return evaluate(
+    #             BinaryOperation{Mult}(
+    #                 evaluate(Mult(), arg1.arg1, rd),
+    #                 evaluate(Mult(), arg1.arg2, rd),
+    #             ),
+    #         )
+    #     end
+    # end
+
+    # if can_contract(arg1.arg2, arg2)
+    #     new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
+    #     return evaluate(Mult(), evaluate(arg1.arg1), new_arg2)
+    # elseif can_contract(arg1.arg1, arg2)
+    #     new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
+    #     return BinaryOperation{Mult}(new_arg1, evaluate(arg1.arg2))
+    # elseif arg1.arg1 isa Real
+    #     return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
+    # else
+    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+    # end
+end
+
+function evaluate(::Mult, arg1::KrD, arg2::Tensor)
+    return evaluate(Mult(), arg2, arg1)
+end
+
+function evaluate(::Mult, arg1::Union{Tensor,KrD}, arg2::KrD)
+    if is_elementwise_multiplication(arg1, arg2) || !can_contract(arg1, arg2)
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
+
+    newarg = deepcopy(arg1)
+    empty!(newarg.indices)
+
+    contracted = false
+
+    for i ∈ arg1.indices
+        if flip(i) == arg2.indices[1] && !contracted
+            push!(newarg.indices, arg2.indices[2])
+            contracted = true
+        elseif flip(i) == arg2.indices[2] && !contracted
+            push!(newarg.indices, arg2.indices[1])
+            contracted = true
+        else
+            push!(newarg.indices, i)
+        end
+    end
+
+    return newarg
 end
 
 function evaluate(::Add, arg1::Zero, arg2::Zero)

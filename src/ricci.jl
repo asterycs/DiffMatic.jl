@@ -234,7 +234,6 @@ function tr(arg::TensorExpr)
     return BinaryOperation{Mult}(arg, KrD(flip(free_ids[2]), flip(free_ids[1])))
 end
 
-# TODO: Make this add only one KrD instead
 function Base.sum(arg::TensorExpr)
     free_ids = get_free_indices(arg)
 
@@ -244,12 +243,7 @@ function Base.sum(arg::TensorExpr)
 
     next_letter = get_next_letter(arg)
 
-    return tr(
-        BinaryOperation{Mult}(
-            arg,
-            KrD(first(free_ids), flip_to(first(free_ids), next_letter)),
-        ),
-    )
+    return BinaryOperation{Mult}(arg, KrD(first(free_ids), flip(first(free_ids))))
 end
 
 function Base.broadcasted(::typeof(*), arg1::TensorExpr, arg2::TensorExpr)
@@ -493,7 +487,18 @@ function update_index(
         end
     end
 
-    return simplify(Mult(), arg, KrD(flip(from), to))
+    tmp_letter = get_next_letter(arg)
+
+    # TODO: Refactor this
+    if tmp_letter == to.letter
+        tmp_letter += 1
+    end
+
+    return simplify(
+        Mult(),
+        simplify(Mult(), arg, KrD(flip(from), flip_to(from, tmp_letter))),
+        KrD(same_to(from, tmp_letter), to),
+    )
 end
 
 function Base.:(-)(arg::TensorExpr)

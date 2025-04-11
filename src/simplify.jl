@@ -229,8 +229,19 @@ function group_factors(factors::AbstractArray)
             for ci ∈ complex
                 remaining[ci] = nothing
             end
-        elseif length(target_indices) == 1
+        else
             ordered_factors = []
+
+            is_contraction = true
+
+            for fi ∈ complex
+                if typeof(remaining[fi]) == KrD
+                    d = remaining[fi]
+                    if first(d.indices).letter != last(d.indices).letter
+                        is_contraction = false
+                    end
+                end
+            end
 
             if all(typeof.(factors[complex]) .== KrD) # sum
                 for di ∈ complex
@@ -242,20 +253,42 @@ function group_factors(factors::AbstractArray)
                     factor = remaining[fi]
 
                     if typeof(factor) != KrD
-                        @assert length(get_indices(factor)) == 1 # other orders not implemented
+                        ids = vcat(get_indices.(ordered_factors)...)
 
-                        push!(ordered_factors, reshape(factor, target_indices...))
-                        remaining[fi] = nothing
-                    elseif isempty(get_indices(factor))
-                        pushfirst!(ordered_factors, factor)
-                        remaining[fi] = nothing
-                    elseif factor isa Real
-                        pushfirst!(ordered_factors, factor)
-                        remaining[fi] = nothing
-                    else
-                        # drop unneeded KrD:s
-                        remaining[fi] = nothing
+                        next = get_free_indices(factor)
+                        new_ids = LowerOrUpperIndex[]
+
+                        for i ∈ next
+                            if i.letter == letter
+                                if is_contraction
+                                    if flip(i) ∈ ids
+                                        push!(new_ids, i)
+                                    else
+                                        push!(new_ids, flip(i))
+                                    end
+                                else
+                                    if length(target_indices) != 1
+                                        @assert false && "Not implemented"
+                                    end
+
+                                    t = first(target_indices)
+
+                                    if flip(i) ∈ ids
+                                        push!(new_ids, flip(t))
+                                    else
+                                        push!(new_ids, t)
+                                    end
+                                end
+                            else
+                                push!(new_ids, i)
+                            end
+                        end
+
+                        push!(ordered_factors, reshape(factor, new_ids...))
+                        # TODO: Add a trailing KrD in case of sums, diag(x)
                     end
+
+                    remaining[fi] = nothing
                 end
             end
 
@@ -264,10 +297,6 @@ function group_factors(factors::AbstractArray)
             end
 
             push!(chunked_factors, ordered_factors)
-        else
-            # TODO: Refactor
-            @show factors[complex]
-            @assert false
         end
     end
 
@@ -286,15 +315,17 @@ function simplify(arg::BinaryOperation{Pow})
 end
 
 function simplify(arg::BinaryOperation{Mult})
+    # factors = collect_factors(arg)
+    arg = BinaryOperation{Mult}(simplify(arg.arg1), simplify(arg.arg2))
     factors = collect_factors(arg)
-    factors = map(simplify, factors) # recursion
+    # factors = map(simplify, factors) # recursion
 
     grouped_factors = group_factors(factors)
 
     for i ∈ eachindex(grouped_factors)
         if grouped_factors[i] isa AbstractArray
             op = to_binary_operation(Mult(), grouped_factors[i])
-            grouped_factors[i] = simplify(Mult(), op.arg1, op.arg2)
+            grouped_factors[i] = op#simplify(Mult(), op.arg1, op.arg2)
         end
     end
 
