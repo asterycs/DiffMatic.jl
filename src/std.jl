@@ -14,19 +14,19 @@ export hessian
 export to_std_string
 
 function create_matrix(name::String)
-    T = Tensor(name, Upper(1), Lower(2))
+    T = Tensor{2}(name)
 
     return T
 end
 
 function create_vector(name::String)
-    T = Tensor(name, Upper(1))
+    T = Tensor{1}(name)
 
     return T
 end
 
 function create_scalar(name::String)
-    T = Tensor(name)
+    T = Tensor{0}(name)
 
     return T
 end

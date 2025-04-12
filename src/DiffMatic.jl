@@ -5,9 +5,10 @@
 module DiffMatic
 
 include("index.jl")
-include("ricci.jl")
-include("simplify.jl")
+include("einstein.jl")
+# include("ricci.jl")
+# include("simplify.jl")
 include("std.jl")
-include("forward.jl")
+# include("forward.jl")
 
 end
