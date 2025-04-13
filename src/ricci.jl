@@ -244,12 +244,7 @@ function Base.sum(arg::TensorExpr)
 
     next_letter = get_next_letter(arg)
 
-    return tr(
-        BinaryOperation{Mult}(
-            arg,
-            KrD(first(free_ids), flip_to(first(free_ids), next_letter)),
-        ),
-    )
+    return BinaryOperation{Mult}(arg, KrD(first(free_ids), flip(first(free_ids))))
 end
 
 function Base.broadcasted(::typeof(*), arg1::TensorExpr, arg2::TensorExpr)
