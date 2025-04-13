@@ -493,7 +493,7 @@ function update_index(
         end
     end
 
-    return simplify(Mult(), arg, KrD(flip(from), to))
+    return evaluate(Mult(), arg, KrD(flip(from), to))
 end
 
 function Base.:(-)(arg::TensorExpr)

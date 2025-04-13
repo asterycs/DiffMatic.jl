@@ -107,7 +107,7 @@ function derivative(expr, wrt::Tensor)
 
     D = diff(expr, ∂)
 
-    return evaluate(simplify(evaluate(D)))
+    return evaluate(evaluate(D))
 end
 
 """
@@ -137,7 +137,7 @@ function gradient(expr, wrt::Tensor)
     end
 
     D = derivative(expr, wrt)
-    gradient = evaluate(simplify(D'))
+    gradient = evaluate(D')
 
     return gradient
 end
@@ -203,7 +203,7 @@ function hessian(expr, wrt::Tensor)
     g = evaluate(D')
     H = derivative(g, wrt)
 
-    return evaluate(simplify(H))
+    return evaluate(H)
 end
 
 function throw_not_std()
@@ -681,9 +681,130 @@ function to_standard(
     return to_binary_operation(NonStdCon(), reshaped)
 end
 
+function group_factors(factors::AbstractArray)
+    indices = vcat([get_indices(f) for f ∈ factors]...)
+    letters = unique([i.letter for i ∈ indices])
+
+    chunked_factors = []
+    remaining = Any[f for f ∈ factors]
+
+    # Find groups where contractions happen over more than two indices
+    for letter ∈ letters
+        complex = []
+
+        if all(isnothing.(remaining))
+            break
+        end
+
+        for i ∈ eachindex(remaining)
+            if isnothing(remaining[i])
+                continue
+            end
+            if has_letter(remaining[i], letter)
+                push!(complex, i)
+            end
+        end
+
+        if isempty(complex)
+            continue
+        end
+
+        complex_ids = LowerOrUpperIndex[]
+
+        for ci ∈ complex
+            append!(complex_ids, get_indices(remaining[ci]))
+        end
+
+        target_indices = unique(eliminate_indices(complex_ids))
+        eliminated_ids = eliminated_indices(complex_ids)
+
+        if any(typeof.(factors[complex]) .== Zero)
+            free_indices = unique(eliminate_indices(complex_ids))
+            push!(chunked_factors, Zero(free_indices...))
+            remaining[complex] .= nothing
+        elseif length(complex) == 2 &&
+               is_regular_contraction(remaining[first(complex)], remaining[last(complex)])
+            if typeof(remaining[first(complex)]) == KrD ||
+               typeof(remaining[last(complex)]) == KrD
+                push!(
+                    chunked_factors,
+                    simplify(Mult(), remaining[first(complex)], remaining[last(complex)]),
+                )
+                remaining[complex] .= nothing
+            end
+            continue
+        elseif isempty(target_indices)
+            push!(chunked_factors, remaining[complex])
+            for ci ∈ complex
+                remaining[ci] = nothing
+            end
+        elseif length(complex) == 1
+            continue
+        elseif isempty(eliminated_ids)
+            push!(chunked_factors, remaining[complex])
+            for ci ∈ complex
+                remaining[ci] = nothing
+            end
+        elseif isempty(target_indices)
+            push!(chunked_factors, remaining[complex])
+            for ci ∈ complex
+                remaining[ci] = nothing
+            end
+        elseif length(target_indices) == 1
+            ordered_factors = []
+
+            if all(typeof.(factors[complex]) .== KrD) # sum
+                for di ∈ complex
+                    push!(ordered_factors, to_standard(factors[di]))
+                    remaining[di] = nothing
+                end
+            else
+                for fi ∈ complex
+                    factor = remaining[fi]
+
+                    if typeof(factor) != KrD
+                        @assert length(get_indices(factor)) == 1 # other orders not implemented
+
+                        push!(ordered_factors, reshape(factor, target_indices...))
+                        remaining[fi] = nothing
+                    elseif isempty(get_indices(factor))
+                        pushfirst!(ordered_factors, factor)
+                        remaining[fi] = nothing
+                    elseif factor isa Real
+                        pushfirst!(ordered_factors, factor)
+                        remaining[fi] = nothing
+                    else
+                        # drop unneeded KrD:s
+                        remaining[fi] = nothing
+                    end
+                end
+            end
+
+            if length(ordered_factors) == 1
+                ordered_factors = first(ordered_factors)
+            end
+
+            push!(chunked_factors, ordered_factors)
+        else
+            # TODO: Refactor
+            @show factors[complex]
+            @assert false
+        end
+    end
+
+    for i ∈ eachindex(remaining)
+        if !isnothing(remaining[i])
+            push!(chunked_factors, remaining[i])
+            remaining[i] = nothing
+        end
+    end
+
+    return chunked_factors
+end
+
 function group_non_std_factors(arg::BinaryOperation{Mult})
     factors = collect_factors(arg)
-    factors = map(simplify, factors) # recursion
+    factors = map(evaluate, factors) # recursion
 
     grouped_factors = group_factors(factors)
 
@@ -970,7 +1091,7 @@ to_std_string(gradient(x' * A * x, x))
 ```
 """
 function to_std_string(arg)
-    arg = simplify(arg)
+    arg = evaluate(arg)
     free_indices = unique(get_free_indices(arg))
 
     standardized = if length(free_indices) == 2
