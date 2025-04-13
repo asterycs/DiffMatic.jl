@@ -100,6 +100,10 @@ function evaluate(arg::UnaryOperation{Op}) where {Op}
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Pow}, arg2::KrD)
+    if !is_elementwise_multiplication(arg1.arg1, arg2)
+        return BinaryOperation{Pow}(evaluate(Mult(), arg1.arg1, arg2), arg1.arg2)
+    end
+
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
@@ -133,15 +137,79 @@ function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
-    return BinaryOperation{Mult}(arg1, arg2)
+    is_elementwise = is_elementwise_multiplication(arg1.arg1, arg1.arg2)
+    arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
+
+    contracting_indices = eliminated_indices([arg1_indices; arg2_indices])
+
+    if can_contract(arg1.arg2, arg2) && !is_elementwise
+        new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
+        return BinaryOperation{Mult}(arg1.arg1, new_arg2)
+    elseif can_contract(arg1.arg1, arg2) && !is_elementwise
+        new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
+        return BinaryOperation{Mult}(new_arg1, arg1.arg2)
+    else
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
-    if arg1.arg1 == -1 && arg2.arg1 == -1
-        return BinaryOperation{Mult}(arg1.arg2, arg2.arg2)
+    new_args = []
+
+    available1 = Any[arg1.arg1; arg1.arg2]
+    available2 = Any[arg2.arg1; arg2.arg2]
+
+    for i ∈ eachindex(available1)
+        if isnothing(available1[i])
+            continue
+        end
+        for j ∈ eachindex(available2)
+            if isnothing(available2[j]) || isnothing(available1[i])
+                continue
+            end
+
+            if can_contract(available1[i], available2[j])
+                push!(new_args, evaluate(Mult(), available1[i], available2[j]))
+                available1[i] = nothing
+                available2[j] = nothing
+            end
+        end
     end
 
-    return BinaryOperation{Mult}(arg1, arg2)
+    for i ∈ available1
+        if !isnothing(i)
+            push!(new_args, i)
+        end
+    end
+
+    for i ∈ available2
+        if !isnothing(i)
+            push!(new_args, i)
+        end
+    end
+
+    new_arg = nothing
+
+    for args ∈ Iterators.partition(new_args, 2)
+        if length(args) == 1
+            if isnothing(new_arg)
+                return args[1]
+            else
+                return evaluate(BinaryOperation{Mult}(new_arg, args[1]))
+            end
+        end
+
+        if isnothing(new_arg)
+            new_arg = evaluate(BinaryOperation{Mult}(args[1], args[2]))
+        else
+            new_arg = BinaryOperation{Mult}(
+                new_arg,
+                evaluate(BinaryOperation{Mult}(args[1], args[2])),
+            )
+        end
+    end
+
+    return new_arg
 end
 
 function evaluate(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
@@ -149,7 +217,43 @@ function evaluate(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
-    return BinaryOperation{Mult}(arg1, arg2)
+    ci = indices_in_common(arg1.arg1, arg1.arg2)
+
+    # TODO: Make this redundant
+    if !isempty(ci)
+        el = eliminated_indices([ci; arg2.indices[1]])
+        er = eliminated_indices([ci; arg2.indices[2]])
+
+        if !isempty(el)
+            return evaluate(
+                BinaryOperation{Mult}(
+                    evaluate(Mult(), arg1.arg1, arg2), # order of the indices in arg2 determines which one is contracted
+                    evaluate(Mult(), arg1.arg2, arg2),
+                ),
+            )
+        elseif !isempty(er)
+            rd = KrD(reverse(arg2.indices)...)
+
+            return evaluate(
+                BinaryOperation{Mult}(
+                    evaluate(Mult(), arg1.arg1, rd),
+                    evaluate(Mult(), arg1.arg2, rd),
+                ),
+            )
+        end
+    end
+
+    if can_contract(arg1.arg2, arg2)
+        new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
+        return BinaryOperation{Mult}(evaluate(arg1.arg1), new_arg2)
+    elseif can_contract(arg1.arg1, arg2)
+        new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
+        return BinaryOperation{Mult}(new_arg1, evaluate(arg1.arg2))
+    elseif arg1.arg1 isa Real
+        return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
+    else
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
 end
 
 function evaluate(::Mult, arg1::Zero, arg2::UnaryOperation)
@@ -196,7 +300,11 @@ function evaluate(::Mult, arg1::UnaryOperation, arg2::KrD)
 end
 
 function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperation}
-    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+    if can_contract(evaluate(arg1), evaluate(arg2.arg))
+        return UnaryOp(evaluate(Mult(), evaluate(arg1), evaluate(arg2.arg)))
+    end
+
+    return BinaryOperation{Mult}(evaluate(arg2), evaluate(arg1))
 end
 
 function evaluate(
