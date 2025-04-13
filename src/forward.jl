@@ -307,6 +307,53 @@ function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperati
     return BinaryOperation{Mult}(evaluate(arg2), evaluate(arg1))
 end
 
+function evaluate(::Mult, arg1::Tensor, arg2::KrD)
+    return _multiply_with_krd(arg1, arg2)
+end
+
+function evaluate(::Mult, arg1::KrD, arg2::Tensor)
+    return _multiply_with_krd(arg2, arg1)
+end
+
+function evaluate(::Mult, arg1::KrD, arg2::KrD)
+    return _multiply_with_krd(arg1, arg2)
+end
+
+function _multiply_with_krd(arg1::Union{Tensor,KrD}, arg2::KrD)
+    arg1_indices = get_free_indices(arg1)
+    contracting_index = eliminated_indices([arg1_indices; get_indices(arg2)])
+
+    if isempty(contracting_index) # Is an outer product
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
+
+    if is_elementwise_multiplication(arg1, arg2)
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
+
+    @assert can_contract(arg1, arg2)
+    @assert length(arg2.indices) == 2
+
+    newarg = deepcopy(arg1)
+    empty!(newarg.indices)
+
+    contracted = false
+
+    for i ∈ arg1.indices
+        if flip(i) == arg2.indices[1] && !contracted
+            push!(newarg.indices, arg2.indices[2])
+            contracted = true
+        elseif flip(i) == arg2.indices[2] && !contracted
+            push!(newarg.indices, arg2.indices[1])
+            contracted = true
+        else
+            push!(newarg.indices, i)
+        end
+    end
+
+    return newarg
+end
+
 function evaluate(
     ::Mult,
     arg1::BinaryOperation{Op},
