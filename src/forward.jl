@@ -15,7 +15,11 @@ function diff(arg::Tensor, wrt::Tensor)
         return evaluate(D) # evaluate to get rid of the constant factor
     end
 
-    indices = union(arg.indices, [flip(i) for i ∈ wrt.indices])
+    # TODO: What is the canonical way?
+    indices = copy(arg.indices)
+    foreach(i -> push!(indices, flip(i)), wrt.indices)
+
+    indices = eliminate_indices(indices)
 
     return Zero(unique(indices)...)
 end
