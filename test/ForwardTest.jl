@@ -780,8 +780,11 @@ end
 
     D = dc.diff(expr, wrt)
 
-    expected = dc.BinaryOperation{dc.Mult}(3, KrD(Upper(3), Lower(3)))
-    expected = dc.BinaryOperation{dc.Mult}(expected, Tensor("A", Upper(1), Lower(3)))
+    expected = dc.BinaryOperation{dc.Mult}(
+        Tensor("A", Upper(1), Lower(3)),
+        KrD(Upper(3), Lower(3)),
+    )
+    expected = dc.BinaryOperation{dc.Mult}(3, expected)
 
     @test equivalent(evaluate(D), expected)
 end
