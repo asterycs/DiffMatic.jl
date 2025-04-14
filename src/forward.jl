@@ -177,6 +177,10 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
+    if arg1.arg1 == -1 && arg2.arg1 == -1
+        return BinaryOperation{Mult}(arg1.arg2, arg2.arg2)
+    end
+
     new_args = []
 
     available1 = Any[arg1.arg1; arg1.arg2]
