@@ -147,7 +147,7 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     contracting_indices = eliminated_indices([arg1_indices; arg2_indices])
 
     if is_elementwise &&
-       is_diag(arg1) &&
+       is_diag2(arg1) &&
        !isempty(contracting_indices) &&
        length(arg2_indices) == 1
         new_index = setdiff(arg1_indices, contracting_indices)
@@ -337,28 +337,6 @@ function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperati
     return BinaryOperation{Mult}(evaluate(arg2), evaluate(arg1))
 end
 
-function is_diag(arg1::KrD, arg2::TensorExpr)
-    return is_diag(arg2, arg1)
-end
-
-function is_diag(arg1::TensorExpr, arg2::KrD)
-    arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
-
-    return length(arg1_indices) == 1 && !isempty(intersect(arg1_indices, arg2_indices))
-end
-
-function is_diag(arg1::KrD, arg2::KrD)
-    return false
-end
-
-function is_diag(arg::BinaryOperation{Mult})
-    return is_diag(arg.arg1, arg.arg2)
-end
-
-function is_diag(arg1, arg2)
-    return false
-end
-
 function evaluate(::Mult, arg1::Tensor, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
@@ -379,7 +357,7 @@ function _multiply_with_krd(arg1::Union{Tensor,KrD}, arg2::KrD)
         return BinaryOperation{Mult}(arg1, arg2)
     end
 
-    if is_diag(arg1, arg2)
+    if is_elementwise_multiplication(arg1, arg2)
         return BinaryOperation{Mult}(arg1, arg2)
     end
 
