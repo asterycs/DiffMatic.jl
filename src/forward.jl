@@ -136,6 +136,43 @@ function is_elementwise_multiplication(arg1, arg2)
     return !isempty(indices_in_common(arg1, arg2))
 end
 
+
+function is_diag(arg::BinaryOperation{Mult})
+    return is_diag(arg.arg1, arg.arg2)
+end
+
+function is_diag(arg)
+    return false
+end
+
+function is_diag(arg1::KrD, arg2::TensorExpr)
+    return is_diag(arg2, arg1)
+end
+
+function is_diag(arg1::KrD, arg2::KrD)
+    return false
+end
+
+function is_diag(arg::Union{Tensor,KrD,Zero})
+    return false
+end
+
+function is_diag(arg1::TensorExpr, arg2::KrD)
+    arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
+
+    return length(arg1_indices) == 1 && !isempty(intersect(arg1_indices, arg2_indices))
+end
+
+function is_diag(arg1::Value, arg2::Value)
+    if isempty(get_free_indices(arg1))
+        return is_diag(arg2)
+    elseif isempty(get_free_indices(arg2))
+        return is_diag(arg1)
+    end
+
+    return is_diag(arg1) || is_diag(arg2)
+end
+
 function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
     return evaluate(Mult(), arg2, arg1)
 end
@@ -147,7 +184,7 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     contracting_indices = eliminated_indices([arg1_indices; arg2_indices])
 
     if is_elementwise &&
-       is_diag2(arg1) &&
+       is_diag(arg1) &&
        !isempty(contracting_indices) &&
        length(arg2_indices) == 1
         new_index = setdiff(arg1_indices, contracting_indices)

@@ -43,42 +43,6 @@ function elementwise_indices(arg1, arg2)
     return intersect(arg1_indices, arg2_indices)
 end
 
-function is_diag2(arg::BinaryOperation{Mult})
-    return is_diag2(arg.arg1, arg.arg2)
-end
-
-function is_diag2(arg)
-    return false
-end
-
-function is_diag2(arg1::KrD, arg2::TensorExpr)
-    return is_diag2(arg2, arg1)
-end
-
-function is_diag2(arg1::KrD, arg2::KrD)
-    return false
-end
-
-function is_diag2(arg::Union{Tensor,KrD,Zero})
-    return false
-end
-
-function is_diag2(arg1::TensorExpr, arg2::KrD)
-    arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
-
-    return length(arg1_indices) == 1 && !isempty(intersect(arg1_indices, arg2_indices))
-end
-
-function is_diag2(arg1::Value, arg2::Value)
-    if isempty(get_free_indices(arg1))
-        return is_diag2(arg2)
-    elseif isempty(get_free_indices(arg2))
-        return is_diag2(arg1)
-    end
-
-    return is_diag2(arg1) || is_diag2(arg2)
-end
-
 function get_diag_delta(arg::BinaryOperation{Mult})
     l = get_diag_delta(arg.arg1)
     r = get_diag_delta(arg.arg2)
@@ -130,7 +94,7 @@ function get_last_letter(indices::IndexList)
 end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
-    if is_diag2(arg1)
+    if is_diag(arg1)
         d = get_diag_delta(arg1)
 
         @assert !isnothing(d)
