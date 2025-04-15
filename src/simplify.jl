@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 struct Diag
-    arg::TensorExpr
+    arg::Tensor
     ids::IndexList
 end
 

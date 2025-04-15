@@ -145,7 +145,7 @@ function is_diag(arg)
     return false
 end
 
-function is_diag(arg1::KrD, arg2::TensorExpr)
+function is_diag(arg1::KrD, arg2::Tensor)
     return is_diag(arg2, arg1)
 end
 
@@ -157,7 +157,7 @@ function is_diag(arg::Union{Monomial,KrD,Zero})
     return false
 end
 
-function is_diag(arg1::TensorExpr, arg2::KrD)
+function is_diag(arg1::Tensor, arg2::KrD)
     arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
 
     return length(arg1_indices) == 1 && !isempty(intersect(arg1_indices, arg2_indices))
@@ -333,11 +333,11 @@ function evaluate(::Mult, arg1::UnaryOperation, arg2::Zero)
     return Zero(free_indices...)
 end
 
-function evaluate(::Mult, arg1::Zero, arg2::TensorExpr)
+function evaluate(::Mult, arg1::Zero, arg2::Tensor)
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::TensorExpr, arg2::Zero)
+function evaluate(::Mult, arg1::Tensor, arg2::Zero)
     free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
 
     return Zero(free_indices...)
@@ -453,11 +453,11 @@ function evaluate(::Mult, arg1::Value, arg2::Value)
     return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
 end
 
-function evaluate(::Mult, arg1::TensorExpr, arg2::Real)
+function evaluate(::Mult, arg1::Tensor, arg2::Real)
     evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::Real, arg2::TensorExpr)
+function evaluate(::Mult, arg1::Real, arg2::Tensor)
     if arg1 == 1
         return arg2
     else
