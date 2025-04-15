@@ -234,15 +234,12 @@ function tr(arg::Tensor)
     return BinaryOperation{Mult}(arg, KrD(flip(free_ids[2]), flip(free_ids[1])))
 end
 
-# TODO: Make this add only one KrD instead
 function Base.sum(arg::Tensor)
     free_ids = get_free_indices(arg)
 
     if length(free_ids) != 1
         throw(DomainError("Sum is defined only for vectors"))
     end
-
-    next_letter = get_next_letter(arg)
 
     return BinaryOperation{Mult}(arg, KrD(first(free_ids), flip(first(free_ids))))
 end
