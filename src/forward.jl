@@ -80,13 +80,16 @@ function collect_factors(arg)
     return [arg]
 end
 
+function has_letter(tensor::UnaryOperation, letter::Letter)
+    ids = get_free_indices(tensor)
+
+    letters = [i.letter for i ∈ ids]
+
+    return letter ∈ letters
+end
+
 function has_letter(tensor, letter::Letter)
-    # TODO: Change UnaryOperation parametrization
-    ids = if tensor isa UnaryOperation
-        get_free_indices(tensor)
-    else
-        get_indices(tensor)
-    end
+    ids = get_indices(tensor)
 
     letters = [i.letter for i ∈ ids]
 
