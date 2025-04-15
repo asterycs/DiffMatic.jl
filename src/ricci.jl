@@ -23,11 +23,11 @@ function get_indices(arg::Real)
     return LowerOrUpperIndex[]
 end
 
-struct Tensor <: TensorExpr
+struct Monomial <: TensorExpr
     id::String
     indices::IndexList
 
-    function Tensor(id, indices::LowerOrUpperIndex...)
+    function Monomial(id, indices::LowerOrUpperIndex...)
         # Convert type
         indices = LowerOrUpperIndex[i for i ∈ indices]
 
@@ -160,7 +160,7 @@ function is_permutation(arg1::TensorExpr, arg2::TensorExpr)
     return is_permutation(unique(arg1_indices), unique(arg2_indices))
 end
 
-function get_indices(arg::Union{Tensor,KrD,Zero})
+function get_indices(arg::Union{Monomial,KrD,Zero})
     @assert length(unique(arg.indices)) == length(arg.indices)
 
     return arg.indices
@@ -535,7 +535,7 @@ function Base.adjoint(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
     return BinaryOperation{Op}(arg1_t, arg2_t)
 end
 
-function Base.adjoint(arg::Union{Tensor,KrD,Zero})
+function Base.adjoint(arg::Union{Monomial,KrD,Zero})
     free_indices = unique(get_free_indices(arg))
 
     if length(free_indices) > 2
@@ -591,7 +591,7 @@ function script(index::Upper)
     return join(text)
 end
 
-function to_string(arg::Tensor)
+function to_string(arg::Monomial)
     scripts = [script(i) for i ∈ arg.indices]
 
     return arg.id * join(scripts)

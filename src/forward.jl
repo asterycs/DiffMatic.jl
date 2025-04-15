@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-function diff(arg::Tensor, wrt::Tensor)
+function diff(arg::Monomial, wrt::Monomial)
     if arg.id == wrt.id
         @assert length(arg.indices) == length(wrt.indices)
 
@@ -24,39 +24,39 @@ function diff(arg::Tensor, wrt::Tensor)
     return Zero(unique(indices)...)
 end
 
-function diff(arg::KrD, wrt::Tensor)
+function diff(arg::KrD, wrt::Monomial)
     indices = union(arg.indices, [flip(i) for i ∈ wrt.indices])
 
     return Zero(unique(indices)...)
 end
 
-function diff(arg::Real, wrt::Tensor)
+function diff(arg::Real, wrt::Monomial)
     return Zero([flip(i) for i ∈ wrt.indices]...)
 end
 
-function diff(arg::UnaryOperation{Sin}, wrt::Tensor)
+function diff(arg::UnaryOperation{Sin}, wrt::Monomial)
     return BinaryOperation{Mult}(UnaryOperation{Cos}(arg.arg), diff(arg.arg, wrt))
 end
 
-function diff(arg::UnaryOperation{Cos}, wrt::Tensor)
+function diff(arg::UnaryOperation{Cos}, wrt::Monomial)
     return BinaryOperation{Mult}(-UnaryOperation{Sin}(arg.arg), diff(arg.arg, wrt))
 end
 
-function diff(arg::BinaryOperation{Pow}, wrt::Tensor)
+function diff(arg::BinaryOperation{Pow}, wrt::Monomial)
     return BinaryOperation{Mult}(
         BinaryOperation{Mult}(arg.arg2, BinaryOperation{Pow}(arg.arg1, arg.arg2 - 1)),
         diff(arg.arg1, wrt),
     )
 end
 
-function diff(arg::BinaryOperation{Mult}, wrt::Tensor)
+function diff(arg::BinaryOperation{Mult}, wrt::Monomial)
     return BinaryOperation{Add}(
         BinaryOperation{Mult}(arg.arg1, diff(arg.arg2, wrt)),
         BinaryOperation{Mult}(diff(arg.arg1, wrt), arg.arg2),
     )
 end
 
-function diff(arg::BinaryOperation{Op}, wrt::Tensor) where {Op<:AdditiveOperation}
+function diff(arg::BinaryOperation{Op}, wrt::Monomial) where {Op<:AdditiveOperation}
     return BinaryOperation{Op}(diff(arg.arg1, wrt), diff(arg.arg2, wrt))
 end
 
@@ -95,7 +95,7 @@ end
 
 # TODO: Rename evaluate to e.g. expand. Evaluate does not evaluate anymore in order to retain more context.
 # All simplifications should be moved to simplify instead.
-function evaluate(arg::Union{Tensor,KrD,Zero,Real})
+function evaluate(arg::Union{Monomial,KrD,Zero,Real})
     return arg
 end
 
@@ -153,7 +153,7 @@ function is_diag(arg1::KrD, arg2::KrD)
     return false
 end
 
-function is_diag(arg::Union{Tensor,KrD,Zero})
+function is_diag(arg::Union{Monomial,KrD,Zero})
     return false
 end
 
@@ -173,11 +173,11 @@ function is_diag(arg1::Value, arg2::Value)
     return is_diag(arg1) || is_diag(arg2)
 end
 
-function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
+function evaluate(::Mult, arg1::Monomial, arg2::BinaryOperation{Mult})
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
+function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Monomial)
     is_elementwise = is_elementwise_multiplication(arg1.arg1, arg1.arg2)
     arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
 
@@ -374,11 +374,11 @@ function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperati
     return BinaryOperation{Mult}(evaluate(arg2), evaluate(arg1))
 end
 
-function evaluate(::Mult, arg1::Tensor, arg2::KrD)
+function evaluate(::Mult, arg1::Monomial, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::KrD, arg2::Tensor)
+function evaluate(::Mult, arg1::KrD, arg2::Monomial)
     return _multiply_with_krd(arg2, arg1)
 end
 
@@ -386,7 +386,7 @@ function evaluate(::Mult, arg1::KrD, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
 
-function _multiply_with_krd(arg1::Union{Tensor,KrD}, arg2::KrD)
+function _multiply_with_krd(arg1::Union{Monomial,KrD}, arg2::KrD)
     arg1_indices = get_free_indices(arg1)
     contracting_index = eliminated_indices([arg1_indices; get_indices(arg2)])
 
@@ -428,7 +428,7 @@ end
 function evaluate(
     ::Mult,
     arg1::BinaryOperation{Op},
-    arg2::Union{Tensor,KrD},
+    arg2::Union{Monomial,KrD},
 ) where {Op<:AdditiveOperation}
     return evaluate(
         Op(),
@@ -439,7 +439,7 @@ end
 
 function evaluate(
     ::Mult,
-    arg1::Union{Tensor,KrD},
+    arg1::Union{Monomial,KrD},
     arg2::BinaryOperation{Op},
 ) where {Op<:AdditiveOperation}
     return evaluate(

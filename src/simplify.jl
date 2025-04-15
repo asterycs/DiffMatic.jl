@@ -8,7 +8,7 @@ struct Diag
 end
 
 # TODO: If this works, rename 'to_standard' and others in std.jl and rename 'std' -> 'to_standard'
-function simplify(arg::Tensor)
+function simplify(arg::Monomial)
     return arg
 end
 
@@ -32,7 +32,7 @@ function simplify(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
     return simplify(Op(), arg.arg1, arg.arg2)
 end
 
-function simplify(::Mult, arg1::Tensor, arg2::Tensor)
+function simplify(::Mult, arg1::Monomial, arg2::Monomial)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 

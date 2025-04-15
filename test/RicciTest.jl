@@ -5,23 +5,23 @@
 using DiffMatic
 using Test
 
-using DiffMatic: Tensor, KrD, Zero
+using DiffMatic: Monomial, KrD, Zero
 using DiffMatic: evaluate
 using DiffMatic: Upper, Lower
 
 dc = DiffMatic
 
-@testset "Tensor constructor throws on invalid input" begin
-    @test_throws DomainError Tensor("A", Lower(2), Lower(2))
-    @test_throws DomainError Tensor("A", Lower(2), Upper(2), Lower(1), Lower(2))
+@testset "Monomial constructor throws on invalid input" begin
+    @test_throws DomainError Monomial("A", Lower(2), Lower(2))
+    @test_throws DomainError Monomial("A", Lower(2), Upper(2), Lower(1), Lower(2))
 end
 
-@testset "Tensor constructor succeeds on valid input" begin
-    @test !isnothing(Tensor("A", Upper(1), Lower(2)))
-    @test !isnothing(Tensor("B", Lower(1), Lower(2)))
-    @test !isnothing(Tensor("x", Upper(1)))
-    @test !isnothing(Tensor("y", Lower(1)))
-    @test !isnothing(Tensor("z"))
+@testset "Monomial constructor succeeds on valid input" begin
+    @test !isnothing(Monomial("A", Upper(1), Lower(2)))
+    @test !isnothing(Monomial("B", Lower(1), Lower(2)))
+    @test !isnothing(Monomial("x", Upper(1)))
+    @test !isnothing(Monomial("y", Lower(1)))
+    @test !isnothing(Monomial("z"))
 end
 
 @testset "index equality operator" begin
@@ -72,7 +72,7 @@ end
 
 @testset "Sin constructor" begin
     a = KrD(Upper(1), Lower(2))
-    b = Tensor("b", Upper(2))
+    b = Monomial("b", Upper(2))
 
     op = sin(a * b)
 
@@ -82,7 +82,7 @@ end
 
 @testset "Cos constructor" begin
     a = KrD(Upper(1), Lower(2))
-    b = Tensor("b", Upper(2))
+    b = Monomial("b", Upper(2))
 
     op = cos(a * b)
 
@@ -92,7 +92,7 @@ end
 
 @testset "UnaryOperation equality operator" begin
     a = KrD(Upper(1), Lower(2))
-    b = Tensor("b", Upper(2))
+    b = Monomial("b", Upper(2))
 
     inner = a * b
 
@@ -127,8 +127,8 @@ end
 end
 
 @testset "BinaryOperation equality operator" begin
-    a = Tensor("a", Upper(1))
-    b = Tensor("b", Lower(1))
+    a = Monomial("a", Upper(1))
+    b = Monomial("b", Lower(1))
 
     left = dc.BinaryOperation{dc.Mult}(a, b)
 
@@ -139,8 +139,8 @@ end
 end
 
 @testset "BinaryOperation equivalent" begin
-    a = Tensor("a", Upper(1))
-    b = Tensor("b", Lower(1))
+    a = Monomial("a", Upper(1))
+    b = Monomial("b", Lower(1))
 
     left = dc.BinaryOperation{dc.Mult}(a, b)
 
@@ -148,7 +148,7 @@ end
     @test equivalent(left, dc.BinaryOperation{dc.Mult}(a, b))
     @test equivalent(left, dc.BinaryOperation{dc.Mult}(b, a))
     @test !equivalent(left, dc.BinaryOperation{dc.Add}(a, b))
-    @test !equivalent(left, dc.BinaryOperation{dc.Mult}(a, Tensor("x", Upper(1))))
+    @test !equivalent(left, dc.BinaryOperation{dc.Mult}(a, Monomial("x", Upper(1))))
 end
 
 @testset "index hash function" begin
@@ -163,9 +163,9 @@ end
     @test dc.flip(Upper(3)) == Lower(3)
 end
 
-@testset "get_free_indices with Tensor * Tensor and one matching pair" begin
-    xt = Tensor("x", Lower(1)) # row vector
-    A = Tensor("A", Upper(1), Lower(2))
+@testset "get_free_indices with Monomial * Monomial and one matching pair" begin
+    xt = Monomial("x", Lower(1)) # row vector
+    A = Monomial("A", Upper(1), Lower(2))
 
     op1 = dc.BinaryOperation{dc.Mult}(xt, A)
     op2 = dc.BinaryOperation{dc.Mult}(A, xt)
@@ -174,9 +174,9 @@ end
     @test dc.get_free_indices(op2) == [Lower(2)]
 end
 
-@testset "get_free_indices with Tensor {+-} Tensor" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Lower(2), Upper(1))
+@testset "get_free_indices with Monomial {+-} Monomial" begin
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Lower(2), Upper(1))
 
     ops = (dc.BinaryOperation{dc.Add}, dc.BinaryOperation{dc.Sub})
 
@@ -191,8 +191,8 @@ end
     end
 end
 
-@testset "get_free_indices with Tensor * KrD and one matching pair" begin
-    x = Tensor("x", Upper(1))
+@testset "get_free_indices with Monomial * KrD and one matching pair" begin
+    x = Monomial("x", Upper(1))
     δ = KrD(Lower(1), Lower(2))
 
     op1 = dc.BinaryOperation{dc.Mult}(x, δ)
@@ -202,8 +202,8 @@ end
     @test dc.get_free_indices(op2) == [Lower(2)]
 end
 
-@testset "get_free_indices with scalar Tensor * KrD" begin
-    x = Tensor("x")
+@testset "get_free_indices with scalar Monomial * KrD" begin
+    x = Monomial("x")
     δ = KrD(Lower(1), Lower(2))
 
     op1 = dc.BinaryOperation{dc.Mult}(x, δ)
@@ -213,9 +213,9 @@ end
     @test dc.get_free_indices(op2) == [Lower(1); Lower(2)]
 end
 
-@testset "get_free_indices with Tensor * Tensor and no matching pairs" begin
-    x = Tensor("x", Upper(1))
-    A = Tensor("A", Upper(1), Lower(2))
+@testset "get_free_indices with Monomial * Monomial and no matching pairs" begin
+    x = Monomial("x", Upper(1))
+    A = Monomial("A", Upper(1), Lower(2))
 
     op1 = dc.BinaryOperation{dc.Mult}(x, A)
     op2 = dc.BinaryOperation{dc.Mult}(A, x)
@@ -225,8 +225,8 @@ end
 end
 
 @testset "multiplication of matrices" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(1), Lower(2))
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(1), Lower(2))
 
     p1 = dc.evaluate(A * B)
     p2 = dc.evaluate(A' * B)
@@ -263,10 +263,10 @@ end
 end
 
 @testset "multiplication with matching indices" begin
-    x = Tensor("x", Upper(2))
-    y = Tensor("y", Lower(1))
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(2), Lower(3))
+    x = Monomial("x", Upper(2))
+    y = Monomial("y", Lower(1))
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(2), Lower(3))
 
     @test dc.get_free_indices(A * x) ==
           dc.get_free_indices(dc.BinaryOperation{dc.Mult}(A, x))
@@ -277,11 +277,11 @@ end
 end
 
 @testset "multiplication with ambigous input fails" begin
-    x = Tensor("x", Upper(2))
-    y = Tensor("y", Lower(1))
-    z = Tensor("z", Upper(1))
-    A = Tensor("A", Upper(1), Lower(2), Lower(3))
-    B = Tensor("B", Upper(1), Lower(2))
+    x = Monomial("x", Upper(2))
+    y = Monomial("y", Lower(1))
+    z = Monomial("z", Upper(1))
+    A = Monomial("A", Upper(1), Lower(2), Lower(3))
+    B = Monomial("B", Upper(1), Lower(2))
 
     @test_throws DomainError A * x
     @test_throws DomainError y * A
@@ -289,10 +289,10 @@ end
 end
 
 @testset "multiplication with scalars" begin
-    x = Tensor("x", Upper(2))
-    y = Tensor("y", Lower(1))
-    A = Tensor("A", Upper(1), Lower(2), Lower(3))
-    z = Tensor("z")
+    x = Monomial("x", Upper(2))
+    y = Monomial("y", Lower(1))
+    A = Monomial("A", Upper(1), Lower(2), Lower(3))
+    z = Monomial("z")
     r = 42
 
     for n ∈ (z, r)
@@ -304,56 +304,56 @@ end
 end
 
 @testset "elementwise multiplication matrix-matrix" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(3), Lower(4))
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(3), Lower(4))
 
     op1 = A .* A
 
     @test typeof(op1) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op1.arg1), Tensor("A", Upper(1), Lower(2)))
-    @test equivalent(evaluate(op1.arg2), Tensor("A", Upper(1), Lower(2)))
+    @test equivalent(evaluate(op1.arg1), Monomial("A", Upper(1), Lower(2)))
+    @test equivalent(evaluate(op1.arg2), Monomial("A", Upper(1), Lower(2)))
 
     op2 = A .* B
 
     @test typeof(op2) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op2.arg1), Tensor("A", Upper(3), Lower(4)))
-    @test equivalent(evaluate(op2.arg2), Tensor("B", Upper(3), Lower(4)))
+    @test equivalent(evaluate(op2.arg1), Monomial("A", Upper(3), Lower(4)))
+    @test equivalent(evaluate(op2.arg2), Monomial("B", Upper(3), Lower(4)))
 
     op3 = A' .* B'
 
     @test typeof(op3) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op3.arg1), Tensor("A", Lower(1), Upper(2)))
-    @test equivalent(evaluate(op3.arg2), Tensor("B", Lower(3), Upper(4)))
+    @test equivalent(evaluate(op3.arg1), Monomial("A", Lower(1), Upper(2)))
+    @test equivalent(evaluate(op3.arg2), Monomial("B", Lower(3), Upper(4)))
 end
 
 @testset "elementwise multiplication vector-vector" begin
-    x = Tensor("x", Upper(1))
-    y = Tensor("y", Upper(2))
+    x = Monomial("x", Upper(1))
+    y = Monomial("y", Upper(2))
 
     op1 = x .* x
 
     @test typeof(op1) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op1.arg1), Tensor("x", Upper(1)))
-    @test equivalent(evaluate(op1.arg2), Tensor("x", Upper(1)))
+    @test equivalent(evaluate(op1.arg1), Monomial("x", Upper(1)))
+    @test equivalent(evaluate(op1.arg2), Monomial("x", Upper(1)))
 
     op2 = x .* y
 
     @test typeof(op2) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op2.arg1), Tensor("x", Upper(2)))
-    @test equivalent(evaluate(op2.arg2), Tensor("y", Upper(2)))
+    @test equivalent(evaluate(op2.arg1), Monomial("x", Upper(2)))
+    @test equivalent(evaluate(op2.arg2), Monomial("y", Upper(2)))
 
     op3 = x' .* y'
 
     @test typeof(op3) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op3.arg1), Tensor("x", Lower(2)))
-    @test equivalent(evaluate(op3.arg2), Tensor("y", Lower(2)))
+    @test equivalent(evaluate(op3.arg1), Monomial("x", Lower(2)))
+    @test equivalent(evaluate(op3.arg2), Monomial("y", Lower(2)))
 end
 
 @testset "elementwise multiplication with ambiguous input fails" begin
-    x = Tensor("x", Upper(1))
-    A = Tensor("A", Upper(3), Lower(4))
-    B = Tensor("B", Upper(5), Upper(6))
-    T = Tensor("T", Upper(7), Lower(8), Lower(9))
+    x = Monomial("x", Upper(1))
+    A = Monomial("A", Upper(3), Lower(4))
+    B = Monomial("B", Upper(5), Upper(6))
+    T = Monomial("T", Upper(7), Lower(8), Lower(9))
 
     @test_throws DomainError x .* x'
     @test_throws DomainError x' .* x
@@ -368,7 +368,7 @@ end
 end
 
 @testset "update_index column vector" begin
-    x = Tensor("x", Upper(3))
+    x = Monomial("x", Upper(3))
 
     @test dc.update_index(x, Upper(3), Upper(3)) == x
 
@@ -382,7 +382,7 @@ end
 end
 
 @testset "update_index row vector" begin
-    x = Tensor("x", Lower(3))
+    x = Monomial("x", Lower(3))
 
     @test dc.update_index(x, Lower(3), Lower(3)) == x
 
@@ -396,7 +396,7 @@ end
 end
 
 @testset "update_index matrix" begin
-    A = Tensor("A", Upper(1), Lower(2))
+    A = Monomial("A", Upper(1), Lower(2))
 
     @test dc.update_index(A, Lower(2), Lower(2)) == A
 
@@ -406,11 +406,11 @@ end
 end
 
 @testset "transpose vector" begin
-    x = Tensor("x", Upper(1))
-    y = Tensor("y", Lower(1))
+    x = Monomial("x", Upper(1))
+    y = Monomial("y", Lower(1))
 
-    @test equivalent(evaluate(x'), Tensor("x", Lower(1)))
-    @test equivalent(evaluate(y'), Tensor("y", Upper(1)))
+    @test equivalent(evaluate(x'), Monomial("x", Lower(1)))
+    @test equivalent(evaluate(y'), Monomial("y", Upper(1)))
 end
 
 @testset "transpose KrD" begin
@@ -420,18 +420,18 @@ end
 end
 
 @testset "combined update_index and transpose vector" begin
-    x = Tensor("x", Upper(2))
+    x = Monomial("x", Upper(2))
 
     xt = x'
     x_indices = dc.get_free_indices(xt)
     updated_transpose = evaluate(dc.update_index(xt, x_indices[1], Lower(1)))
 
-    @test equivalent(updated_transpose, Tensor("x", Lower(1)))
+    @test equivalent(updated_transpose, Monomial("x", Lower(1)))
 end
 
 @testset "transpose unary operations" begin
-    x = Tensor("x", Upper(1))
-    y = Tensor("y", Lower(1))
+    x = Monomial("x", Upper(1))
+    y = Monomial("y", Lower(1))
 
     ops = (sin, cos)
     types = (dc.Sin, dc.Cos)
@@ -442,13 +442,13 @@ end
 
         @test typeof(op1) == dc.UnaryOperation{type}
         @test dc.get_free_indices(op1.arg) == dc.get_free_indices(y * x)
-        @test equivalent(op2.arg, Tensor("x", Lower(1)))
+        @test equivalent(op2.arg, Monomial("x", Lower(1)))
     end
 end
 
 @testset "negate any operation" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    x = Tensor("x", Upper(3))
+    A = Monomial("A", Upper(1), Lower(2))
+    x = Monomial("x", Upper(3))
 
     ops = (A, x, A * x, A + A, sin(x), cos(x), tr(A))
 
@@ -459,33 +459,36 @@ end
 end
 
 @testset "transpose matrix" begin
-    A = Tensor("A", Upper(1), Lower(2))
+    A = Monomial("A", Upper(1), Lower(2))
 
     At = evaluate(A')
-    @test equivalent(At, Tensor("A", Lower(1), Upper(2)))
+    @test equivalent(At, Monomial("A", Lower(1), Upper(2)))
 end
 
 @testset "transpose BinaryOperation{dc.Mult}" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    x = Tensor("x", Upper(2))
+    A = Monomial("A", Upper(1), Lower(2))
+    x = Monomial("x", Upper(2))
 
     op_t = evaluate((A * x)')
     @test equivalent(
         evaluate(op_t),
-        dc.BinaryOperation{dc.Mult}(Tensor("A", Lower(1), Lower(2)), Tensor("x", Upper(2))),
+        dc.BinaryOperation{dc.Mult}(
+            Monomial("A", Lower(1), Lower(2)),
+            Monomial("x", Upper(2)),
+        ),
     )
 end
 
-@testset "dc.Add/dc.Subtract tensors with different order fails" begin
-    a = Tensor("a")
-    x = Tensor("x", Upper(1))
-    A = Tensor("A", Upper(1), Lower(2))
-    T = Tensor("T", Upper(1), Lower(2), Lower(3))
+@testset "dc.Add/dc.Subtract Monomials with different order fails" begin
+    a = Monomial("a")
+    x = Monomial("x", Upper(1))
+    A = Monomial("A", Upper(1), Lower(2))
+    T = Monomial("T", Upper(1), Lower(2), Lower(3))
 
-    tensors = (a, x, A, T)
+    Monomials = (a, x, A, T)
 
-    for l ∈ tensors
-        for r ∈ tensors
+    for l ∈ Monomials
+        for r ∈ Monomials
             if l == r
                 continue
             end
@@ -496,25 +499,25 @@ end
     end
 end
 
-@testset "dc.Add/dc.Subtract tensors with ambiguous indices succeeds" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(2), Lower(3))
+@testset "dc.Add/dc.Subtract Monomials with ambiguous indices succeeds" begin
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(2), Lower(3))
 
     @test equivalent(
         evaluate(A + B),
         dc.BinaryOperation{dc.Add}(
-            Tensor("A", Upper(1), Lower(2)),
-            Tensor("B", Upper(1), Lower(2)),
+            Monomial("A", Upper(1), Lower(2)),
+            Monomial("B", Upper(1), Lower(2)),
         ),
     )
 end
 
-@testset "dc.Add/dc.Subtract tensors with different indices" begin
-    x = Tensor("x", Upper(1))
-    y = Tensor("y", Upper(2))
+@testset "dc.Add/dc.Subtract Monomials with different indices" begin
+    x = Monomial("x", Upper(1))
+    y = Monomial("y", Upper(2))
 
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(3), Lower(4))
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(3), Lower(4))
 
 
     for op ∈ (+, -)
@@ -526,9 +529,9 @@ end
 end
 
 @testset "transpose BinaryOperation{+-}" begin
-    x = Tensor("x", Upper(2))
-    y = Tensor("y", Upper(2))
-    z = Tensor("z", Upper(3))
+    x = Monomial("x", Upper(2))
+    y = Monomial("y", Upper(2))
+    z = Monomial("z", Upper(3))
 
     for op ∈ (+, -)
         for ags ∈ ((x, y), (x, z))
@@ -539,17 +542,17 @@ end
 end
 
 @testset "trace with matrix input works" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(2), Lower(3))
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(2), Lower(3))
 
     @test isempty(dc.get_free_indices(tr(A)))
     @test isempty(dc.get_free_indices(tr(A * B)))
 end
 
 @testset "trace with non-matrix input fails" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(2), Lower(3))
-    x = Tensor("x", Upper(3))
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(2), Lower(3))
+    x = Monomial("x", Upper(3))
 
     @test_throws DomainError tr(x)
     @test_throws DomainError tr(A * x)
@@ -558,10 +561,10 @@ end
 end
 
 @testset "can_contract" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    x = Tensor("x", Upper(2))
-    y = Tensor("y", Upper(3))
-    z = Tensor("z", Lower(1))
+    A = Monomial("A", Upper(1), Lower(2))
+    x = Monomial("x", Upper(2))
+    y = Monomial("y", Upper(3))
+    z = Monomial("z", Lower(1))
     d = KrD(Lower(1), Upper(3))
 
     @test dc.can_contract(A, x)
@@ -575,8 +578,8 @@ end
 end
 
 @testset "multiplication with non-matching indices matrix-vector" begin
-    x = Tensor("x", Upper(3))
-    A = Tensor("A", Upper(1), Lower(2))
+    x = Monomial("x", Upper(3))
+    A = Monomial("A", Upper(1), Lower(2))
 
     op1 = A * x
 
@@ -592,15 +595,15 @@ end
 end
 
 @testset "multiplication with non-compatible matrix-vector fails" begin
-    x = Tensor("x", Upper(3))
-    A = Tensor("A", Upper(1), Lower(2))
+    x = Monomial("x", Upper(3))
+    A = Monomial("A", Upper(1), Lower(2))
 
     @test_throws DomainError x * A
 end
 
 @testset "multiplication with matrix'-matrix has correct indices" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    C = Tensor("C", Upper(3), Lower(4))
+    A = Monomial("A", Upper(1), Lower(2))
+    C = Monomial("C", Upper(3), Lower(4))
 
     op = A' * C
 
@@ -614,8 +617,8 @@ end
 end
 
 @testset "multiplication with matrix'-matrix' has correct indices" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    C = Tensor("C", Upper(3), Lower(4))
+    A = Monomial("A", Upper(1), Lower(2))
+    C = Monomial("C", Upper(3), Lower(4))
 
     op = A' * C'
 
@@ -629,8 +632,8 @@ end
 end
 
 @testset "vector inner product with mismatching indices" begin
-    x = Tensor("x", Upper(2))
-    y = Tensor("y", Upper(1))
+    x = Monomial("x", Upper(2))
+    y = Monomial("y", Upper(1))
 
     op1 = x' * y
 
@@ -646,8 +649,8 @@ end
 end
 
 @testset "multiplication with non-matching indices scalar-matrix" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    z = Tensor("z")
+    A = Monomial("A", Upper(1), Lower(2))
+    z = Monomial("z")
 
     op1 = A * z
     op2 = z * A
@@ -664,8 +667,8 @@ end
 end
 
 @testset "multiplication with non-matching indices scalar-vector" begin
-    x = Tensor("x", Upper(3))
-    z = Tensor("z")
+    x = Monomial("x", Upper(3))
+    z = Monomial("z")
 
     op1 = z * x
     op2 = x * z
@@ -682,19 +685,19 @@ end
 end
 
 @testset "multiplication with adjoint and adjoint of multiplication is equal" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    x = Tensor("x", Upper(3))
+    A = Monomial("A", Upper(1), Lower(2))
+    x = Monomial("x", Upper(3))
 
     @test dc.get_free_indices(x' * A') == dc.get_free_indices((A * x)')
     @test dc.get_free_indices(x' * A) == dc.get_free_indices((A' * x)')
 end
 
 @testset "to_string output is correct for primitive types" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(1), Upper(2), Upper(3), Lower(4), Upper(5), Lower(6), Lower(7))
-    x = Tensor("x", Upper(2))
-    y = Tensor("y", Lower(1))
-    z = Tensor("z")
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(1), Upper(2), Upper(3), Lower(4), Upper(5), Lower(6), Lower(7))
+    x = Monomial("x", Upper(2))
+    y = Monomial("y", Lower(1))
+    z = Monomial("z")
     d1 = KrD(Upper(1), Upper(2))
     d2 = KrD(Upper(3), Lower(4))
     zero = Zero(Upper(1), Lower(3), Lower(4))
@@ -710,8 +713,8 @@ end
 end
 
 @testset "to_string output is correct for BinaryOperation" begin
-    a = Tensor("a")
-    b = Tensor("b")
+    a = Monomial("a")
+    b = Monomial("b")
 
     mul = dc.BinaryOperation{dc.Mult}(a, b)
     add = dc.BinaryOperation{dc.Add}(a, b)
@@ -729,8 +732,8 @@ end
 end
 
 @testset "to_string output is correct for negated values" begin
-    x = Tensor("x", Upper(1))
-    a = Tensor("a")
+    x = Monomial("x", Upper(1))
+    a = Monomial("a")
     c = 2
 
     @test dc.to_string(-x) == "-x¹"

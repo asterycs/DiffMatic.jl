@@ -14,19 +14,19 @@ export hessian
 export to_std_string
 
 function create_matrix(name::String)
-    T = Tensor(name, Upper(1), Lower(2))
+    T = Monomial(name, Upper(1), Lower(2))
 
     return T
 end
 
 function create_vector(name::String)
-    T = Tensor(name, Upper(1))
+    T = Monomial(name, Upper(1))
 
     return T
 end
 
 function create_scalar(name::String)
-    T = Tensor(name)
+    T = Monomial(name)
 
     return T
 end
@@ -98,8 +98,8 @@ derivative(x' * x, x)
 2x₃
 ```
 """
-function derivative(expr, wrt::Tensor)
-    ∂ = Tensor(wrt.id)
+function derivative(expr, wrt::Monomial)
+    ∂ = Monomial(wrt.id)
 
     for index ∈ wrt.indices
         push!(∂.indices, same_to(index, get_next_letter(expr, ∂)))
@@ -125,7 +125,7 @@ gradient(x' * A * x, x)
 A₃⁵x³ + A⁵⁴x₄
 ```
 """
-function gradient(expr, wrt::Tensor)
+function gradient(expr, wrt::Monomial)
     free_indices = get_free_indices(evaluate(expr))
 
     if !isempty(free_indices)
@@ -157,7 +157,7 @@ jacobian(A * x, x)
 A³₅
 ```
 """
-function jacobian(expr, wrt::Tensor)
+function jacobian(expr, wrt::Monomial)
     free_indices = get_free_indices(evaluate(expr))
 
     if length(free_indices) != 1 || typeof(free_indices[1]) != Upper
@@ -188,7 +188,7 @@ hessian(x' * A * x, x)
 A₆⁵ + A⁵₆
 ```
 """
-function hessian(expr, wrt::Tensor)
+function hessian(expr, wrt::Monomial)
     free_indices = get_free_indices(evaluate(expr))
 
     if !isempty(free_indices)
@@ -226,7 +226,7 @@ function evaluate(arg::BinaryOperation{NonStdCon})
     return arg
 end
 
-function _to_std_string(arg::Tensor)
+function _to_std_string(arg::Monomial)
     ids = get_indices(arg)
 
     if length(ids) == 2
@@ -437,8 +437,8 @@ function is_trace(arg)
     return all(length.(get_free_indices.(terms)) .== 2) && isempty(get_free_indices(arg))
 end
 
-function reshape(term::Tensor, indices::LowerOrUpperIndex...)
-    return Tensor(term.id, indices...)
+function reshape(term::Monomial, indices::LowerOrUpperIndex...)
+    return Monomial(term.id, indices...)
 end
 
 function reshape(term::Zero, indices::LowerOrUpperIndex...)

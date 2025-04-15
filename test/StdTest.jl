@@ -4,7 +4,7 @@
 using DiffMatic
 using Test
 
-using DiffMatic: Tensor, KrD, Zero
+using DiffMatic: Monomial, KrD, Zero
 using DiffMatic: evaluate
 using DiffMatic: Upper, Lower
 
@@ -15,36 +15,36 @@ dc = DiffMatic
     @vector y A
 
     # TODO: Find a better way to keep track of the indices and remove all "equivalent"
-    @test equivalent(x, Tensor("x", Upper(1)))
-    @test equivalent(y, Tensor("y", Upper(2)))
-    @test equivalent(A, Tensor("A", Upper(3)))
+    @test equivalent(x, Monomial("x", Upper(1)))
+    @test equivalent(y, Monomial("y", Upper(2)))
+    @test equivalent(A, Monomial("A", Upper(3)))
 end
 
 @testset "create matrix" begin
     @matrix A
     @matrix B X
 
-    @test equivalent(A, Tensor("A", Upper(4), Lower(5)))
-    @test equivalent(B, Tensor("B", Upper(6), Lower(7)))
-    @test equivalent(X, Tensor("X", Upper(8), Lower(9)))
+    @test equivalent(A, Monomial("A", Upper(4), Lower(5)))
+    @test equivalent(B, Monomial("B", Upper(6), Lower(7)))
+    @test equivalent(X, Monomial("X", Upper(8), Lower(9)))
 end
 
 @testset "create scalar" begin
     @scalar a
     @scalar b c
 
-    @test equivalent(a, Tensor("a"))
-    @test equivalent(b, Tensor("b"))
-    @test equivalent(c, Tensor("c"))
+    @test equivalent(a, Monomial("a"))
+    @test equivalent(b, Monomial("b"))
+    @test equivalent(c, Monomial("c"))
 end
 
-@testset "to_std_string output is correct with scalar-tensor multiplication" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    At = Tensor("A", Lower(1), Upper(2))
-    x = Tensor("x", Upper(2))
-    xt = Tensor("x", Lower(2))
-    a = Tensor("a")
-    b = Tensor("b")
+@testset "to_std_string output is correct with scalar-Monomial multiplication" begin
+    A = Monomial("A", Upper(1), Lower(2))
+    At = Monomial("A", Lower(1), Upper(2))
+    x = Monomial("x", Upper(2))
+    xt = Monomial("x", Lower(2))
+    a = Monomial("a")
+    b = Monomial("b")
 
     function mult(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -62,12 +62,12 @@ end
 end
 
 @testset "to_std_string output is correct with matrix-vector contraction" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    At = Tensor("A", Lower(1), Upper(2))
-    x = Tensor("x", Upper(2))
-    xt = Tensor("x", Lower(2))
-    y = Tensor("y", Upper(1))
-    yt = Tensor("y", Lower(1))
+    A = Monomial("A", Upper(1), Lower(2))
+    At = Monomial("A", Lower(1), Upper(2))
+    x = Monomial("x", Upper(2))
+    xt = Monomial("x", Lower(2))
+    y = Monomial("y", Upper(1))
+    yt = Monomial("y", Lower(1))
 
     function contract(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -84,9 +84,9 @@ end
 end
 
 @testset "to_std_string output is correct with all covariant bilinar form-vector contraction" begin
-    A = Tensor("A", Lower(1), Lower(2))
-    x = Tensor("x", Upper(2))
-    y = Tensor("y", Upper(1))
+    A = Monomial("A", Lower(1), Lower(2))
+    x = Monomial("x", Upper(2))
+    y = Monomial("y", Upper(1))
 
     function contract(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -99,9 +99,9 @@ end
 end
 
 @testset "to_std_string output is correct with all contravariant bilinear form-vector contraction" begin
-    A = Tensor("A", Upper(1), Upper(2))
-    x = Tensor("x", Lower(2))
-    y = Tensor("y", Lower(1))
+    A = Monomial("A", Upper(1), Upper(2))
+    x = Monomial("x", Lower(2))
+    y = Monomial("y", Lower(1))
 
     function contract(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -114,10 +114,10 @@ end
 end
 
 @testset "to_std_string output is correct with matrix-matrix contraction" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(2), Lower(3))
-    C = Tensor("C", Lower(1), Upper(3))
-    D = Tensor("D", Lower(3), Upper(2))
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(2), Lower(3))
+    C = Monomial("C", Lower(1), Upper(3))
+    D = Monomial("D", Lower(3), Upper(2))
 
     function contract(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -134,9 +134,9 @@ end
 end
 
 @testset "to_std_string output is correct with matrix-matrix sum" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    B = Tensor("B", Upper(1), Lower(2))
-    C = Tensor("C", Lower(2), Upper(1))
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(1), Lower(2))
+    C = Monomial("C", Lower(2), Upper(1))
 
     function sum(l, r)
         return evaluate(dc.BinaryOperation{dc.Add}(l, r))
@@ -149,9 +149,9 @@ end
 end
 
 @testset "to_std_string output is correct with vector-matrix element wise multiplication" begin
-    A = Tensor("A", Upper(1), Lower(2))
-    x = Tensor("x", Upper(1))
-    y = Tensor("y", Lower(2))
+    A = Monomial("A", Upper(1), Lower(2))
+    x = Monomial("x", Upper(1))
+    y = Monomial("y", Lower(2))
 
     function mul(l, r)
         return dc.BinaryOperation{dc.Mult}(l, r)
@@ -164,10 +164,10 @@ end
 end
 
 @testset "to_std_string output is correct with vector-vector element wise multiplication" begin
-    x = Tensor("x", Upper(1))
-    y = Tensor("y", Upper(1))
-    z = Tensor("z", Upper(1))
-    v = Tensor("v", Upper(1))
+    x = Monomial("x", Upper(1))
+    y = Monomial("y", Upper(1))
+    z = Monomial("z", Upper(1))
+    v = Monomial("v", Upper(1))
 
     function mul(l, r)
         return dc.BinaryOperation{dc.Mult}(l, r)
@@ -184,8 +184,8 @@ end
 end
 
 @testset "to_std_string output is correct with vector sum" begin
-    x = Tensor("x", Upper(1))
-    y = Tensor("y", Lower(2))
+    x = Monomial("x", Upper(1))
+    y = Monomial("y", Lower(2))
 
     function mul(l, r)
         return dc.BinaryOperation{dc.Mult}(l, r)
@@ -215,9 +215,9 @@ end
 end
 
 @testset "to_std_string output is correct with complex expression" begin
-    x = Tensor("x", Upper(1))
-    y = Tensor("y", Upper(2))
-    a = Tensor("a")
+    x = Monomial("x", Upper(1))
+    y = Monomial("y", Upper(2))
+    a = Monomial("a")
 
     @test to_std_string(evaluate(a * sin(x)' * y)) == "asin(xᵀ)y"
     @test to_std_string(evaluate(sin(x)' * a * y)) == "asin(xᵀ)y"
