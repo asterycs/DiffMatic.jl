@@ -488,7 +488,7 @@ function update_index(
         end
     end
 
-    return evaluate(Mult(), arg, KrD(flip(from), to))
+    return BinaryOperation{Mult}(arg, KrD(flip(from), to))
 end
 
 function Base.:(-)(arg::TensorExpr)
