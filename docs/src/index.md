@@ -6,9 +6,9 @@ Documentation for DiffMatic.jl
 @matrix(ids...)
 @vector(ids...)
 @scalar(ids...)
-derivative(expr, wrt::DiffMatic.Tensor)
-gradient(expr, wrt::DiffMatic.Tensor)
-jacobian(expr, wrt::DiffMatic.Tensor)
-hessian(expr, wrt::DiffMatic.Tensor)
+derivative(expr, wrt::DiffMatic.Monomial)
+gradient(expr, wrt::DiffMatic.Monomial)
+jacobian(expr, wrt::DiffMatic.Monomial)
+hessian(expr, wrt::DiffMatic.Monomial)
 to_std_string(expr)
 ```
