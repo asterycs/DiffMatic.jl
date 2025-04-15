@@ -95,7 +95,7 @@ derivative(x' * x, x)
 
 # output
 
-2x₃
+2x₄
 ```
 """
 function derivative(expr, wrt::Monomial)
@@ -122,7 +122,7 @@ gradient(x' * A * x, x)
 
 # output
 
-A₃⁵x³ + A⁵⁴x₄
+x₃A³⁵ + A⁵₄x⁴
 ```
 """
 function gradient(expr, wrt::Monomial)
