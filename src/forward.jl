@@ -431,7 +431,7 @@ end
 function evaluate(
     ::Mult,
     arg1::BinaryOperation{Op},
-    arg2::Union{Monomial,KrD},
+    arg2::KrD,
 ) where {Op<:AdditiveOperation}
     return evaluate(
         Op(),
@@ -442,7 +442,7 @@ end
 
 function evaluate(
     ::Mult,
-    arg1::Union{Monomial,KrD},
+    arg1::KrD,
     arg2::BinaryOperation{Op},
 ) where {Op<:AdditiveOperation}
     return evaluate(
