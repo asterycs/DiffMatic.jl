@@ -296,6 +296,13 @@ end
     @test to_std_string(jacobian(A' * x, x)) == "Aᵀ"
 end
 
+@testset "to_std_string of derivative {A, A'} * x" begin
+    @matrix X
+    @vector x y z
+
+    @test to_std_string(derivative(sum(-y .* (X*z)), X)) == "(-1)zyᵀ"
+end
+
 @testset "to_std_string of hessian" begin
     @matrix A
     @vector x
