@@ -754,18 +754,17 @@ end
 @testset "Differentiate xx'x" begin
     x = Monomial("x", Upper(1))
 
-    lr = dc.BinaryOperation{dc.Mult}(Monomial("x", Lower(101)), Monomial("x", Upper(100)))
-    l = dc.BinaryOperation{dc.Mult}(2, lr)
-    rr = dc.BinaryOperation{dc.Mult}(
-        dc.BinaryOperation{dc.Mult}(Monomial("x", Lower(1)), x),
-        KrD(Upper(100), Lower(101)),
+    l = dc.BinaryOperation{dc.Mult}(Monomial("x", Upper(100)), Monomial("x", Lower(101)))
+    rl = dc.BinaryOperation{dc.Add}(
+        dc.BinaryOperation{dc.Mult}(Monomial("x", Upper(100)), KrD(Lower(1), Lower(101))),
+        dc.BinaryOperation{dc.Mult}(Monomial("x", Lower(1)), KrD(Upper(100), Lower(101))),
     )
-    expected = dc.BinaryOperation{dc.Add}(l, rr)
+    r = dc.BinaryOperation{dc.Mult}(rl, Monomial("x", Upper(1)))
+    expected = dc.BinaryOperation{dc.Add}(l, r)
 
     D = dc.diff(x * x' * x, Monomial("x", Upper(6)))
 
-    # TODO: Make evaluate work until the rersult doesn't change anymore
-    @test equivalent(dc.evaluate(dc.evaluate(dc.evaluate(D))), expected)
+    @test equivalent(dc.evaluate(D), expected)
 end
 
 @testset "Differentiate A(x + 2x)" begin
