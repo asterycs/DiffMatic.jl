@@ -594,23 +594,15 @@ function reshape(arg::BinaryOperation{Pow}, indices::LowerOrUpperIndex...)
     return BinaryOperation{Pow}(reshape(arg.arg1, indices...), arg.arg2)
 end
 
-function to_standard(
-    term::UnaryOperation{Op};
-    upper_letter = nothing,
-    lower_letter = nothing,
-) where {Op}
-    return UnaryOperation{Op}(to_standard(term.arg; upper_letter, lower_letter))
+function to_standard(term::UnaryOperation{Op}) where {Op}
+    return UnaryOperation{Op}(to_standard(term.arg))
 end
 
-function to_standard(
-    term::BinaryOperation{Pow};
-    upper_letter = nothing,
-    lower_letter = nothing,
-)
+function to_standard(term::BinaryOperation{Pow})
     return BinaryOperation{Pow}(to_standard(term.arg1), term.arg2)
 end
 
-function to_standard(term::Monomial; upper_letter = nothing, lower_letter = nothing)
+function to_standard(term::Monomial)
     ids = term.indices
 
     if length(ids) == 2
@@ -628,7 +620,7 @@ function to_standard(term::Monomial; upper_letter = nothing, lower_letter = noth
     throw_not_std()
 end
 
-function to_standard(term::Union{KrD,Zero}; upper_letter = nothing, lower_letter = nothing)
+function to_standard(term::Union{KrD,Zero})
     ids = term.indices
 
     if length(ids) == 2
@@ -646,11 +638,7 @@ function to_standard(term::Union{KrD,Zero}; upper_letter = nothing, lower_letter
     throw_not_std()
 end
 
-function to_standard(
-    arg::BinaryOperation{Op};
-    upper_letter = nothing,
-    lower_letter = nothing,
-) where {Op<:AdditiveOperation}
+function to_standard(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
     target_indices = get_free_indices(arg)
 
     l = to_standard(arg.arg1)
@@ -674,7 +662,7 @@ function to_standard(
     throw_not_std()
 end
 
-function to_standard(arg::Real; upper_letter = nothing, lower_letter = nothing)
+function to_standard(arg::Real)
     return arg
 end
 
@@ -973,11 +961,7 @@ function transpose(arg::Union{KrD,Zero})
     return typeof(arg)(flip.(indices)...)
 end
 
-function to_standard(
-    arg::BinaryOperation{Mult};
-    upper_letter = nothing,
-    lower_letter = nothing,
-)
+function to_standard(arg::BinaryOperation{Mult})
     target_indices = unique(get_free_indices(arg))
     target_len = length(target_indices)
 
@@ -1054,25 +1038,17 @@ function to_std_string(arg)
 
     standardized = if length(free_indices) == 2
         if typeof(free_indices[1]) == Upper && typeof(free_indices[2]) == Lower
-            to_standard(
-                arg;
-                upper_letter = free_indices[1].letter,
-                lower_letter = free_indices[2].letter,
-            )
+            to_standard(arg)
         elseif typeof(free_indices[1]) == Lower && typeof(free_indices[2]) == Upper
-            to_standard(
-                arg;
-                upper_letter = free_indices[2].letter,
-                lower_letter = free_indices[1].letter,
-            )
+            to_standard(arg)
         else
             throw_not_std()
         end
     elseif length(free_indices) == 1
         if typeof(free_indices[1]) == Lower
-            to_standard(arg; lower_letter = free_indices[1].letter)
+            to_standard(arg)
         elseif typeof(free_indices[1]) == Upper
-            to_standard(arg; upper_letter = free_indices[1].letter)
+            to_standard(arg)
         else
             throw_not_std()
         end
