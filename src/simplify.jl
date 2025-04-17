@@ -124,9 +124,9 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
         if !isempty(elwise_ids)
             if s ∈ elwise_ids || flip(s) ∈ elwise_ids
                 if last_index ∈ get_free_indices(arg1.arg1)
-                    return BinaryOperation{Mult}(arg1.arg1, adjoint(arg1.arg2))
+                    return evaluate(BinaryOperation{Mult}(arg1.arg1, adjoint(arg1.arg2)))
                 elseif last_index ∈ get_free_indices(arg1.arg2)
-                    return BinaryOperation{Mult}(adjoint(arg1.arg1), arg1.arg2)
+                    return evaluate(BinaryOperation{Mult}(adjoint(arg1.arg1), arg1.arg2))
                 else
                     @assert false
                 end
