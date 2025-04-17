@@ -212,17 +212,17 @@ end
 
 # This type is for tagging contractions that need special treatment before converting to
 # standard notation (if at all possible).
-struct NonStdCon end
+struct ElementWise end
 
-function get_indices(arg::BinaryOperation{NonStdCon})
+function get_indices(arg::BinaryOperation{ElementWise})
     return [get_indices(arg.arg1); get_indices(arg.arg2)]
 end
 
-function to_string(arg::BinaryOperation{NonStdCon})
+function to_string(arg::BinaryOperation{ElementWise})
     return parenthesize(arg.arg1) * parenthesize(arg.arg2)
 end
 
-function evaluate(arg::BinaryOperation{NonStdCon})
+function evaluate(arg::BinaryOperation{ElementWise})
     return arg
 end
 
@@ -370,7 +370,7 @@ function add_contracting_factor_ordered(factor, ordered_factors)
 end
 
 function _to_std_string(arg::BinaryOperation{Mult})
-    factors = group_non_std_factors(arg)
+    factors = group_element_wise_products(arg)
     factors = Any[f for f ∈ factors]
 
     ordered_factors = []
@@ -449,7 +449,7 @@ function _to_std_string(arg::BinaryOperation{Pow})
     return parenthesize_std(arg.arg1) * script(Upper(arg.arg2))
 end
 
-function _to_std_string(arg::BinaryOperation{NonStdCon})
+function _to_std_string(arg::BinaryOperation{ElementWise})
     indices = get_indices(arg)
     target_indices = unique(eliminate_indices(indices))
     terms = collect_factors(arg)
@@ -538,11 +538,11 @@ function parenthesize_std(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation
     return "(" * _to_std_string(arg) * ")"
 end
 
-function parenthesize_std(arg::BinaryOperation{NonStdCon})
+function parenthesize_std(arg::BinaryOperation{ElementWise})
     return "(" * _to_std_string(arg) * ")"
 end
 
-function collect_factors(arg::BinaryOperation{NonStdCon})
+function collect_factors(arg::BinaryOperation{ElementWise})
     return [collect_factors(arg.arg1); collect_factors(arg.arg2)]
 end
 
@@ -691,7 +691,7 @@ function was_flipped(index, flips)
     return false
 end
 
-# TODO: Constrain to Mult and NonStdCon
+# TODO: Constrain to Mult and ElementWise
 function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
     binop = nothing
 
@@ -832,7 +832,7 @@ function group_factors(factors::AbstractArray)
     return chunked_factors
 end
 
-function group_non_std_factors(arg::BinaryOperation{Mult})
+function group_element_wise_products(arg::BinaryOperation{Mult})
     factors = collect_factors(arg)
     factors = map(evaluate, factors) # recursion
 
@@ -840,7 +840,7 @@ function group_non_std_factors(arg::BinaryOperation{Mult})
 
     for i ∈ eachindex(grouped_factors)
         if grouped_factors[i] isa AbstractArray
-            grouped_factors[i] = to_binary_operation(NonStdCon(), grouped_factors[i])
+            grouped_factors[i] = to_binary_operation(ElementWise(), grouped_factors[i])
         end
     end
 
@@ -920,18 +920,9 @@ function to_standard(arg::BinaryOperation{Mult})
         throw_not_std()
     end
 
-    terms = group_non_std_factors(term)
+    terms = group_element_wise_products(term)
 
-    standardized_term = nothing
-
-    for t ∈ terms
-        if isnothing(standardized_term)
-            standardized_term = t
-            continue
-        end
-
-        standardized_term = BinaryOperation{Mult}(standardized_term, t)
-    end
+    standardized_term = to_binary_operation(Mult(), terms)
 
     ordered_expr_ids = get_free_indices(standardized_term)
 
