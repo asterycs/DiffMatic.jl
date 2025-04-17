@@ -310,12 +310,139 @@ function _to_std_string(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
            _to_std_string(arg.arg2)
 end
 
-function _to_std_string(arg::BinaryOperation{Mult})
-    if arg.arg1 == -1
-        return "-" * parenthesize_std(arg.arg2)
+function add_contracting_factor_ordered(factor, ordered_factors)
+    for fixed ∈ (first(ordered_factors), last(ordered_factors))
+        fixed_indices = get_free_indices(fixed)
+        next_indices = get_free_indices(factor)
+
+        ### Contractions
+        ################
+        if typeof(last(next_indices)) == Lower &&
+           flip(last(next_indices)) == first(fixed_indices)
+            pushfirst!(ordered_factors, factor)
+            return true
+        end
+
+        if typeof(last(next_indices)) == Upper &&
+           flip(last(next_indices)) == first(fixed_indices)
+            push!(ordered_factors, factor)
+            return true
+        end
+
+        if typeof(first(next_indices)) == Upper &&
+           flip(first(next_indices)) == last(fixed_indices)
+            push!(ordered_factors, factor)
+            return true
+        end
+
+        if typeof(first(next_indices)) == Lower &&
+           flip(first(next_indices)) == last(fixed_indices)
+            pushfirst!(ordered_factors, factor)
+            return true
+        end
+
+        if typeof(last(next_indices)) == Upper &&
+           flip(last(next_indices)) == last(fixed_indices)
+            push!(ordered_factors, factor)
+            return true
+        end
+
+        if typeof(last(next_indices)) == Lower &&
+           flip(last(next_indices)) == last(fixed_indices)
+            pushfirst!(ordered_factors, factor)
+            return true
+        end
+
+        if typeof(first(next_indices)) == Upper &&
+           flip(first(next_indices)) == first(fixed_indices)
+            push!(ordered_factors, factor)
+            return true
+        end
+
+        if typeof(first(next_indices)) == Lower &&
+           flip(first(next_indices)) == first(fixed_indices)
+            pushfirst!(ordered_factors, factor)
+            return true
+        end
     end
 
-    return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+    return false
+end
+
+function _to_std_string(arg::BinaryOperation{Mult})
+    factors = group_non_std_factors(arg)
+    factors = Any[f for f ∈ factors]
+
+    ordered_factors = []
+    reals = Real[]
+    scalars = []
+
+    while !all(isnothing.(factors))
+        term_was_added = false
+
+        for i ∈ eachindex(factors)
+            if isnothing(factors[i])
+                continue
+            end
+
+            factor = factors[i]
+            free_ids = get_free_indices(factor)
+
+            if factor isa Real
+                push!(reals, factor)
+                factors[i] = nothing
+                term_was_added = true
+            elseif isempty(free_ids)
+                push!(scalars, factor)
+                factors[i] = nothing
+                term_was_added = true
+            else
+                if isempty(ordered_factors)
+                    push!(ordered_factors, factor)
+                    factors[i] = nothing
+                    term_was_added = true
+                    continue
+                end
+
+                if add_contracting_factor_ordered(factor, ordered_factors)
+                    factors[i] = nothing
+                    term_was_added = true
+                    continue
+                end
+            end
+        end
+
+        if !term_was_added
+            break
+        end
+    end
+
+    for i ∈ eachindex(factors) # Remaining factors make outer products
+        if !isnothing(factors[i])
+            if typeof(last(get_free_indices(factors[i]))) == Upper
+                pushfirst!(ordered_factors, factors[i])
+                factors[i] = nothing
+            else
+                push!(ordered_factors, factors[i])
+                factors[i] = nothing
+            end
+        end
+    end
+
+    @assert all(isnothing.(factors))
+
+    prepend!(ordered_factors, scalars)
+    if !isempty(reals)
+        pushfirst!(ordered_factors, prod(reals))
+    end
+
+    out = ""
+
+    for f ∈ ordered_factors
+        out *= parenthesize_std(f)
+    end
+
+    return out
 end
 
 function _to_std_string(arg::BinaryOperation{Pow})
