@@ -457,9 +457,9 @@ function _to_std_string(arg::BinaryOperation{NonStdCon})
     if length(target_indices) == 1
         if all(length.(get_indices.(terms)) .== 1)
             return reduce(
-                (l, r) -> l * " ⊙ " * to_std_string(r),
+                (l, r) -> l * " ⊙ " * _to_std_string(r),
                 terms[2:end];
-                init = to_std_string(terms[1]),
+                init = _to_std_string(terms[1]),
             )
         elseif all(typeof.(terms) .== KrD)
             if typeof(target_indices[1]) == Upper
@@ -488,15 +488,15 @@ function _to_std_string(arg::BinaryOperation{NonStdCon})
             v_ids = get_indices(vector)
 
             if m_ids[1] == v_ids[1]
-                return "diag(" * to_std_string(vector) * ")" * to_std_string(matrix)
+                return "diag(" * _to_std_string(vector) * ")" * _to_std_string(matrix)
             elseif m_ids[2] == v_ids[1]
-                return to_std_string(matrix) * " diag(" * to_std_string(vector) * ")"
+                return _to_std_string(matrix) * " diag(" * _to_std_string(vector) * ")"
             end
         end
 
         if length(arg1_ids) == length(arg2_ids)
             if all(arg1_ids .== arg2_ids)
-                return to_std_string(terms[1]) * " ⊙ " * to_std_string(terms[2])
+                return _to_std_string(terms[1]) * " ⊙ " * _to_std_string(terms[2])
             else
                 throw_not_std()
             end
