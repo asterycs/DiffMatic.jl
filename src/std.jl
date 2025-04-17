@@ -1084,6 +1084,7 @@ function to_std_string(arg)
 
     argstr = _to_std_string(standardized)
 
+    # TODO: Move inside _to_std_string
     if trace
         argstr = "tr(" * argstr * ")"
     end
