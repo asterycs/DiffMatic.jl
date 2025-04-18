@@ -54,6 +54,36 @@ function get_diag_delta(arg)
     return nothing
 end
 
+function reshape(term::Monomial, indices::LowerOrUpperIndex...)
+    return Monomial(term.id, indices...)
+end
+
+function reshape(term::Zero, indices::LowerOrUpperIndex...)
+    return Zero(indices...)
+end
+
+function reshape(term::KrD, indices::LowerOrUpperIndex...)
+    return KrD(indices...)
+end
+
+function reshape(term::UnaryOperation{Op}, indices::LowerOrUpperIndex...) where {Op}
+    return UnaryOperation{Op}(reshape(term.arg, indices...))
+end
+
+function reshape(
+    term::BinaryOperation{Op},
+    indices::LowerOrUpperIndex...,
+) where {Op<:AdditiveOperation}
+    return BinaryOperation{Op}(
+        reshape(term.arg1, indices...),
+        reshape(term.arg2, indices...),
+    )
+end
+
+function reshape(arg::BinaryOperation{Pow}, indices::LowerOrUpperIndex...)
+    return BinaryOperation{Pow}(reshape(arg.arg1, indices...), arg.arg2)
+end
+
 function get_last_letter(indices::IndexList)
     current_last = Upper(0)
 

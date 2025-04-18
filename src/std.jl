@@ -568,36 +568,6 @@ function is_trace(arg)
     return all(length.(get_free_indices.(terms)) .== 2) && isempty(get_free_indices(arg))
 end
 
-function reshape(term::Monomial, indices::LowerOrUpperIndex...)
-    return Monomial(term.id, indices...)
-end
-
-function reshape(term::Zero, indices::LowerOrUpperIndex...)
-    return Zero(indices...)
-end
-
-function reshape(term::KrD, indices::LowerOrUpperIndex...)
-    return KrD(indices...)
-end
-
-function reshape(term::UnaryOperation{Op}, indices::LowerOrUpperIndex...) where {Op}
-    return UnaryOperation{Op}(reshape(term.arg, indices...))
-end
-
-function reshape(
-    term::BinaryOperation{Op},
-    indices::LowerOrUpperIndex...,
-) where {Op<:AdditiveOperation}
-    return BinaryOperation{Op}(
-        reshape(term.arg1, indices...),
-        reshape(term.arg2, indices...),
-    )
-end
-
-function reshape(arg::BinaryOperation{Pow}, indices::LowerOrUpperIndex...)
-    return BinaryOperation{Pow}(reshape(arg.arg1, indices...), arg.arg2)
-end
-
 function to_standard(term::UnaryOperation{Op}) where {Op}
     return UnaryOperation{Op}(to_standard(term.arg))
 end
