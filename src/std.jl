@@ -310,7 +310,7 @@ function _to_std_string(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
            _to_std_string(arg.arg2)
 end
 
-function add_contracting_factor_ordered(factor, ordered_factors)
+function add_contracting_factor_ordered!(ordered_factors::AbstractArray, factor::Tensor)
     for fixed ∈ (first(ordered_factors), last(ordered_factors))
         fixed_indices = get_free_indices(fixed)
         next_indices = get_free_indices(factor)
@@ -404,7 +404,7 @@ function _to_std_string(arg::BinaryOperation{Mult})
                     continue
                 end
 
-                if add_contracting_factor_ordered(factor, ordered_factors)
+                if add_contracting_factor_ordered!(ordered_factors, factor)
                     factors[i] = nothing
                     term_was_added = true
                     continue
