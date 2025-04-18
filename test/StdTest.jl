@@ -288,12 +288,13 @@ end
     @test to_std_string(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
 end
 
-@testset "to_std_string of jacobian {A, A'} * x" begin
+@testset "to_std_string of jacobian" begin
     @matrix A
-    @vector x
+    @vector x y
 
     @test to_std_string(jacobian(A * x, x)) == "A"
     @test to_std_string(jacobian(A' * x, x)) == "Aᵀ"
+    @test to_std_string(jacobian(sin(A * x + y), x)) == "diag(cos(Ax + y))A"
 end
 
 @testset "to_std_string of derivative {A, A'} * x" begin
