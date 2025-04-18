@@ -828,12 +828,12 @@ end
         tr(x * x'), #
         (y .* c)' * x, #
         (x .* c)' * x, #
-        # (x + y)' * x, #
-        # (x - y)' * x, #
+        (x + y)' * x, #
+        (x - y)' * x, #
         x' * (y .* c), #
         x' * (x .* c), #
-        # x' * (x + y), #
-        # x' * (x - y), #
+        x' * (x + y), #
+        x' * (x - y), #
         sin(tr(x * x')), #
         cos(tr(x * x')), #
         tr(sin(x * x')), #
