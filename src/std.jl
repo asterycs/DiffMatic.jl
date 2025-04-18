@@ -647,16 +647,15 @@ function to_standard(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
     if isempty(setdiff(get_free_indices(l), get_free_indices(r))) &&
        isempty(setdiff(get_free_indices(l), target_indices))
         return BinaryOperation{Op}(l, r)
-    elseif isempty(setdiff(get_free_indices(transpose(l)), get_free_indices(r))) &&
-           isempty(setdiff(get_free_indices(transpose(l)), target_indices))
-        return BinaryOperation{Op}(transpose(l), r)
-    elseif isempty(setdiff(get_free_indices(l), get_free_indices(transpose(r)))) &&
+    elseif isempty(setdiff(get_free_indices(radjoint(l)), get_free_indices(r))) &&
+           isempty(setdiff(get_free_indices(radjoint(l)), target_indices))
+        return BinaryOperation{Op}(radjoint(l), r)
+    elseif isempty(setdiff(get_free_indices(l), get_free_indices(radjoint(r)))) &&
            isempty(setdiff(get_free_indices(l), target_indices))
-        return BinaryOperation{Op}(l, transpose(r))
-    elseif isempty(
-        setdiff(get_free_indices(transpose(l)), get_free_indices(transpose(r))),
-    ) && isempty(setdiff(get_free_indices(transpose(l)), target_indices))
-        return BinaryOperation{Op}(transpose(l), transpose(r))
+        return BinaryOperation{Op}(l, radjoint(r))
+    elseif isempty(setdiff(get_free_indices(radjoint(l)), get_free_indices(radjoint(r)))) &&
+           isempty(setdiff(get_free_indices(radjoint(l)), target_indices))
+        return BinaryOperation{Op}(radjoint(l), radjoint(r))
     end
 
     throw_not_std()
@@ -847,38 +846,38 @@ function group_element_wise_products(arg::BinaryOperation{Mult})
     return grouped_factors
 end
 
-
-function transpose(arg::T) where {T<:UnaryOperation}
+# Recursive adjoint
+function radjoint(arg::T) where {T<:UnaryOperation}
     return T(arg.arg')
 end
 
-function transpose(arg::BinaryOperation{Pow})
-    return BinaryOperation{Pow}(transpose(arg.arg1), arg.arg2)
+function radjoint(arg::BinaryOperation{Pow})
+    return BinaryOperation{Pow}(radjoint(arg.arg1), arg.arg2)
 end
 
-function transpose(arg::BinaryOperation{Mult})
-    return BinaryOperation{Mult}(transpose(arg.arg1), transpose(arg.arg2))
+function radjoint(arg::BinaryOperation{Mult})
+    return BinaryOperation{Mult}(radjoint(arg.arg1), radjoint(arg.arg2))
 end
 
-function transpose(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    return BinaryOperation{Op}(transpose(arg.arg1), transpose(arg.arg2))
+function radjoint(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
+    return BinaryOperation{Op}(radjoint(arg.arg1), radjoint(arg.arg2))
 end
 
-function transpose(arg::Monomial)
+function radjoint(arg::Monomial)
     indices = get_indices(arg)
 
     if length(indices) > 2
-        throw(DomainError(arg.id, "Transpose is only defined for vectors and matrices"))
+        throw(DomainError(arg.id, "Adjoint is only defined for vectors and matrices"))
     end
 
     return Monomial(arg.id, flip.(indices)...)
 end
 
-function transpose(arg::Union{KrD,Zero})
+function radjoint(arg::Union{KrD,Zero})
     indices = get_indices(arg)
 
     if length(indices) > 2
-        throw(DomainError(arg.id, "Transpose is only defined for vectors and matrices"))
+        throw(DomainError(arg.id, "Adjoint is only defined for vectors and matrices"))
     end
 
     return typeof(arg)(flip.(indices)...)
@@ -900,22 +899,22 @@ function to_standard(arg::BinaryOperation{Mult})
     # TODO: Refactor
     if get_free_indices(BinaryOperation{Mult}(l, r)) == target_indices
         term = BinaryOperation{Mult}(l, r)
-    elseif get_free_indices(BinaryOperation{Mult}(transpose(l), r)) == target_indices
-        term = BinaryOperation{Mult}(transpose(l), r)
-    elseif get_free_indices(BinaryOperation{Mult}(l, transpose(r))) == target_indices
-        term = BinaryOperation{Mult}(l, transpose(r))
-    elseif get_free_indices(BinaryOperation{Mult}(transpose(l), transpose(r))) ==
+    elseif get_free_indices(BinaryOperation{Mult}(radjoint(l), r)) == target_indices
+        term = BinaryOperation{Mult}(radjoint(l), r)
+    elseif get_free_indices(BinaryOperation{Mult}(l, radjoint(r))) == target_indices
+        term = BinaryOperation{Mult}(l, radjoint(r))
+    elseif get_free_indices(BinaryOperation{Mult}(radjoint(l), radjoint(r))) ==
            target_indices
-        term = BinaryOperation{Mult}(transpose(l), transpose(r))
+        term = BinaryOperation{Mult}(radjoint(l), radjoint(r))
     elseif length(get_free_indices(BinaryOperation{Mult}(l, r))) == target_len
         term = BinaryOperation{Mult}(l, r)
-    elseif length(get_free_indices(BinaryOperation{Mult}(transpose(l), r))) == target_len
-        term = BinaryOperation{Mult}(transpose(l), r)
-    elseif length(get_free_indices(BinaryOperation{Mult}(l, transpose(r)))) == target_len
-        term = BinaryOperation{Mult}(l, transpose(r))
-    elseif length(get_free_indices(BinaryOperation{Mult}(transpose(l), transpose(r)))) ==
+    elseif length(get_free_indices(BinaryOperation{Mult}(radjoint(l), r))) == target_len
+        term = BinaryOperation{Mult}(radjoint(l), r)
+    elseif length(get_free_indices(BinaryOperation{Mult}(l, radjoint(r)))) == target_len
+        term = BinaryOperation{Mult}(l, radjoint(r))
+    elseif length(get_free_indices(BinaryOperation{Mult}(radjoint(l), radjoint(r)))) ==
            target_len
-        term = BinaryOperation{Mult}(transpose(l), transpose(r))
+        term = BinaryOperation{Mult}(radjoint(l), radjoint(r))
     else
         throw_not_std()
     end
