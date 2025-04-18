@@ -5,6 +5,7 @@
 import LinearAlgebra.tr
 
 export tr
+export sum
 
 abstract type Tensor end
 
