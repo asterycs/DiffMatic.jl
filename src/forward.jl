@@ -15,10 +15,7 @@ function diff(arg::Monomial, wrt::Monomial)
         return evaluate(D) # evaluate to get rid of the constant factor
     end
 
-    # TODO: What is the canonical way?
-    indices = copy(arg.indices)
-    foreach(i -> push!(indices, flip(i)), wrt.indices)
-
+    indices = LowerOrUpperIndex[arg.indices; [flip(i) for i ∈ wrt.indices]]
     indices = eliminate_indices(indices)
 
     return Zero(unique(indices)...)
