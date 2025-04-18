@@ -639,7 +639,6 @@ function to_standard(arg::Real)
     return arg
 end
 
-# TODO: Constrain to Mult and ElementWise
 function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
     binop = nothing
 
