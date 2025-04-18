@@ -715,7 +715,7 @@ function to_binary_operation(op::Op, term) where {Op}
 end
 
 function group_factors(factors::AbstractArray)
-    indices = unique(vcat(get_indices.(factors)...))
+    indices = unique(vcat(get_free_indices.(factors)...))
 
     chunked_factors = []
     remaining = Any[f for f ∈ factors]
