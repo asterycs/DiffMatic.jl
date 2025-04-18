@@ -7,9 +7,6 @@
 
 ## Symbolic differentiation of vector/matrix/tensor expressions in Julia
 
-#### Warning: Not ready for use!
-#### This package is still under development. Issues are welcome.
-
 ### Example
 
 Create a matrix and a vector:
