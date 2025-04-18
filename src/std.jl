@@ -473,7 +473,7 @@ function _to_std_string(arg::BinaryOperation{ElementWise})
     end
 
     if length(terms) == 2 && length(target_indices) == 2
-        arg1_ids, arg2_ids = get_indices.(terms)
+        arg1_ids, arg2_ids = get_free_indices.(terms)
 
         if maximum(length.((arg1_ids, arg2_ids))) == 2 &&
            minimum(length.((arg1_ids, arg2_ids))) == 1
