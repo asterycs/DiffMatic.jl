@@ -286,6 +286,7 @@ end
     @test to_std_string(gradient(sum((x + y) .^ 2), x)) == "2(x + y)"
     @test to_std_string(gradient(sum((x .* y) .^ 2), x)) == "2(x ⊙ y ⊙ y)"
     @test to_std_string(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
+    @test to_std_string(gradient((x' * A * x) .^ (-2), x)) == "(-2)(xᵀAᵀx)⁻³(Aᵀx + Ax)"
 end
 
 @testset "to_std_string of jacobian" begin
