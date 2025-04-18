@@ -2,12 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-struct Diag
-    arg::Tensor
-    ids::IndexList
-end
-
-# TODO: If this works, rename 'to_standard' and others in std.jl and rename 'std' -> 'to_standard'
 function simplify(arg::Monomial)
     return arg
 end
