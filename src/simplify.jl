@@ -2,15 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-function simplify(arg::Monomial)
-    return arg
-end
-
-function simplify(arg::KrD)
-    return arg
-end
-
-function simplify(arg::Zero)
+function simplify(arg::Value)
     return arg
 end
 
@@ -19,11 +11,11 @@ function simplify(arg::UnaryOperation{Op}) where {Op}
 end
 
 function simplify(arg::BinaryOperation{Mult})
-    return simplify(Mult(), arg.arg1, arg.arg2)
+    return simplify(Mult(), simplify(arg.arg1), simplify(arg.arg2))
 end
 
 function simplify(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    return simplify(Op(), arg.arg1, arg.arg2)
+    return simplify(Op(), simplify(arg.arg1), simplify(arg.arg2))
 end
 
 function simplify(::Mult, arg1::Monomial, arg2::Monomial)
