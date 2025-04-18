@@ -57,18 +57,6 @@ function diff(arg::BinaryOperation{Op}, wrt::Monomial) where {Op<:AdditiveOperat
     return BinaryOperation{Op}(diff(arg.arg1, wrt), diff(arg.arg2, wrt))
 end
 
-function is_regular_contraction(arg1, arg2)
-    arg1_free_ids, arg2_free_ids = get_free_indices.((arg1, arg2))
-
-    eliminated = eliminated_indices([arg1_free_ids; arg2_free_ids])
-
-    # TODO: Refactor
-    return !isempty(intersect(arg1_free_ids, eliminated)) &&
-           length(eliminated) == 2 &&
-           length(intersect(get_indices(arg1), eliminated)) == 1 &&
-           length(intersect(get_indices(arg2), eliminated)) == 1
-end
-
 function collect_factors(arg::BinaryOperation{Mult})
     return [collect_factors(arg.arg1); collect_factors(arg.arg2)]
 end
@@ -77,30 +65,12 @@ function collect_factors(arg)
     return [arg]
 end
 
-function has_letter(tensor::UnaryOperation, letter::Letter)
-    ids = get_free_indices(tensor)
-
-    letters = [i.letter for i ∈ ids]
-
-    return letter ∈ letters
-end
-
-function has_letter(tensor, letter::Letter)
-    ids = get_indices(tensor)
-
-    letters = [i.letter for i ∈ ids]
-
-    return letter ∈ letters
-end
-
 function has_index(tensor, index::LowerOrUpperIndex)
     ids = get_indices(tensor)
 
     return index ∈ ids
 end
 
-# TODO: Rename evaluate to e.g. expand. Evaluate does not evaluate anymore in order to retain more context.
-# All simplifications should be moved to simplify instead.
 function evaluate(arg::Union{Monomial,KrD,Zero,Real})
     return arg
 end
