@@ -96,6 +96,12 @@ function has_letter(tensor, letter::Letter)
     return letter ∈ letters
 end
 
+function has_index(tensor, index::LowerOrUpperIndex)
+    ids = get_indices(tensor)
+
+    return index ∈ ids
+end
+
 # TODO: Rename evaluate to e.g. expand. Evaluate does not evaluate anymore in order to retain more context.
 # All simplifications should be moved to simplify instead.
 function evaluate(arg::Union{Monomial,KrD,Zero,Real})
