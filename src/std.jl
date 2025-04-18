@@ -639,31 +639,6 @@ function to_standard(arg::Real)
     return arg
 end
 
-function get_flipped(new_term, old_term)
-    new_ids = get_free_indices(new_term)
-    old_ids = get_free_indices(old_term)
-
-    flipped = Dict()
-
-    for (l, r) ∈ zip(new_ids, old_ids)
-        @assert l.letter == r.letter
-
-        if typeof(l) != typeof(r)
-            flipped[r] = l
-        end
-    end
-
-    return flipped
-end
-
-function was_flipped(index, flips)
-    if flip(index) ∈ keys(flips)
-        return true
-    end
-
-    return false
-end
-
 # TODO: Constrain to Mult and ElementWise
 function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
     binop = nothing
