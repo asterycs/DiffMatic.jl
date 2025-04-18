@@ -427,6 +427,10 @@ function Base.:(-)(arg1::Tensor, arg2::Tensor)
     return create_additive_op(Sub(), arg1, arg2)
 end
 
+function get_index_type_count(indices::IndexList)
+    return [(t, count(==(t), typeof.(indices))) for t ∈ (Upper, Lower)]
+end
+
 function create_additive_op(
     op::Op,
     arg1::Tensor,
@@ -442,6 +446,15 @@ function create_additive_op(
         end
 
         throw(DomainError((arg1, arg2), "Cannot $op_text tensors of different order"))
+    end
+
+    if get_index_type_count(arg1_ids) != get_index_type_count(arg2_ids)
+        throw(
+            DomainError(
+                (arg1, arg2),
+                "Cannot add tensors with different components. Did you try to add e.g. a row and a column vector?",
+            ),
+        )
     end
 
     if arg1_ids == arg2_ids
