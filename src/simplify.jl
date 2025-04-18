@@ -54,19 +54,6 @@ function get_diag_delta(arg)
     return nothing
 end
 
-function get_diag_delta(arg1, arg2)
-    l = get_diag_delta(arg1)
-    r = get_diag_delta(arg2)
-
-    if !isnothing(l)
-        return l
-    elseif !isnothing(r)
-        return r
-    end
-
-    return nothing
-end
-
 function get_last_letter(indices::IndexList)
     current_last = Upper(0)
 
