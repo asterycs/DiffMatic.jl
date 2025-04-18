@@ -446,7 +446,11 @@ function _to_std_string(arg::BinaryOperation{Mult})
 end
 
 function _to_std_string(arg::BinaryOperation{Pow})
-    return parenthesize_std(arg.arg1) * script(Upper(arg.arg2))
+    if arg.arg1 isa UnaryOperation || arg.arg1 isa Real || arg.arg1 isa Monomial
+        return parenthesize_std(arg.arg1) * script(Upper(arg.arg2))
+    end
+
+    return "(" * _to_std_string(arg.arg1) * ")" * script(Upper(arg.arg2))
 end
 
 function _to_std_string(arg::BinaryOperation{ElementWise})

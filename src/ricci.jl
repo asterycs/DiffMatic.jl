@@ -557,18 +557,25 @@ function script(index::Lower)
     @assert index.letter >= 0
     text = []
 
-    for d ∈ reverse(digits(index.letter))
+    letter = abs(index.letter)
+
+    for d ∈ reverse(digits(letter))
         push!(text, Char(0x2080 + d))
+    end
+
+    if index.letter < 0
+        pushfirst!(text, "₋")
     end
 
     return join(text)
 end
 
 function script(index::Upper)
-    @assert index.letter >= 0
     text = []
 
-    for d ∈ reverse(digits(index.letter))
+    letter = abs(index.letter)
+
+    for d ∈ reverse(digits(letter))
         if d == 0
             push!(text, Char(0x2070))
         end
@@ -584,6 +591,10 @@ function script(index::Upper)
         if d > 3
             push!(text, Char(0x2070 + d))
         end
+    end
+
+    if index.letter < 0
+        pushfirst!(text, "⁻")
     end
 
     return join(text)
