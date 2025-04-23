@@ -79,14 +79,6 @@ function evaluate(arg::UnaryOperation{Op}) where {Op}
     return UnaryOperation{Op}(evaluate(arg.arg))
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Pow}, arg2::KrD)
-    if !is_elementwise_multiplication(arg1.arg1, arg2)
-        return BinaryOperation{Pow}(evaluate(Mult(), arg1.arg1, arg2), arg1.arg2)
-    end
-
-    return BinaryOperation{Mult}(arg1, arg2)
-end
-
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Real)
     return evaluate(Mult(), arg2, arg1)
 end
