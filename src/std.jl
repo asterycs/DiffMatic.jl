@@ -210,22 +210,6 @@ function throw_not_std()
     throw(DomainError("Cannot write expression in standard notation"))
 end
 
-# This type is for tagging contractions that need special treatment before converting to
-# standard notation (if at all possible).
-struct ElementWise end
-
-function get_indices(arg::BinaryOperation{ElementWise})
-    return [get_indices(arg.arg1); get_indices(arg.arg2)]
-end
-
-function to_string(arg::BinaryOperation{ElementWise})
-    return parenthesize(arg.arg1) * parenthesize(arg.arg2)
-end
-
-function evaluate(arg::BinaryOperation{ElementWise})
-    return arg
-end
-
 function _to_std_string(arg::Monomial)
     ids = get_indices(arg)
 
@@ -369,97 +353,76 @@ function add_contracting_factor_ordered!(ordered_factors::AbstractArray, factor:
     return false
 end
 
+function get_contra_covariant_matrix(arg1::Tensor, arg2::Tensor)
+    arg1_ids, arg2_ids = get_free_indices.((arg1, arg2))
+    arg1_letters = [i.letter for i ∈ get_free_indices(arg1)]
+    arg2_letters = [i.letter for i ∈ get_free_indices(arg2)]
+    common_letter = intersect(arg1_letters, arg2_letters)
+
+    @assert length(common_letter) == 1
+
+    arg1_filt = filter(i->i.letter == first(common_letter), arg1_ids)
+    arg2_filt = filter(i->i.letter == first(common_letter), arg2_ids)
+
+    if typeof(first(arg1_filt)) == Lower && typeof(first(arg2_filt)) == Upper
+        return (arg2, arg1)
+    elseif typeof(first(arg1_filt)) == Upper && typeof(first(arg2_filt)) == Lower
+        return (arg1, arg2)
+    end
+
+    # TODO: Refactor
+    @assert false
+end
+
 function _to_std_string(arg::BinaryOperation{Mult})
-    factors = group_element_wise_products(arg)
-    factors = Any[f for f ∈ factors]
+    if is_elementwise_multiplication(arg.arg1, arg.arg2)
+        indices = get_indices(arg)
+        target_indices = unique(eliminate_indices(indices))
+        terms = (arg.arg1, arg.arg2)
 
-    ordered_factors = []
-    reals = Real[]
-    scalars = []
+        if length(terms) == 2 && length(target_indices) == 2
+            arg1_ids, arg2_ids = get_free_indices.(terms)
 
-    while !all(isnothing.(factors))
-        term_was_added = false
+            if maximum(length.((arg1_ids, arg2_ids))) == 2 &&
+               minimum(length.((arg1_ids, arg2_ids))) == 1
+                matrix = terms[1]
+                vector = terms[2]
 
-        for i ∈ eachindex(factors)
-            if isnothing(factors[i])
-                continue
-            end
-
-            factor = factors[i]
-            free_ids = get_free_indices(factor)
-
-            if factor isa Real
-                push!(reals, factor)
-                factors[i] = nothing
-                term_was_added = true
-            elseif isempty(free_ids)
-                push!(scalars, factor)
-                factors[i] = nothing
-                term_was_added = true
-            else
-                if isempty(ordered_factors)
-                    push!(ordered_factors, factor)
-                    factors[i] = nothing
-                    term_was_added = true
-                    continue
+                if length(arg2_ids) == 2
+                    matrix, vector = vector, matrix
                 end
 
-                if add_contracting_factor_ordered!(ordered_factors, factor)
-                    factors[i] = nothing
-                    term_was_added = true
-                    continue
+                m_ids = get_indices(matrix)
+                v_ids = get_indices(vector)
+
+                if m_ids[1] == v_ids[1]
+                    return "diag(" * _to_std_string(vector) * ")" * _to_std_string(matrix)
+                elseif m_ids[2] == v_ids[1]
+                    return _to_std_string(matrix) * " diag(" * _to_std_string(vector) * ")"
                 end
             end
-        end
 
-        if !term_was_added
-            break
-        end
-    end
-
-    for i ∈ eachindex(factors) # Remaining factors make outer products
-        if !isnothing(factors[i])
-            if typeof(last(get_free_indices(factors[i]))) == Upper
-                pushfirst!(ordered_factors, factors[i])
-                factors[i] = nothing
-            else
-                push!(ordered_factors, factors[i])
-                factors[i] = nothing
+            if length(arg1_ids) == length(arg2_ids)
+                if all(arg1_ids .== arg2_ids)
+                    return _to_std_string(terms[1]) * " ⊙ " * _to_std_string(terms[2])
+                else
+                    throw_not_std()
+                end
             end
+
+            throw_not_std()
         end
     end
 
-    @assert all(isnothing.(factors))
+    arg1_ids, arg2_ids = get_free_indices.((arg.arg1, arg.arg2))
 
-    prepend!(ordered_factors, scalars)
-    if !isempty(reals)
-        pushfirst!(ordered_factors, prod(reals))
-    end
-
-    out = ""
-
-    for f ∈ ordered_factors
-        out *= parenthesize_std(f)
-    end
-
-    return out
-end
-
-function _to_std_string(arg::BinaryOperation{Pow})
-    if arg.arg1 isa UnaryOperation || arg.arg1 isa Real || arg.arg1 isa Monomial
-        return parenthesize_std(arg.arg1) * script(Upper(arg.arg2))
-    end
-
-    return "(" * _to_std_string(arg.arg1) * ")" * script(Upper(arg.arg2))
-end
-
-function _to_std_string(arg::BinaryOperation{ElementWise})
+    ##### Refactor
     indices = get_indices(arg)
     target_indices = unique(eliminate_indices(indices))
-    terms = collect_factors(arg)
+    terms = (arg.arg1, arg.arg2)
 
     if length(target_indices) == 1
-        if all(length.(get_indices.(terms)) .== 1)
+        if all(length.(unique(get_free_indices.(terms))) .== 1)
             return reduce(
                 (l, r) -> l * " ⊙ " * _to_std_string(r),
                 terms[2:end];
@@ -471,59 +434,118 @@ function _to_std_string(arg::BinaryOperation{ElementWise})
             else
                 return "vec(1)ᵀ"
             end
-        else
-            throw_not_std()
         end
     end
 
-    if length(terms) == 2 && length(target_indices) == 2
-        arg1_ids, arg2_ids = get_free_indices.(terms)
-
-        if maximum(length.((arg1_ids, arg2_ids))) == 2 &&
-           minimum(length.((arg1_ids, arg2_ids))) == 1
-            matrix = terms[1]
-            vector = terms[2]
-
-            if length(arg2_ids) == 2
-                matrix, vector = vector, matrix
-            end
-
-            m_ids = get_indices(matrix)
-            v_ids = get_indices(vector)
-
-            if m_ids[1] == v_ids[1]
-                return "diag(" * _to_std_string(vector) * ")" * _to_std_string(matrix)
-            elseif m_ids[2] == v_ids[1]
-                return _to_std_string(matrix) * " diag(" * _to_std_string(vector) * ")"
-            end
-        end
-
-        if length(arg1_ids) == length(arg2_ids)
-            if all(arg1_ids .== arg2_ids)
-                return _to_std_string(terms[1]) * " ⊙ " * _to_std_string(terms[2])
-            else
-                throw_not_std()
-            end
-        end
-
-        throw_not_std()
-    end
-
-    if isempty(target_indices) && length(terms) == 2
+    if isempty(target_indices) &&
+       length(terms) == 2 &&
+       (typeof(terms[1]) == KrD || typeof(terms[2]) == KrD)
         tensor = nothing
 
         if isempty(get_free_indices(terms[1])) && typeof(terms[1]) == KrD
             tensor = terms[2]
         elseif isempty(get_free_indices(terms[2])) && typeof(terms[2]) == KrD
             tensor = terms[1]
-        else
-            throw_not_std()
         end
 
         return "sum(" * _to_std_string(tensor) * ")"
     end
+    #####
 
-    throw_not_std()
+    if length(arg1_ids) == 2 && length(arg2_ids) == 2
+        contra, covariant = get_contra_covariant_matrix(arg.arg1, arg.arg2)
+
+        return parenthesize_std(covariant) * parenthesize_std(contra)
+    end
+
+    if (length(arg1_ids) == 2 && length(arg2_ids) == 1) ||
+       (length(arg2_ids) == 2 && length(arg1_ids) == 1)
+        mat = if length(arg1_ids) == 2
+            arg.arg1
+        else
+            arg.arg2
+        end
+        vec = if length(arg1_ids) == 1
+            arg.arg1
+        else
+            arg.arg2
+        end
+        mat_ids = if length(arg1_ids) == 2
+            arg1_ids
+        else
+            arg2_ids
+        end
+        vec_ids = if length(arg1_ids) == 1
+            arg1_ids
+        else
+            arg2_ids
+        end
+
+        if typeof(last(mat_ids)) == Lower && flip(last(mat_ids)) == first(vec_ids)
+            return parenthesize_std(mat) * parenthesize_std(vec)
+        elseif typeof(first(mat_ids)) == Lower && flip(first(mat_ids)) == first(vec_ids)
+            return parenthesize_std(mat) * parenthesize_std(vec)
+        elseif typeof(first(mat_ids)) == Upper && flip(first(mat_ids)) == first(vec_ids)
+            return parenthesize_std(vec) * parenthesize_std(mat)
+        elseif typeof(last(mat_ids)) == Upper && flip(last(mat_ids)) == first(vec_ids)
+            return parenthesize_std(vec) * parenthesize_std(mat)
+        end
+    end
+
+    if length(arg1_ids) == 1 && length(arg2_ids) == 1
+        if isempty(get_free_indices(arg))
+            if typeof(first(arg1_ids)) == Lower && typeof(first(arg2_ids)) == Upper
+                return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+            elseif typeof(first(arg1_ids)) == Upper && typeof(first(arg2_ids)) == Lower
+                return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
+            end
+        else
+            if typeof(first(arg1_ids)) == Lower && typeof(first(arg2_ids)) == Upper
+                return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
+            elseif typeof(first(arg1_ids)) == Upper && typeof(first(arg2_ids)) == Lower
+                return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+            end
+        end
+    end
+
+    if (isempty(arg1_ids) && !isempty(arg2_ids)) ||
+       (isempty(arg2_ids) && !isempty(arg1_ids))
+        scalar = if isempty(arg1_ids)
+            arg.arg1
+        else
+            arg.arg2
+        end
+        tensor = if !isempty(arg1_ids)
+            arg.arg1
+        else
+            arg.arg2
+        end
+
+        return parenthesize_std(scalar) * parenthesize_std(tensor)
+    end
+
+    if (isempty(arg1_ids) && isempty(arg2_ids))
+        if arg.arg1 isa Real
+            return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+        elseif arg.arg2 isa Real
+            return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
+        elseif arg.arg1 isa Monomial
+            return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+        elseif arg.arg2 isa Monomial
+            return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
+        end
+    end
+
+    # throw_not_std()
+    return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+end
+
+function _to_std_string(arg::BinaryOperation{Pow})
+    if arg.arg1 isa UnaryOperation || arg.arg1 isa Real || arg.arg1 isa Monomial
+        return parenthesize_std(arg.arg1) * script(Upper(arg.arg2))
+    end
+
+    return "(" * _to_std_string(arg.arg1) * ")" * script(Upper(arg.arg2))
 end
 
 function parenthesize_std(arg)
@@ -542,12 +564,12 @@ function parenthesize_std(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation
     return "(" * _to_std_string(arg) * ")"
 end
 
-function parenthesize_std(arg::BinaryOperation{ElementWise})
-    return "(" * _to_std_string(arg) * ")"
-end
+function parenthesize_std(arg::BinaryOperation{Mult})
+    if is_elementwise_multiplication(arg.arg1, arg.arg2)
+        return "(" * _to_std_string(arg) * ")"
+    end
 
-function collect_factors(arg::BinaryOperation{ElementWise})
-    return [collect_factors(arg.arg1); collect_factors(arg.arg2)]
+    return _to_std_string(arg)
 end
 
 # TODO: Remove
@@ -699,21 +721,6 @@ function group_factors(factors::AbstractArray)
     return chunked_factors
 end
 
-function group_element_wise_products(arg::BinaryOperation{Mult})
-    factors = collect_factors(arg)
-    factors = map(evaluate, factors) # recursion
-
-    grouped_factors = group_factors(factors)
-
-    for i ∈ eachindex(grouped_factors)
-        if grouped_factors[i] isa AbstractArray
-            grouped_factors[i] = to_binary_operation(ElementWise(), grouped_factors[i])
-        end
-    end
-
-    return grouped_factors
-end
-
 # Recursive adjoint
 function radjoint(arg::T) where {T<:UnaryOperation}
     return T(arg.arg')
@@ -787,15 +794,7 @@ function to_standard(arg::BinaryOperation{Mult})
         throw_not_std()
     end
 
-    terms = group_element_wise_products(term)
-
-    standardized_term = to_binary_operation(Mult(), terms)
-
-    ordered_expr_ids = get_free_indices(standardized_term)
-
-    @assert length(unique(ordered_expr_ids)) == length(target_indices)
-
-    return standardized_term
+    return term
 end
 
 """
