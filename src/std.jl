@@ -294,65 +294,6 @@ function _to_std_string(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
            _to_std_string(arg.arg2)
 end
 
-function add_contracting_factor_ordered!(ordered_factors::AbstractArray, factor::Tensor)
-    for fixed ∈ (first(ordered_factors), last(ordered_factors))
-        fixed_indices = get_free_indices(fixed)
-        next_indices = get_free_indices(factor)
-
-        ### Contractions
-        ################
-        if typeof(last(next_indices)) == Lower &&
-           flip(last(next_indices)) == first(fixed_indices)
-            pushfirst!(ordered_factors, factor)
-            return true
-        end
-
-        if typeof(last(next_indices)) == Upper &&
-           flip(last(next_indices)) == first(fixed_indices)
-            push!(ordered_factors, factor)
-            return true
-        end
-
-        if typeof(first(next_indices)) == Upper &&
-           flip(first(next_indices)) == last(fixed_indices)
-            push!(ordered_factors, factor)
-            return true
-        end
-
-        if typeof(first(next_indices)) == Lower &&
-           flip(first(next_indices)) == last(fixed_indices)
-            pushfirst!(ordered_factors, factor)
-            return true
-        end
-
-        if typeof(last(next_indices)) == Upper &&
-           flip(last(next_indices)) == last(fixed_indices)
-            push!(ordered_factors, factor)
-            return true
-        end
-
-        if typeof(last(next_indices)) == Lower &&
-           flip(last(next_indices)) == last(fixed_indices)
-            pushfirst!(ordered_factors, factor)
-            return true
-        end
-
-        if typeof(first(next_indices)) == Upper &&
-           flip(first(next_indices)) == first(fixed_indices)
-            push!(ordered_factors, factor)
-            return true
-        end
-
-        if typeof(first(next_indices)) == Lower &&
-           flip(first(next_indices)) == first(fixed_indices)
-            pushfirst!(ordered_factors, factor)
-            return true
-        end
-    end
-
-    return false
-end
-
 function get_contra_covariant_matrix(arg1::Tensor, arg2::Tensor)
     arg1_ids, arg2_ids = get_free_indices.((arg1, arg2))
     arg1_letters = [i.letter for i ∈ get_free_indices(arg1)]
@@ -677,47 +618,6 @@ end
 
 function to_binary_operation(op::Op, term) where {Op}
     return term
-end
-
-function group_factors(factors::AbstractArray)
-    indices = unique(vcat(get_free_indices.(factors)...))
-
-    chunked_factors = []
-    remaining = Any[f for f ∈ factors]
-
-    # Find factors that contain the same index
-    for index ∈ indices
-        complex = []
-
-        if all(isnothing.(remaining))
-            break
-        end
-
-        for i ∈ eachindex(remaining)
-            if isnothing(remaining[i])
-                continue
-            end
-            if has_index(remaining[i], index)
-                push!(complex, i)
-            end
-        end
-
-        if isempty(complex) || length(complex) == 1
-            continue
-        end
-
-        push!(chunked_factors, remaining[complex])
-        remaining[complex] .= nothing
-    end
-
-    for i ∈ eachindex(remaining)
-        if !isnothing(remaining[i])
-            push!(chunked_factors, remaining[i])
-            remaining[i] = nothing
-        end
-    end
-
-    return chunked_factors
 end
 
 # Recursive adjoint
