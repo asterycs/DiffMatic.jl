@@ -267,8 +267,8 @@ end
     @test to_std_string(gradient((x .* c)' * x, x)) == "2(x ⊙ c)"
     @test to_std_string(gradient((x + y)' * x, x)) == "2x + y"
     @test to_std_string(gradient((x - y)' * x, x)) == "2x - y"
-    @test to_std_string(gradient(sin(tr(x * x')), x)) == "2cos(xᵀx)x"
-    @test to_std_string(gradient(cos(tr(x * x')), x)) == "(-2)sin(xᵀx)x"
+    @test to_std_string(gradient(sin(tr(x * x')), x)) == "cos(xᵀx)2x"
+    @test to_std_string(gradient(cos(tr(x * x')), x)) == "(-1)sin(xᵀx)2x"
     @test to_std_string(gradient(tr(A), x)) == "vec(0)"
     @test to_std_string(gradient(x' * B' * A * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std_string(gradient((A' * B * x)' * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
@@ -302,7 +302,7 @@ end
     @matrix X
     @vector x y z
 
-    @test to_std_string(derivative(sum(-y .* (X*z)), X)) == "(-1)zyᵀ"
+    @test to_std_string(derivative(sum(-y .* (X*z)), X)) == "z(-1)yᵀ"
 end
 
 @testset "to_std_string of hessian" begin
