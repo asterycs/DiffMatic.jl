@@ -96,6 +96,15 @@ function get_last_letter(indices::IndexList)
     return current_last
 end
 
+
+function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
+    if length(terms) == 1
+        return first(terms)
+    end
+
+    return BinaryOperation{Op}(to_binary_operation(op, terms[1:(end-1)]), terms[end])
+end
+
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     if is_diag(arg1)
         d = get_diag_delta(arg1)

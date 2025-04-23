@@ -601,25 +601,6 @@ function to_standard(arg::Real)
     return arg
 end
 
-function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
-    binop = nothing
-
-    for t ∈ terms
-        if isnothing(binop)
-            binop = t
-            continue
-        end
-
-        binop = BinaryOperation{Op}(binop, t)
-    end
-
-    return binop
-end
-
-function to_binary_operation(op::Op, term) where {Op}
-    return term
-end
-
 # Recursive adjoint
 function radjoint(arg::T) where {T<:UnaryOperation}
     return T(arg.arg')
