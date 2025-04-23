@@ -311,8 +311,7 @@ function get_contra_covariant_matrix(arg1::Tensor, arg2::Tensor)
         return (arg1, arg2)
     end
 
-    # TODO: Refactor
-    @assert false
+    throw_not_std(to_binary_operation(Mult(), (arg1, arg2)))
 end
 
 function _to_std_string(arg::BinaryOperation{Mult})
