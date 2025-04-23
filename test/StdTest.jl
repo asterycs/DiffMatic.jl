@@ -133,6 +133,18 @@ end
     @test to_std_string(contract(D, C)) == "DᵀCᵀ"
 end
 
+@testset "to_std_string output is correct with matrix-matrix element wise multiplication" begin
+    A = Monomial("A", Upper(1), Lower(2))
+    B = Monomial("B", Upper(1), Lower(2))
+
+    @test to_std_string(A .* B) == "A ⊙ B"
+    @test to_std_string(A .* A) == "A ⊙ A"
+    @test to_std_string(dc.evaluate(A * (A .* B))) == "A(A ⊙ B)"
+    @test to_std_string(dc.evaluate((A .* B) * A)) == "(A ⊙ B)A"
+    @test to_std_string(dc.evaluate(A .* (A * B))) == "AB ⊙ A"
+    @test to_std_string(dc.evaluate((A * B) .* A)) == "AB ⊙ A"
+end
+
 @testset "to_std_string output is correct with matrix-matrix sum" begin
     A = Monomial("A", Upper(1), Lower(2))
     B = Monomial("B", Upper(1), Lower(2))
