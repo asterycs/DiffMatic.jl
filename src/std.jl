@@ -649,32 +649,27 @@ function to_standard(arg::BinaryOperation{Mult})
     l = to_standard(arg.arg1)
     r = to_standard(arg.arg2)
 
-    term = nothing
-
-    # TODO: Refactor
-    if get_free_indices(BinaryOperation{Mult}(l, r)) == target_indices
-        term = BinaryOperation{Mult}(l, r)
-    elseif get_free_indices(BinaryOperation{Mult}(radjoint(l), r)) == target_indices
-        term = BinaryOperation{Mult}(radjoint(l), r)
-    elseif get_free_indices(BinaryOperation{Mult}(l, radjoint(r))) == target_indices
-        term = BinaryOperation{Mult}(l, radjoint(r))
-    elseif get_free_indices(BinaryOperation{Mult}(radjoint(l), radjoint(r))) ==
-           target_indices
-        term = BinaryOperation{Mult}(radjoint(l), radjoint(r))
-    elseif length(get_free_indices(BinaryOperation{Mult}(l, r))) == target_len
-        term = BinaryOperation{Mult}(l, r)
-    elseif length(get_free_indices(BinaryOperation{Mult}(radjoint(l), r))) == target_len
-        term = BinaryOperation{Mult}(radjoint(l), r)
-    elseif length(get_free_indices(BinaryOperation{Mult}(l, radjoint(r)))) == target_len
-        term = BinaryOperation{Mult}(l, radjoint(r))
-    elseif length(get_free_indices(BinaryOperation{Mult}(radjoint(l), radjoint(r)))) ==
-           target_len
-        term = BinaryOperation{Mult}(radjoint(l), radjoint(r))
-    else
-        throw_not_std(arg)
+    attempt = BinaryOperation{Mult}(l, r)
+    if get_free_indices(attempt) == target_indices
+        return attempt
     end
 
-    return term
+    attempt = BinaryOperation{Mult}(radjoint(l), r)
+    if get_free_indices(attempt) == target_indices
+        return attempt
+    end
+
+    attempt = BinaryOperation{Mult}(l, radjoint(r))
+    if get_free_indices(attempt) == target_indices
+        return attempt
+    end
+
+    attempt = BinaryOperation{Mult}(radjoint(l), radjoint(r))
+    if get_free_indices(attempt) == target_indices
+        return attempt
+    end
+
+    throw_not_std(arg)
 end
 
 """
