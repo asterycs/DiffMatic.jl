@@ -206,8 +206,8 @@ function hessian(expr, wrt::Monomial)
     return evaluate(H)
 end
 
-function throw_not_std()
-    throw(DomainError("Cannot write expression in standard notation"))
+function throw_not_std(arg::Tensor)
+    throw(DomainError(arg, "Cannot write expression in standard notation"))
 end
 
 function _to_std_string(arg::Monomial)
@@ -229,7 +229,7 @@ function _to_std_string(arg::Monomial)
         return arg.id
     end
 
-    throw_not_std()
+    throw_not_std(arg)
 end
 
 function _to_std_string(arg::KrD)
@@ -243,7 +243,7 @@ function _to_std_string(arg::KrD)
         end
     end
 
-    throw_not_std()
+    throw_not_std(arg)
 end
 
 function _to_std_string(arg::Zero)
@@ -263,7 +263,7 @@ function _to_std_string(arg::Zero)
         end
     end
 
-    throw_not_std()
+    throw_not_std(arg)
 end
 
 function _to_std_string(arg::Real)
@@ -406,11 +406,11 @@ function _to_std_string(arg::BinaryOperation{Mult})
                 if all(arg1_ids .== arg2_ids)
                     return _to_std_string(terms[1]) * " ⊙ " * _to_std_string(terms[2])
                 else
-                    throw_not_std()
+                    throw_not_std(arg)
                 end
             end
 
-            throw_not_std()
+            throw_not_std(arg)
         end
     end
 
@@ -536,7 +536,7 @@ function _to_std_string(arg::BinaryOperation{Mult})
         end
     end
 
-    throw_not_std()
+    throw_not_std(arg)
 end
 
 function _to_std_string(arg::BinaryOperation{Pow})
@@ -612,7 +612,7 @@ function to_standard(term::Monomial)
         return Monomial(term.id)
     end
 
-    throw_not_std()
+    throw_not_std(term)
 end
 
 function to_standard(term::Union{KrD,Zero})
@@ -630,7 +630,7 @@ function to_standard(term::Union{KrD,Zero})
         return typeof(term)()
     end
 
-    throw_not_std()
+    throw_not_std(term)
 end
 
 function to_standard(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
@@ -653,7 +653,7 @@ function to_standard(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
         return BinaryOperation{Op}(radjoint(l), radjoint(r))
     end
 
-    throw_not_std()
+    throw_not_std(arg)
 end
 
 function to_standard(arg::Real)
@@ -762,7 +762,7 @@ function to_standard(arg::BinaryOperation{Mult})
     target_len = length(target_indices)
 
     if length(target_indices) > 2
-        throw_not_std()
+        throw_not_std(arg)
     end
 
     l = to_standard(arg.arg1)
@@ -790,7 +790,7 @@ function to_standard(arg::BinaryOperation{Mult})
            target_len
         term = BinaryOperation{Mult}(radjoint(l), radjoint(r))
     else
-        throw_not_std()
+        throw_not_std(arg)
     end
 
     return term
@@ -821,7 +821,7 @@ function to_std_string(arg)
         elseif typeof(free_indices[1]) == Lower && typeof(free_indices[2]) == Upper
             to_standard(arg)
         else
-            throw_not_std()
+            throw_not_std(arg)
         end
     elseif length(free_indices) == 1
         if typeof(free_indices[1]) == Lower
@@ -829,7 +829,7 @@ function to_std_string(arg)
         elseif typeof(free_indices[1]) == Upper
             to_standard(arg)
         else
-            throw_not_std()
+            throw_not_std(arg)
         end
     else
         to_standard(arg)

@@ -84,5 +84,5 @@ to_std_string(derivative(A, A))
 
 # output
 
-ERROR: DomainError with Cannot write expression in standard notation
+ERROR: DomainError
 ```
