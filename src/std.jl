@@ -536,8 +536,7 @@ function _to_std_string(arg::BinaryOperation{Mult})
         end
     end
 
-    # throw_not_std()
-    return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+    throw_not_std()
 end
 
 function _to_std_string(arg::BinaryOperation{Pow})
