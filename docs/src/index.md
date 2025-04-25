@@ -28,7 +28,7 @@ Creating an expression:
 expr = x' * A * x
 
 # output
-x¹δ₁₂δ²₁δ¹₃A¹₂δ₁³δ²₄x¹δ₁⁴
+x₄A⁴₅x⁵
 ```
 The variable `expr` now contains an internal representation of the expression `x' * A * x`.
 
@@ -38,7 +38,7 @@ g = gradient(expr, x)
 H = hessian(expr, x)
 
 # output
-A₆⁵ + A⁵₆
+A₇⁶ + A⁶₇
 ```
 Convert the gradientinto standard notation using `to_std_string`:
 ```jldoctest intro
