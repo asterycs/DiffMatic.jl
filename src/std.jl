@@ -122,7 +122,7 @@ gradient(x' * A * x, x)
 
 # output
 
-x₃A³⁵ + A⁵₄x⁴
+x₄A⁴⁶ + A⁶₅x⁵
 ```
 """
 function gradient(expr, wrt::Monomial)
@@ -154,7 +154,7 @@ jacobian(A * x, x)
 
 # output
 
-A³₅
+A¹₅
 ```
 """
 function jacobian(expr, wrt::Monomial)
@@ -185,7 +185,7 @@ hessian(x' * A * x, x)
 
 # output
 
-A₆⁵ + A⁵₆
+A₇⁶ + A⁶₇
 ```
 """
 function hessian(expr, wrt::Monomial)
