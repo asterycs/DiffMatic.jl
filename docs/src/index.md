@@ -24,7 +24,7 @@ using DiffMatic
 x¹
 ```
 Creating an expression:
-```jldoctest intro; output = false
+```jldoctest intro
 expr = x' * A * x
 
 # output
@@ -40,7 +40,7 @@ H = hessian(expr, x)
 # output
 A₇⁶ + A⁶₇
 ```
-Convert the gradientinto standard notation using `to_std_string`:
+Convert the gradient into standard notation using `to_std_string`:
 ```jldoctest intro
 to_std_string(g)
 
