@@ -45,6 +45,16 @@ end
     @test to_std_string(KrD(Lower(2), Upper(1))) == "Iᵀ"
 end
 
+@testset "to_std_string output is correct with standard form Zero" begin
+    @test to_std_string(Zero(Upper(1))) == "vec(0)"
+    @test to_std_string(Zero(Lower(1))) == "vec(0)ᵀ"
+
+    @test to_std_string(Zero(Upper(1), Lower(2))) == "mat(0)"
+    @test to_std_string(Zero(Upper(2), Lower(1))) == "mat(0)"
+    @test to_std_string(Zero(Lower(1), Upper(2))) == "mat(0)ᵀ"
+    @test to_std_string(Zero(Lower(2), Upper(1))) == "mat(0)ᵀ"
+end
+
 @testset "to_std_string output is correct with scalar-Monomial multiplication" begin
     A = Monomial("A", Upper(1), Lower(2))
     At = Monomial("A", Lower(1), Upper(2))
