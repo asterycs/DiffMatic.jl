@@ -38,6 +38,13 @@ end
     @test equivalent(c, Monomial("c"))
 end
 
+@testset "to_std_string output is correct with standard form KrD" begin
+    @test to_std_string(KrD(Upper(1), Lower(2))) == "I"
+    @test to_std_string(KrD(Upper(2), Lower(1))) == "I"
+    @test to_std_string(KrD(Lower(1), Upper(2))) == "Iᵀ"
+    @test to_std_string(KrD(Lower(2), Upper(1))) == "Iᵀ"
+end
+
 @testset "to_std_string output is correct with scalar-Monomial multiplication" begin
     A = Monomial("A", Upper(1), Lower(2))
     At = Monomial("A", Lower(1), Upper(2))
