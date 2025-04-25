@@ -371,38 +371,23 @@ end
     x = Monomial("x", Upper(3))
 
     @test dc.update_index(x, Upper(3), Upper(3)) == x
-
-    expected_shift = KrD(Lower(3), Upper(1))
-    @test dc.update_index(x, Upper(3), Upper(1)) ==
-          dc.BinaryOperation{dc.Mult}(x, expected_shift)
-
-    expected_shift = KrD(Lower(3), Upper(2))
-    @test dc.update_index(x, Upper(3), Upper(2)) ==
-          dc.BinaryOperation{dc.Mult}(x, expected_shift)
+    @test dc.update_index(x, Upper(3), Upper(1)) == Monomial("x", Upper(1))
+    @test dc.update_index(x, Upper(3), Upper(2)) == Monomial("x", Upper(2))
 end
 
 @testset "update_index row vector" begin
     x = Monomial("x", Lower(3))
 
     @test dc.update_index(x, Lower(3), Lower(3)) == x
-
-    expected_shift = KrD(Upper(3), Lower(1))
-    @test dc.update_index(x, Lower(3), Lower(1)) ==
-          dc.BinaryOperation{dc.Mult}(x, expected_shift)
-
-    expected_shift = KrD(Upper(3), Lower(2))
-    @test dc.update_index(x, Lower(3), Lower(2)) ==
-          dc.BinaryOperation{dc.Mult}(x, expected_shift)
+    @test dc.update_index(x, Lower(3), Lower(1)) == Monomial("x", Lower(1))
+    @test dc.update_index(x, Lower(3), Lower(2)) == Monomial("x", Lower(2))
 end
 
 @testset "update_index matrix" begin
     A = Monomial("A", Upper(1), Lower(2))
 
     @test dc.update_index(A, Lower(2), Lower(2)) == A
-
-    expected_shift = KrD(Upper(2), Lower(3))
-    @test dc.update_index(A, Lower(2), Lower(3)) ==
-          dc.BinaryOperation{dc.Mult}(A, expected_shift)
+    @test dc.update_index(A, Lower(2), Lower(3)) == Monomial("A", Upper(1), Lower(3))
 end
 
 @testset "transpose vector" begin

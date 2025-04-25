@@ -499,7 +499,7 @@ function update_index(
         end
     end
 
-    return BinaryOperation{Mult}(arg, KrD(flip(from), to))
+    return evaluate(BinaryOperation{Mult}(arg, KrD(flip(from), to)))
 end
 
 function Base.:(-)(arg::Tensor)
@@ -543,7 +543,7 @@ function Base.adjoint(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
         )
     end
 
-    return BinaryOperation{Op}(arg1_t, arg2_t)
+    return evaluate(BinaryOperation{Op}(arg1_t, arg2_t))
 end
 
 function Base.adjoint(arg::Union{Monomial,KrD,Zero})
@@ -563,7 +563,7 @@ function Base.adjoint(arg::Union{Monomial,KrD,Zero})
         )
     end
 
-    return e
+    return evaluate(e)
 end
 
 function script(index::Lower)
