@@ -190,7 +190,7 @@ function get_indices(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
 end
 
 function get_free_indices(arg)
-    return unique(eliminate_indices(get_indices(evaluate(arg))))
+    return unique(eliminate_indices(get_indices(arg)))
 end
 
 function can_contract(arg1::Value, arg2::Value)
@@ -294,6 +294,18 @@ function Base.:(*)(arg1::Tensor, arg2::Real)
 end
 
 function Base.:(*)(arg1::Value, arg2::Tensor)
+    arg1_indices, arg2_indices = unique.(get_indices.((arg1, arg2)))
+    intersecting_letters = intersect(get_letters(arg1_indices), get_letters(arg2_indices))
+
+    for letter ∈ intersecting_letters
+        for index ∈ arg2_indices
+            if index.letter == letter
+                new_letter = get_next_letter(arg1, arg2)
+                arg2 = update_index(arg2, index, same_to(index, new_letter))
+            end
+        end
+    end
+
     arg1_free_indices = get_free_indices(arg1)
     arg2_free_indices = get_free_indices(arg2)
 
