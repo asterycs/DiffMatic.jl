@@ -586,15 +586,15 @@ function to_standard(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
     if isempty(setdiff(get_free_indices(l), get_free_indices(r))) &&
        isempty(setdiff(get_free_indices(l), target_indices))
         return BinaryOperation{Op}(l, r)
-    elseif isempty(setdiff(get_free_indices(radjoint(l)), get_free_indices(r))) &&
-           isempty(setdiff(get_free_indices(radjoint(l)), target_indices))
-        return BinaryOperation{Op}(radjoint(l), r)
-    elseif isempty(setdiff(get_free_indices(l), get_free_indices(radjoint(r)))) &&
+    elseif isempty(setdiff(get_free_indices(adjoint(l)), get_free_indices(r))) &&
+           isempty(setdiff(get_free_indices(adjoint(l)), target_indices))
+        return BinaryOperation{Op}(adjoint(l), r)
+    elseif isempty(setdiff(get_free_indices(l), get_free_indices(adjoint(r)))) &&
            isempty(setdiff(get_free_indices(l), target_indices))
-        return BinaryOperation{Op}(l, radjoint(r))
-    elseif isempty(setdiff(get_free_indices(radjoint(l)), get_free_indices(radjoint(r)))) &&
-           isempty(setdiff(get_free_indices(radjoint(l)), target_indices))
-        return BinaryOperation{Op}(radjoint(l), radjoint(r))
+        return BinaryOperation{Op}(l, adjoint(r))
+    elseif isempty(setdiff(get_free_indices(adjoint(l)), get_free_indices(adjoint(r)))) &&
+           isempty(setdiff(get_free_indices(adjoint(l)), target_indices))
+        return BinaryOperation{Op}(adjoint(l), adjoint(r))
     end
 
     throw_not_std(arg)
@@ -602,43 +602,6 @@ end
 
 function to_standard(arg::Real)
     return arg
-end
-
-# Recursive adjoint
-function radjoint(arg::T) where {T<:UnaryOperation}
-    return T(arg.arg')
-end
-
-function radjoint(arg::BinaryOperation{Pow})
-    return BinaryOperation{Pow}(radjoint(arg.arg1), arg.arg2)
-end
-
-function radjoint(arg::BinaryOperation{Mult})
-    return BinaryOperation{Mult}(radjoint(arg.arg1), radjoint(arg.arg2))
-end
-
-function radjoint(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    return BinaryOperation{Op}(radjoint(arg.arg1), radjoint(arg.arg2))
-end
-
-function radjoint(arg::Monomial)
-    indices = get_indices(arg)
-
-    if length(indices) > 2
-        throw(DomainError(arg.id, "Adjoint is only defined for vectors and matrices"))
-    end
-
-    return Monomial(arg.id, flip.(indices)...)
-end
-
-function radjoint(arg::Union{KrD,Zero})
-    indices = get_indices(arg)
-
-    if length(indices) > 2
-        throw(DomainError(arg.id, "Adjoint is only defined for vectors and matrices"))
-    end
-
-    return typeof(arg)(flip.(indices)...)
 end
 
 function to_standard(arg::BinaryOperation{Mult})
@@ -657,17 +620,17 @@ function to_standard(arg::BinaryOperation{Mult})
         return attempt
     end
 
-    attempt = BinaryOperation{Mult}(radjoint(l), r)
+    attempt = BinaryOperation{Mult}(adjoint(l), r)
     if get_free_indices(attempt) == target_indices
         return attempt
     end
 
-    attempt = BinaryOperation{Mult}(l, radjoint(r))
+    attempt = BinaryOperation{Mult}(l, adjoint(r))
     if get_free_indices(attempt) == target_indices
         return attempt
     end
 
-    attempt = BinaryOperation{Mult}(radjoint(l), radjoint(r))
+    attempt = BinaryOperation{Mult}(adjoint(l), adjoint(r))
     if get_free_indices(attempt) == target_indices
         return attempt
     end
