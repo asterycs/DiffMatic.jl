@@ -377,18 +377,22 @@ function _to_std_string(arg::BinaryOperation{Mult})
         end
     end
 
-    if isempty(target_indices) &&
-       length(terms) == 2 &&
-       (typeof(terms[1]) == KrD || typeof(terms[2]) == KrD)
-        tensor = nothing
-
-        if isempty(get_free_indices(terms[1])) && typeof(terms[1]) == KrD
-            tensor = terms[2]
-        elseif isempty(get_free_indices(terms[2])) && typeof(terms[2]) == KrD
-            tensor = terms[1]
+    if isempty(target_indices) && (typeof(terms[1]) == KrD || typeof(terms[2]) == KrD)
+        tensor = if typeof(first(terms)) == KrD
+            last(terms)
+        else
+            first(terms)
         end
 
-        return "sum(" * _to_std_string(tensor) * ")"
+        tensor_free_ids = get_free_indices(tensor)
+
+        if length(tensor_free_ids) == 2
+            return "tr(" * to_std_string(tensor) * ")"
+        elseif length(tensor_free_ids) == 1
+            return "sum(" * _to_std_string(tensor) * ")"
+        end
+
+        throw_not_std(arg)
     end
     #####
 
@@ -710,14 +714,5 @@ function to_std_string(arg)
         to_standard(arg)
     end
 
-    trace = is_trace(arg)
-
-    argstr = _to_std_string(standardized)
-
-    # TODO: Move inside _to_std_string
-    if trace
-        argstr = "tr(" * argstr * ")"
-    end
-
-    return argstr
+    return _to_std_string(standardized)
 end
