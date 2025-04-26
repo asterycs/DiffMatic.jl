@@ -545,19 +545,11 @@ function parenthesize_std(arg::BinaryOperation{Mult})
     return _to_std_string(arg)
 end
 
-# TODO: Remove
 function is_trace(arg)
     terms = collect_factors(arg)
 
     if length(terms) == 1
-        ids = get_indices(arg)
-        free_ids = get_free_indices(arg)
-
-        if length(ids) == 2 && isempty(free_ids)
-            return true
-        else
-            return false
-        end
+        return length(get_indices(first(terms))) == 2 && isempty(get_free_indices(arg))
     end
 
     return all(length.(get_free_indices.(terms)) .== 2) && isempty(get_free_indices(arg))
