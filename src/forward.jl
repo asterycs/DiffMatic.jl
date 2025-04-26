@@ -65,12 +65,6 @@ function collect_factors(arg)
     return [arg]
 end
 
-function has_index(tensor, index::LowerOrUpperIndex)
-    ids = get_indices(tensor)
-
-    return index ∈ ids
-end
-
 function evaluate(arg::Union{Monomial,KrD,Zero,Real})
     return arg
 end
