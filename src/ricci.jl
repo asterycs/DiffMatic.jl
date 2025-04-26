@@ -132,9 +132,12 @@ function get_next_letter(exprs...)
     indices = get_indices.(exprs)
 
     letters = [index.letter for index ∈ Iterators.flatten(indices)]
-    max_letter = maximum(letters)
 
-    return max_letter + 1
+    if isempty(letters)
+        return 1
+    end
+
+    return maximum(letters) + 1
 end
 
 function is_permutation(l::AbstractArray{T}, r::AbstractArray{T}) where {T}
@@ -289,22 +292,77 @@ function Base.broadcasted(::typeof(^), arg1::Tensor, arg2::Int)
     return BinaryOperation{Pow}(arg1, arg2)
 end
 
+function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
+    return BinaryOperation{Mult}(
+        replace_letters(arg.arg1, letter_map),
+        replace_letters(arg.arg2, letter_map),
+    )
+end
+
+function replace_letters(arg::BinaryOperation{Pow}, letter_map::Dict)
+    return BinaryOperation{Mult}(
+        replace_letters(arg.arg1, letter_map),
+        replace_letters(arg.arg2, letter_map),
+    )
+end
+
+function replace_letters(
+    arg::BinaryOperation{Op},
+    letter_map::Dict,
+) where {Op<:AdditiveOperation}
+    return BinaryOperation{Op}(
+        replace_letters(arg.arg1, letter_map),
+        replace_letters(arg.arg2, letter_map),
+    )
+end
+
+function replace_letters(arg::Union{Monomial,Zero,KrD}, letter_map::Dict)
+    new_indices = LowerOrUpperIndex[]
+
+    for i ∈ arg.indices
+        if haskey(letter_map, i.letter)
+            push!(new_indices, same_to(i, letter_map[i.letter]))
+        else
+            push!(new_indices, i)
+        end
+    end
+
+    newarg = deepcopy(arg)
+    empty!(newarg.indices)
+
+    for ni ∈ new_indices
+        push!(newarg.indices, ni)
+    end
+
+    return newarg
+end
+
+function replace_letters(arg::UnaryOperation{Op}, letter_map::Dict) where {Op}
+    return UnaryOperation{Op}(replace_letters(arg.arg, letter_map))
+end
+
+function replace_letters(arg::Real, letter_map::Dict)
+    return arg
+end
+
 function Base.:(*)(arg1::Tensor, arg2::Real)
     return arg2 * arg1
 end
 
 function Base.:(*)(arg1::Value, arg2::Tensor)
     arg1_indices, arg2_indices = unique.(get_indices.((arg1, arg2)))
-    intersecting_letters = intersect(get_letters(arg1_indices), get_letters(arg2_indices))
+    intersecting_letters =
+        unique(intersect(get_letters(arg1_indices), get_letters(arg2_indices)))
 
-    for letter ∈ intersecting_letters
-        for index ∈ arg2_indices
-            if index.letter == letter
-                new_letter = get_next_letter(arg1, arg2)
-                arg2 = update_index(arg2, index, same_to(index, new_letter))
-            end
-        end
+    new_letters = Dict()
+    next_letter = get_next_letter(arg1, arg2)
+
+    for l ∈ intersecting_letters
+        new_letters[l] = next_letter
+        next_letter += 1
     end
+
+    arg2 = replace_letters(arg2, new_letters)
 
     arg1_free_indices = get_free_indices(arg1)
     arg2_free_indices = get_free_indices(arg2)
@@ -319,26 +377,6 @@ function Base.:(*)(arg1::Value, arg2::Tensor)
 
     if length(arg2_free_indices) > 2
         throw(DomainError(arg2, "Multiplication involving tensor \"$arg2\" is ambiguous"))
-    end
-
-    intersecting_letters =
-        intersect(get_letters(arg1_free_indices), get_letters(arg2_free_indices))
-
-    if !isempty(intersecting_letters)
-        if length(intersecting_letters) > 1 ||
-           arg1_free_indices[end].letter != arg2_free_indices[1].letter
-            # Intersecting letters need updating if:
-            #   - There are multiple intersecting letters
-            #   - The intersecting letters are any other than the contracting indices
-
-            for i ∈ arg1_free_indices
-                if i.letter ∈ intersecting_letters
-                    arg1 = update_index(arg1, i, same_to(i, get_next_letter(arg1, arg2)))
-                end
-            end
-        end
-
-        arg1_free_indices = get_free_indices(arg1)
     end
 
     # TODO: WETWET, simplify, add e.g. get_lower(arg::IndexList) and get_upper(arg::IndexLists)
