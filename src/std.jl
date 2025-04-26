@@ -629,6 +629,7 @@ end
 function to_standard(arg::BinaryOperation{Mult})
     target_indices = unique(get_free_indices(arg))
     target_len = length(target_indices)
+    is_scalar = isempty(target_indices)
 
     if length(target_indices) > 2
         throw_not_std(arg)
@@ -637,24 +638,18 @@ function to_standard(arg::BinaryOperation{Mult})
     l = to_standard(arg.arg1)
     r = to_standard(arg.arg2)
 
-    attempt = BinaryOperation{Mult}(l, r)
-    if get_free_indices(attempt) == target_indices
-        return attempt
-    end
+    attempts = (
+        BinaryOperation{Mult}(l, r),
+        BinaryOperation{Mult}(adjoint(l), r),
+        BinaryOperation{Mult}(l, adjoint(r)),
+        BinaryOperation{Mult}(adjoint(l), adjoint(r)),
+    )
 
-    attempt = BinaryOperation{Mult}(adjoint(l), r)
-    if get_free_indices(attempt) == target_indices
-        return attempt
-    end
-
-    attempt = BinaryOperation{Mult}(l, adjoint(r))
-    if get_free_indices(attempt) == target_indices
-        return attempt
-    end
-
-    attempt = BinaryOperation{Mult}(adjoint(l), adjoint(r))
-    if get_free_indices(attempt) == target_indices
-        return attempt
+    for attempt ∈ attempts
+        if length(get_free_indices(attempt)) == target_len &&
+           (is_scalar || last(get_free_indices(attempt)) == last(target_indices))
+            return attempt
+        end
     end
 
     throw_not_std(arg)

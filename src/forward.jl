@@ -187,7 +187,15 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
     new_args = []
 
     available1 = Any[arg1.arg1; arg1.arg2]
+    if is_elementwise_multiplication(arg1.arg1, arg1.arg2)
+        available1 = Any[arg1]
+    end
+
     available2 = Any[arg2.arg1; arg2.arg2]
+    if is_elementwise_multiplication(arg2.arg1, arg2.arg2)
+        available2 = Any[arg2]
+    end
+
 
     for i ∈ eachindex(available1)
         if isnothing(available1[i])
@@ -225,7 +233,7 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
             if isnothing(new_arg)
                 return args[1]
             else
-                return evaluate(BinaryOperation{Mult}(new_arg, args[1]))
+                return BinaryOperation{Mult}(new_arg, args[1])
             end
         end
 
