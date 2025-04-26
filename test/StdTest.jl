@@ -323,7 +323,7 @@ end
 @testset "to_std_string of gradient" begin
     @scalar a b
     @vector x y c
-    @matrix A B
+    @matrix A B C
 
     @test to_std_string(gradient(x' * x, x)) == "2x"
     @test to_std_string(gradient(tr(x * x'), x)) == "2x"
@@ -351,6 +351,9 @@ end
     @test_broken to_std_string(gradient(sum((x .* y) .^ 2), x)) == "2(x ⊙ y ⊙ y)"
     @test to_std_string(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
     @test to_std_string(gradient((x' * A * x) .^ (-2), x)) == "(-2)(xᵀAᵀx)⁻³(Aᵀx + Ax)"
+    @test to_std_string(gradient(((A .* B) * C * x)' * x, x)) == "(A ⊙ B)Cx + Cᵀ(Aᵀ ⊙ Bᵀ)x"
+    @test to_std_string(gradient(((A .* (B .* C)) * C * x)' * x, x)) ==
+          "(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x"
 end
 
 @testset "to_std_string of jacobian" begin
