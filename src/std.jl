@@ -210,7 +210,33 @@ function throw_not_std(arg::Tensor)
     throw(DomainError(arg, "Cannot write expression in standard notation"))
 end
 
+"""
+Returns a string representation of the input expression. The input must be in standard form.
+"""
+function _to_std_string end
+
+function is_standard_form(arg::Tensor)
+    free_ids = unique(get_free_indices(arg))
+
+    if length(free_ids) > 2
+        return false
+    end
+
+    if length(free_ids) == 2
+        if first(free_ids) isa Upper && last(free_ids) isa Lower ||
+           first(free_ids) isa Lower && last(free_ids) isa Upper
+            return true
+        end
+
+        return false
+    end
+
+    return true
+end
+
 function _to_std_string(arg::Monomial)
+    @assert is_standard_form(arg)
+
     ids = get_indices(arg)
 
     if length(ids) == 2
@@ -227,28 +253,26 @@ function _to_std_string(arg::Monomial)
         elseif typeof(ids[1]) == Lower
             return arg.id * "ᵀ"
         end
-    elseif isempty(ids)
-        return arg.id
     end
 
-    throw_not_std(arg)
+    return arg.id
 end
 
 function _to_std_string(arg::KrD)
+    @assert is_standard_form(arg)
+
     ids = get_indices(arg)
 
-    if length(ids) == 2
-        if typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
-            return "I"
-        elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
-            return "Iᵀ"
-        end
+    if typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
+        return "I"
+    elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
+        return "Iᵀ"
     end
-
-    throw_not_std(arg)
 end
 
 function _to_std_string(arg::Zero)
+    @assert is_standard_form(arg)
+
     ids = get_indices(arg)
 
     if length(ids) == 2
@@ -264,8 +288,6 @@ function _to_std_string(arg::Zero)
             return "vec(0)ᵀ"
         end
     end
-
-    throw_not_std(arg)
 end
 
 function _to_std_string(arg::Real)
@@ -319,6 +341,8 @@ function get_contra_covariant_matrix(arg1::Tensor, arg2::Tensor)
 end
 
 function _to_std_string(arg::BinaryOperation{Mult})
+    @assert is_standard_form(arg)
+
     if is_elementwise_multiplication(arg.arg1, arg.arg2)
         indices = get_indices(arg)
         target_indices = unique(eliminate_indices(indices))
