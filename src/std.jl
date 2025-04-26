@@ -214,7 +214,9 @@ function _to_std_string(arg::Monomial)
     ids = get_indices(arg)
 
     if length(ids) == 2
-        if typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
+        if flip(ids[1]) == ids[2]
+            return "tr(" * arg.id * ")"
+        elseif typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
             return arg.id
         elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
             return arg.id * "ᵀ"
@@ -300,14 +302,16 @@ function get_contra_covariant_matrix(arg1::Tensor, arg2::Tensor)
     arg2_letters = [i.letter for i ∈ get_free_indices(arg2)]
     common_letter = intersect(arg1_letters, arg2_letters)
 
-    @assert length(common_letter) == 1
+    if length(common_letter) == 1
+        arg1_filt = filter(i->i.letter == first(common_letter), arg1_ids)
+        arg2_filt = filter(i->i.letter == first(common_letter), arg2_ids)
 
-    arg1_filt = filter(i->i.letter == first(common_letter), arg1_ids)
-    arg2_filt = filter(i->i.letter == first(common_letter), arg2_ids)
-
-    if typeof(first(arg1_filt)) == Lower && typeof(first(arg2_filt)) == Upper
-        return (arg2, arg1)
-    elseif typeof(first(arg1_filt)) == Upper && typeof(first(arg2_filt)) == Lower
+        if typeof(first(arg1_filt)) == Lower && typeof(first(arg2_filt)) == Upper
+            return (arg2, arg1)
+        elseif typeof(first(arg1_filt)) == Upper && typeof(first(arg2_filt)) == Lower
+            return (arg1, arg2)
+        end
+    elseif length(common_letter) == 2 # is a trace
         return (arg1, arg2)
     end
 
@@ -377,6 +381,10 @@ function _to_std_string(arg::BinaryOperation{Mult})
         end
     end
 
+    if is_trace(arg)
+        return "tr(" * _to_std_string(arg.arg1) * _to_std_string(arg.arg2) * ")"
+    end
+
     if isempty(target_indices) && (typeof(terms[1]) == KrD || typeof(terms[2]) == KrD)
         tensor = if typeof(first(terms)) == KrD
             last(terms)
@@ -386,9 +394,7 @@ function _to_std_string(arg::BinaryOperation{Mult})
 
         tensor_free_ids = get_free_indices(tensor)
 
-        if length(tensor_free_ids) == 2
-            return "tr(" * to_std_string(tensor) * ")"
-        elseif length(tensor_free_ids) == 1
+        if length(tensor_free_ids) == 1
             return "sum(" * _to_std_string(tensor) * ")"
         end
 

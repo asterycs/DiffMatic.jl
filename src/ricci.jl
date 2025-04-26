@@ -232,7 +232,7 @@ function tr(arg::Tensor)
         throw(de)
     end
 
-    return BinaryOperation{Mult}(arg, KrD(flip(free_ids[2]), flip(free_ids[1])))
+    return evaluate(BinaryOperation{Mult}(arg, KrD(flip(free_ids[2]), flip(free_ids[1]))))
 end
 
 function Base.sum(arg::Tensor)

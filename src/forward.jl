@@ -253,10 +253,6 @@ function evaluate(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
-    if is_trace(BinaryOperation{Mult}(arg1, arg2))
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
-
     ci = indices_in_common(arg1.arg1, arg1.arg2)
 
     if !isempty(ci) && !is_trace(arg2)
@@ -339,10 +335,6 @@ function evaluate(::Mult, arg1::UnaryOperation, arg2::KrD)
 end
 
 function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperation}
-    if is_trace(BinaryOperation{Mult}(arg1, arg2))
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
-
     if can_contract(evaluate(arg1), evaluate(arg2.arg))
         return UnaryOp(evaluate(Mult(), evaluate(arg1), evaluate(arg2.arg)))
     end
@@ -371,10 +363,6 @@ function _multiply_with_krd(arg1::Union{Monomial,KrD}, arg2::KrD)
     end
 
     if is_elementwise_multiplication(arg1, arg2)
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
-
-    if is_trace(BinaryOperation{Mult}(arg1, arg2))
         return BinaryOperation{Mult}(arg1, arg2)
     end
 
@@ -410,10 +398,6 @@ function evaluate(
     arg1::BinaryOperation{Op},
     arg2::KrD,
 ) where {Op<:AdditiveOperation}
-    if is_trace(BinaryOperation{Mult}(arg1, arg2))
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
-
     return evaluate(
         Op(),
         evaluate(Mult(), evaluate(arg1.arg1), evaluate(arg2)),
@@ -426,10 +410,6 @@ function evaluate(
     arg1::KrD,
     arg2::BinaryOperation{Op},
 ) where {Op<:AdditiveOperation}
-    if is_trace(BinaryOperation{Mult}(arg1, arg2))
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
-
     return evaluate(
         Op(),
         evaluate(Mult(), arg1, evaluate(arg2.arg1)),

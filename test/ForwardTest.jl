@@ -539,10 +539,7 @@ end
     A = Monomial("A", Upper(1), Lower(2))
     B = Monomial("B", Upper(2), Lower(3))
 
-    @test dc.evaluate(tr(A)) == BinaryOperation{dc.Mult}(
-        Monomial("A", Upper(1), Lower(2)),
-        KrD(Upper(2), Lower(1)),
-    )
+    @test dc.evaluate(tr(A)) == Monomial("A", Upper(2), Lower(2))
     @test equivalent(
         dc.evaluate(tr(A * B)),
         dc.BinaryOperation{dc.Mult}(A, Monomial("B", Upper(2), Lower(1))),

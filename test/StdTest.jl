@@ -109,7 +109,8 @@ end
         return dc.BinaryOperation{dc.Add}(l, r)
     end
 
-    trA = mul(Monomial("A", Upper(1), Lower(2)), KrD(Upper(2), Lower(1)))
+    trA = Monomial("A", Upper(2), Lower(2))
+
     A = Monomial("A", Upper(3), Lower(4))
     B = Monomial("B", Upper(4), Lower(5))
     x = Monomial("x", Upper(4))
@@ -119,23 +120,19 @@ end
     @test to_std_string(mul(A, trA)) == "tr(A)A"
     @test to_std_string(mul(mul(trA, A), x)) == "tr(A)Ax"
 
-    trAB = mul(
-        mul(Monomial("A", Upper(1), Lower(2)), Monomial("B", Upper(2), Lower(3))),
-        KrD(Upper(3), Lower(1)),
-    )
+    trAB = mul(Monomial("A", Upper(1), Lower(2)), Monomial("B", Upper(2), Lower(1)))
+
     @test to_std_string(trAB) == "tr(AB)"
     @test to_std_string(mul(trAB, A)) == "tr(AB)A"
     @test to_std_string(mul(trAB, B)) == "tr(AB)B"
     @test to_std_string(mul(mul(trAB, A), x)) == "tr(AB)Ax"
 
-    trApB = mul(
-        add(Monomial("A", Upper(1), Lower(2)), Monomial("B", Upper(1), Lower(2))),
-        KrD(Upper(2), Lower(1)),
-    )
-    @test to_std_string(trApB) == "tr(A + B)"
-    @test to_std_string(mul(trApB, A)) == "tr(A + B)A"
-    @test to_std_string(mul(trApB, B)) == "tr(A + B)B"
-    @test to_std_string(mul(mul(trApB, A), x)) == "tr(A + B)Ax"
+    trApB = add(Monomial("A", Upper(2), Lower(2)), Monomial("B", Upper(2), Lower(2)))
+
+    @test to_std_string(trApB) == "tr(A) + tr(B)"
+    @test to_std_string(mul(trApB, A)) == "(tr(A) + tr(B))A"
+    @test to_std_string(mul(trApB, B)) == "(tr(A) + tr(B))B"
+    @test to_std_string(mul(mul(trApB, A), x)) == "(tr(A) + tr(B))Ax"
 end
 
 @testset "to_std_string output is correct with all covariant bilinar form-vector contraction" begin
