@@ -119,7 +119,9 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
         end
 
         return to_binary_operation(Mult(), reshaped)
-    elseif flip(first(arg2.indices)) == last(arg2.indices)
+    end
+
+    if is_trace(arg2)
         s = first(arg2.indices)
 
         elwise_ids = elementwise_indices(arg1.arg1, arg1.arg2)
@@ -131,9 +133,9 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
                     return evaluate(BinaryOperation{Mult}(arg1.arg1, adjoint(arg1.arg2)))
                 elseif last_index ∈ get_free_indices(arg1.arg2)
                     return evaluate(BinaryOperation{Mult}(adjoint(arg1.arg1), arg1.arg2))
-                else
-                    @assert false
                 end
+
+                @assert false "Unreachable"
             end
         end
     end
