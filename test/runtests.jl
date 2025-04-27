@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+using Documenter
 using Test
 
 include("TestUtils.jl")
@@ -21,3 +22,6 @@ end
 @testset "StdTest" begin
     include("StdTest.jl")
 end
+
+DocMeta.setdocmeta!(DiffMatic, :DocTestSetup, :(using DiffMatic); recursive = true)
+doctest(DiffMatic)

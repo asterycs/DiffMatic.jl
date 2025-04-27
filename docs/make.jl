@@ -9,6 +9,7 @@ makedocs(
     modules = [DiffMatic],
     pages = ["Introduction" => "index.md", "API Reference" => "api.md"],
     checkdocs = :exports,
+    doctest = false, # doctests are run separately
 )
 
 deploydocs(repo = "https://github.com/asterycs/DiffMatic.jl")
