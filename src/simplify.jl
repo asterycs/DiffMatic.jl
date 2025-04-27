@@ -58,14 +58,6 @@ function reshape(term::Monomial, indices::LowerOrUpperIndex...)
     return Monomial(term.id, indices...)
 end
 
-function reshape(term::Zero, indices::LowerOrUpperIndex...)
-    return Zero(indices...)
-end
-
-function reshape(term::KrD, indices::LowerOrUpperIndex...)
-    return KrD(indices...)
-end
-
 function reshape(term::UnaryOperation{Op}, indices::LowerOrUpperIndex...) where {Op}
     return UnaryOperation{Op}(reshape(term.arg, indices...))
 end
