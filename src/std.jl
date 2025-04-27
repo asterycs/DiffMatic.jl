@@ -402,6 +402,19 @@ function _to_std_string(arg::BinaryOperation{Mult})
             else
                 return "vec(1)ᵀ"
             end
+        elseif (arg.arg1 isa KrD && is_trace(arg.arg1)) ||
+               (arg.arg2 isa KrD && is_trace(arg.arg2))
+            tensor = if arg.arg1 isa KrD
+                arg.arg2
+            else
+                arg.arg1
+            end
+
+            if typeof(target_indices[1]) == Upper
+                return _to_std_string(tensor) * "vec(1)"
+            else
+                return "vec(1)ᵀ" * _to_std_string(tensor)
+            end
         end
     end
 

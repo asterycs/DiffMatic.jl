@@ -354,6 +354,7 @@ end
     @test to_std_string(gradient(((A .* B) * C * x)' * x, x)) == "(A ⊙ B)Cx + Cᵀ(Aᵀ ⊙ Bᵀ)x"
     @test to_std_string(gradient(((A .* (B .* C)) * C * x)' * x, x)) ==
           "(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x"
+    @test to_std_string(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
 end
 
 @testset "to_std_string of jacobian" begin
@@ -366,10 +367,11 @@ end
 end
 
 @testset "to_std_string of derivative {A, A'} * x" begin
-    @matrix X
+    @matrix A B C X
     @vector x y z
 
     @test to_std_string(derivative(sum(-y .* (X*z)), X)) == "z(-1)yᵀ"
+    @test to_std_string(derivative(sum((A .* B) * C * x), x)) == "vec(1)ᵀ(A ⊙ B)C"
 end
 
 @testset "to_std_string of hessian" begin
