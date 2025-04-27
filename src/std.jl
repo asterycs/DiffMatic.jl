@@ -519,12 +519,12 @@ function _to_std_string(arg::BinaryOperation{Mult})
     throw_not_std(arg)
 end
 
-function _to_std_string(arg::BinaryOperation{Pow})
-    if arg.arg1 isa UnaryOperation || arg.arg1 isa Real || arg.arg1 isa Monomial
-        return parenthesize_std(arg.arg1) * script(Upper(arg.arg2))
+function _to_std_string(arg::Power)
+    if arg.base isa UnaryOperation || arg.base isa Real || arg.base isa Monomial
+        return parenthesize_std(arg.base) * script(Upper(arg.exponent))
     end
 
-    return "(" * _to_std_string(arg.arg1) * ")" * script(Upper(arg.arg2))
+    return "(" * _to_std_string(arg.base) * ")" * script(Upper(arg.exponent))
 end
 
 function parenthesize_std(arg)
@@ -565,8 +565,8 @@ function to_standard(term::UnaryOperation{Op}) where {Op}
     return UnaryOperation{Op}(to_standard(term.arg))
 end
 
-function to_standard(term::BinaryOperation{Pow})
-    return BinaryOperation{Pow}(to_standard(term.arg1), term.arg2)
+function to_standard(term::Power)
+    return Power(to_standard(term.base), term.exponent)
 end
 
 function to_standard(term::Monomial)

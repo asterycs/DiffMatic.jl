@@ -81,7 +81,11 @@ abstract type AdditiveOperation end
 struct Add <: AdditiveOperation end
 struct Sub <: AdditiveOperation end
 struct Mult end
-struct Pow end
+
+struct Power <: Tensor
+    base::Value
+    exponent::Int
+end
 
 struct UnaryOperation{Op} <: Tensor where {Op}
     arg::Value
@@ -178,8 +182,8 @@ function get_indices(arg::BinaryOperation{Mult})
     return [get_indices(arg.arg1); get_indices(arg.arg2)]
 end
 
-function get_indices(arg::BinaryOperation{Pow})
-    return get_indices(arg.arg1)
+function get_indices(arg::Power)
+    return get_indices(arg.base)
 end
 
 function get_indices(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
@@ -288,8 +292,8 @@ function Base.broadcasted(
     return Base.broadcasted(f, arg1, P)
 end
 
-function Base.broadcasted(::typeof(^), arg1::Tensor, arg2::Int)
-    return BinaryOperation{Pow}(arg1, arg2)
+function Base.broadcasted(::typeof(^), base::Tensor, power::Int)
+    return Power(base, power)
 end
 
 function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
@@ -299,11 +303,8 @@ function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
     )
 end
 
-function replace_letters(arg::BinaryOperation{Pow}, letter_map::Dict)
-    return BinaryOperation{Mult}(
-        replace_letters(arg.arg1, letter_map),
-        replace_letters(arg.arg2, letter_map),
-    )
+function replace_letters(arg::Power, letter_map::Dict)
+    return Power(replace_letters(arg.base, letter_map), arg.exponent)
 end
 
 function replace_letters(
@@ -560,8 +561,8 @@ function Base.adjoint(arg::T) where {T<:UnaryOperation}
     return T(arg.arg')
 end
 
-function Base.adjoint(arg::BinaryOperation{Pow})
-    return BinaryOperation{Pow}(adjoint(arg.arg1), arg.arg2)
+function Base.adjoint(arg::Power)
+    return Power(adjoint(arg.base), arg.exponent)
 end
 
 function Base.adjoint(arg::BinaryOperation{Mult})
@@ -705,8 +706,8 @@ function parenthesize(arg::BinaryOperation{Sub})
     return "(" * to_string(arg) * ")"
 end
 
-function to_string(arg::BinaryOperation{Pow})
-    return parenthesize(arg.arg1) * ".^" * to_string(arg.arg2)
+function to_string(arg::Power)
+    return parenthesize(arg.base) * ".^" * to_string(arg.exponent)
 end
 
 function to_string(arg::BinaryOperation{Mult})

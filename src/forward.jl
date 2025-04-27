@@ -39,10 +39,10 @@ function diff(arg::UnaryOperation{Cos}, wrt::Monomial)
     return BinaryOperation{Mult}(-UnaryOperation{Sin}(arg.arg), diff(arg.arg, wrt))
 end
 
-function diff(arg::BinaryOperation{Pow}, wrt::Monomial)
+function diff(arg::Power, wrt::Monomial)
     return BinaryOperation{Mult}(
-        BinaryOperation{Mult}(arg.arg2, BinaryOperation{Pow}(arg.arg1, arg.arg2 - 1)),
-        diff(arg.arg1, wrt),
+        BinaryOperation{Mult}(arg.exponent, Power(arg.base, arg.exponent - 1)),
+        diff(arg.base, wrt),
     )
 end
 
@@ -848,12 +848,12 @@ function _sub_from_product(arg1::BinaryOperation{Mult}, arg2::Value)
     return BinaryOperation{Sub}(evaluate(arg1), evaluate(arg2))
 end
 
-function evaluate(op::BinaryOperation{Pow})
-    if op.arg2 == 1
-        return evaluate(op.arg1)
+function evaluate(op::Power)
+    if op.exponent == 1
+        return evaluate(op.base)
     end
 
-    return BinaryOperation{Pow}(evaluate(op.arg1), op.arg2)
+    return Power(evaluate(op.base), op.exponent)
 end
 
 function evaluate(op::BinaryOperation{Mult})

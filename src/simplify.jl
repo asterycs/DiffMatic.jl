@@ -72,8 +72,8 @@ function reshape(
     )
 end
 
-function reshape(arg::BinaryOperation{Pow}, indices::LowerOrUpperIndex...)
-    return BinaryOperation{Pow}(reshape(arg.arg1, indices...), arg.arg2)
+function reshape(arg::Power, indices::LowerOrUpperIndex...)
+    return Power(reshape(arg.base, indices...), arg.exponent)
 end
 
 function get_last_letter(indices::IndexList)
