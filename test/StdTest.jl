@@ -347,8 +347,8 @@ end
     @test to_std_string(gradient(sum(2 * x), x)) == "2vec(1)"
     @test to_std_string(gradient(2 * sum(sin(x)), x)) == "2cos(x)"
     @test to_std_string(gradient(sum(2 * sin(x)), x)) == "2cos(x)"
-    @test to_std_string(gradient(2 * sum(cos(A * x + y)), x)) == "2(-1)Aᵀsin(Ax + y)"
-    @test to_std_string(gradient(sum(2 * cos(A * x + y)), x)) == "2(-1)Aᵀsin(Ax + y)"
+    @test to_std_string(gradient(2 * sum(cos(A * x + y)), x)) == "(-2)Aᵀsin(Ax + y)"
+    @test to_std_string(gradient(sum(2 * cos(A * x + y)), x)) == "(-2)Aᵀsin(Ax + y)"
     @test to_std_string(gradient(sum(x .^ 2), x)) == "2x"
     @test to_std_string(gradient(sum(x .^ 3), x)) == "3x²"
     @test to_std_string(gradient(sum((x + y) .^ 2), x)) == "2(x + y)"
@@ -374,7 +374,7 @@ end
     @matrix A B C X
     @vector x y z
 
-    @test to_std_string(derivative(sum(-y .* (X*z)), X)) == "z(-1)yᵀ"
+    @test to_std_string(derivative(sum(-y .* (X*z)), X)) == "(-1)zyᵀ"
     @test to_std_string(derivative(sum((A .* B) * C * x), x)) == "vec(1)ᵀ(A ⊙ B)C"
 end
 

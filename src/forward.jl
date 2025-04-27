@@ -78,6 +78,10 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Real)
 end
 
 function evaluate(::Mult, arg1::Real, arg2::BinaryOperation{Mult})
+    if arg1 == 1
+        return arg2
+    end
+
     if arg2.arg1 isa Real
         return BinaryOperation{Mult}(arg1 * arg2.arg1, arg2.arg2)
     elseif arg2.arg2 isa Real
@@ -140,6 +144,10 @@ function evaluate(::Mult, arg1::Monomial, arg2::BinaryOperation{Mult})
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Monomial)
+    if arg1.arg1 isa Real
+        return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
+    end
+
     is_elementwise = is_elementwise_multiplication(arg1.arg1, arg1.arg2)
     arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
 
@@ -182,6 +190,16 @@ end
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     if arg1.arg1 == -1 && arg2.arg1 == -1
         return BinaryOperation{Mult}(arg1.arg2, arg2.arg2)
+    elseif arg1.arg1 == -1
+        return BinaryOperation{Mult}(
+            arg1.arg1,
+            evaluate(BinaryOperation{Mult}(arg1.arg2, arg2)),
+        )
+    elseif arg2.arg1 == -1
+        return BinaryOperation{Mult}(
+            arg2.arg1,
+            evaluate(BinaryOperation{Mult}(arg2.arg2, arg1)),
+        )
     end
 
     new_args = []
