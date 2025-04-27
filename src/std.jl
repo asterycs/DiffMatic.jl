@@ -343,20 +343,20 @@ end
 function _to_std_string(arg::BinaryOperation{Mult})
     @assert is_standard_form(arg)
 
+    indices = get_indices(arg)
+    target_indices = unique(eliminate_indices(indices))
+    terms = (arg.arg1, arg.arg2)
+    arg1_free_ids, arg2_free_ids = get_free_indices.(terms)
+
     if is_elementwise_multiplication(arg.arg1, arg.arg2)
-        indices = get_indices(arg)
-        target_indices = unique(eliminate_indices(indices))
-        terms = (arg.arg1, arg.arg2)
-
         if length(terms) == 2 && length(target_indices) == 2
-            arg1_ids, arg2_ids = get_free_indices.(terms)
 
-            if maximum(length.((arg1_ids, arg2_ids))) == 2 &&
-               minimum(length.((arg1_ids, arg2_ids))) == 1
+            if maximum(length.((arg1_free_ids, arg2_free_ids))) == 2 &&
+               minimum(length.((arg1_free_ids, arg2_free_ids))) == 1
                 matrix = terms[1]
                 vector = terms[2]
 
-                if length(arg2_ids) == 2
+                if length(arg2_free_ids) == 2
                     matrix, vector = vector, matrix
                 end
 
@@ -370,24 +370,14 @@ function _to_std_string(arg::BinaryOperation{Mult})
                 end
             end
 
-            if length(arg1_ids) == length(arg2_ids)
-                if all(arg1_ids .== arg2_ids)
-                    return _to_std_string(terms[1]) * " ⊙ " * _to_std_string(terms[2])
-                else
-                    throw_not_std(arg)
-                end
+            if length(arg1_free_ids) == length(arg2_free_ids) &&
+               all(arg1_free_ids .== arg2_free_ids)
+                return _to_std_string(terms[1]) * " ⊙ " * _to_std_string(terms[2])
             end
 
             throw_not_std(arg)
         end
     end
-
-    arg1_ids, arg2_ids = get_free_indices.((arg.arg1, arg.arg2))
-
-    ##### Refactor
-    indices = get_indices(arg)
-    target_indices = unique(eliminate_indices(indices))
-    terms = (arg.arg1, arg.arg2)
 
     if length(target_indices) == 1
         if all(length.(unique(get_free_indices.(terms))) .== 1)
@@ -437,35 +427,34 @@ function _to_std_string(arg::BinaryOperation{Mult})
 
         throw_not_std(arg)
     end
-    #####
 
-    if length(arg1_ids) == 2 && length(arg2_ids) == 2
+    if length(arg1_free_ids) == 2 && length(arg2_free_ids) == 2
         contra, covariant = get_contra_covariant_matrix(arg.arg1, arg.arg2)
 
         return parenthesize_std(covariant) * parenthesize_std(contra)
     end
 
-    if (length(arg1_ids) == 2 && length(arg2_ids) == 1) ||
-       (length(arg2_ids) == 2 && length(arg1_ids) == 1)
-        mat = if length(arg1_ids) == 2
+    if (length(arg1_free_ids) == 2 && length(arg2_free_ids) == 1) ||
+       (length(arg2_free_ids) == 2 && length(arg1_free_ids) == 1)
+        mat = if length(arg1_free_ids) == 2
             arg.arg1
         else
             arg.arg2
         end
-        vec = if length(arg1_ids) == 1
+        vec = if length(arg1_free_ids) == 1
             arg.arg1
         else
             arg.arg2
         end
-        mat_ids = if length(arg1_ids) == 2
-            arg1_ids
+        mat_ids = if length(arg1_free_ids) == 2
+            arg1_free_ids
         else
-            arg2_ids
+            arg2_free_ids
         end
-        vec_ids = if length(arg1_ids) == 1
-            arg1_ids
+        vec_ids = if length(arg1_free_ids) == 1
+            arg1_free_ids
         else
-            arg2_ids
+            arg2_free_ids
         end
 
         if typeof(last(mat_ids)) == Lower && flip(last(mat_ids)) == first(vec_ids)
@@ -479,30 +468,34 @@ function _to_std_string(arg::BinaryOperation{Mult})
         end
     end
 
-    if length(arg1_ids) == 1 && length(arg2_ids) == 1
+    if length(arg1_free_ids) == 1 && length(arg2_free_ids) == 1
         if isempty(get_free_indices(arg))
-            if typeof(first(arg1_ids)) == Lower && typeof(first(arg2_ids)) == Upper
+            if typeof(first(arg1_free_ids)) == Lower &&
+               typeof(first(arg2_free_ids)) == Upper
                 return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
-            elseif typeof(first(arg1_ids)) == Upper && typeof(first(arg2_ids)) == Lower
+            elseif typeof(first(arg1_free_ids)) == Upper &&
+                   typeof(first(arg2_free_ids)) == Lower
                 return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
             end
         else
-            if typeof(first(arg1_ids)) == Lower && typeof(first(arg2_ids)) == Upper
+            if typeof(first(arg1_free_ids)) == Lower &&
+               typeof(first(arg2_free_ids)) == Upper
                 return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
-            elseif typeof(first(arg1_ids)) == Upper && typeof(first(arg2_ids)) == Lower
+            elseif typeof(first(arg1_free_ids)) == Upper &&
+                   typeof(first(arg2_free_ids)) == Lower
                 return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
             end
         end
     end
 
-    if (isempty(arg1_ids) && !isempty(arg2_ids)) ||
-       (isempty(arg2_ids) && !isempty(arg1_ids))
-        scalar = if isempty(arg1_ids)
+    if (isempty(arg1_free_ids) && !isempty(arg2_free_ids)) ||
+       (isempty(arg2_free_ids) && !isempty(arg1_free_ids))
+        scalar = if isempty(arg1_free_ids)
             arg.arg1
         else
             arg.arg2
         end
-        tensor = if !isempty(arg1_ids)
+        tensor = if !isempty(arg1_free_ids)
             arg.arg1
         else
             arg.arg2
@@ -511,7 +504,7 @@ function _to_std_string(arg::BinaryOperation{Mult})
         return parenthesize_std(scalar) * parenthesize_std(tensor)
     end
 
-    if (isempty(arg1_ids) && isempty(arg2_ids))
+    if (isempty(arg1_free_ids) && isempty(arg2_free_ids))
         if arg.arg1 isa Real
             return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
         elseif arg.arg2 isa Real
@@ -618,18 +611,14 @@ function to_standard(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
     l = to_standard(arg.arg1)
     r = to_standard(arg.arg2)
 
-    if isempty(setdiff(get_free_indices(l), get_free_indices(r))) &&
-       isempty(setdiff(get_free_indices(l), target_indices))
-        return BinaryOperation{Op}(l, r)
-    elseif isempty(setdiff(get_free_indices(adjoint(l)), get_free_indices(r))) &&
-           isempty(setdiff(get_free_indices(adjoint(l)), target_indices))
-        return BinaryOperation{Op}(adjoint(l), r)
-    elseif isempty(setdiff(get_free_indices(l), get_free_indices(adjoint(r)))) &&
-           isempty(setdiff(get_free_indices(l), target_indices))
-        return BinaryOperation{Op}(l, adjoint(r))
-    elseif isempty(setdiff(get_free_indices(adjoint(l)), get_free_indices(adjoint(r)))) &&
-           isempty(setdiff(get_free_indices(adjoint(l)), target_indices))
-        return BinaryOperation{Op}(adjoint(l), adjoint(r))
+    attempts = ((l, r), (adjoint(l), r), (l, adjoint(r)), (adjoint(l), adjoint(r)))
+
+    for (l, r) ∈ attempts
+        l_free_indices = get_free_indices(l)
+        if isempty(setdiff(l_free_indices, get_free_indices(r))) &&
+           isempty(setdiff(l_free_indices, target_indices))
+            return BinaryOperation{Op}(l, r)
+        end
     end
 
     throw_not_std(arg)
