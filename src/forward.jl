@@ -40,7 +40,7 @@ function diff(arg::UnaryOperation{Cos}, wrt::Monomial)
 end
 
 function diff(arg::Power, wrt::Monomial)
-    outer = replace_bound_letters(arg.base)
+    outer = replace_bound_letters(arg.base, wrt)
 
     return BinaryOperation{Mult}(
         BinaryOperation{Mult}(arg.exponent, Power(outer, arg.exponent - 1)),
@@ -59,14 +59,14 @@ function diff(arg::BinaryOperation{Op}, wrt::Monomial) where {Op<:AdditiveOperat
     return BinaryOperation{Op}(diff(arg.arg1, wrt), diff(arg.arg2, wrt))
 end
 
-function replace_bound_letters(arg::Tensor)
+function replace_bound_letters(arg::Tensor, letters_to_skip::Tensor...)
     letters = unique(get_letters(get_indices(arg)))
     free_letters = unique(get_letters(get_free_indices(arg)))
     bound_letters = setdiff(letters, free_letters)
-    next_letter = get_next_letter(arg)
+    next_letter = get_next_letter(arg, letters_to_skip...)
 
     letter_map =
-        Dict(bound_letters[li] => next_letter + li for li ∈ eachindex(bound_letters))
+        Dict(bound_letters[li] => next_letter + li - 1 for li ∈ eachindex(bound_letters))
 
     return replace_letters(arg, letter_map)
 end
