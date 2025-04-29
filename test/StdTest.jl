@@ -351,6 +351,7 @@ end
     @test to_std_string(gradient(sum(2 * cos(A * x + y)), x)) == "(-2)Aᵀsin(Ax + y)"
     @test to_std_string(gradient(sum(x .^ 2), x)) == "2x"
     @test to_std_string(gradient(sum(x .^ 3), x)) == "3x²"
+    @test to_std_string(gradient(sum(x)^2, x)) == "2sum(xᵀ)vec(1)"
     @test to_std_string(gradient(sum((x + y) .^ 2), x)) == "2(x + y)"
     @test to_std_string(gradient(sum((x .* y) .^ 2), x)) == "2x ⊙ y ⊙ y"
     @test to_std_string(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
