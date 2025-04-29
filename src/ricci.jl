@@ -286,14 +286,30 @@ end
 function Base.broadcasted(
     ::typeof(Base.literal_pow),
     f::Function,
-    arg1::Tensor,
-    arg2::Val{P},
-) where {P}
-    return Base.broadcasted(f, arg1, P)
+    base::Tensor,
+    exponent::Val{E},
+) where {E}
+    return Base.broadcasted(f, base, E)
 end
 
-function Base.broadcasted(::typeof(^), base::Tensor, power::Int)
-    return Power(base, power)
+function Base.broadcasted(::typeof(^), base::Tensor, exponent::Union{Int,Rational{Int}})
+    return Power(base, exponent)
+end
+
+function Base.:(^)(base::Tensor, exponent::Union{Int,Rational{Int}})
+    if !isempty(get_free_indices(base))
+        throw(DomainError(base, " is not a scalar, use .^ for element-wise power"))
+    end
+
+    return Power(base, exponent)
+end
+
+function Base.literal_pow(f::typeof(^), base::Tensor, exponent::Val{E}) where {E}
+    if !isempty(get_free_indices(base))
+        throw(DomainError(base, " is not a scalar, use .^ for element-wise power"))
+    end
+
+    return Power(base, E)
 end
 
 function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
