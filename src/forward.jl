@@ -40,11 +40,11 @@ function diff(arg::UnaryOperation{Cos}, wrt::Monomial)
 end
 
 function diff(arg::Power, wrt::Monomial)
-    inner = replace_bound_letters(arg.base)
+    outer = replace_bound_letters(arg.base)
 
     return BinaryOperation{Mult}(
-        BinaryOperation{Mult}(arg.exponent, Power(arg.base, arg.exponent - 1)),
-        diff(inner, wrt),
+        BinaryOperation{Mult}(arg.exponent, Power(outer, arg.exponent - 1)),
+        diff(arg.base, wrt),
     )
 end
 
