@@ -363,10 +363,16 @@ function _to_std_string(arg::BinaryOperation{Mult})
                 m_ids = get_indices(matrix)
                 v_ids = get_indices(vector)
 
+                matrix_str = if matrix isa KrD
+                    ""
+                else
+                    _to_std_string(matrix)
+                end
+
                 if m_ids[1] == v_ids[1]
-                    return "diag(" * _to_std_string(vector) * ")" * _to_std_string(matrix)
+                    return "diag(" * _to_std_string(vector) * ")" * matrix_str
                 elseif m_ids[2] == v_ids[1]
-                    return _to_std_string(matrix) * " diag(" * _to_std_string(vector) * ")"
+                    return matrix_str * " diag(" * _to_std_string(vector) * ")"
                 end
             end
 
