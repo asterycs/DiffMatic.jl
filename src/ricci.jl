@@ -565,36 +565,8 @@ function Base.adjoint(arg::Power)
     return Power(adjoint(arg.base), arg.exponent)
 end
 
-function Base.adjoint(arg::BinaryOperation{Mult})
-    return BinaryOperation{Mult}(adjoint(arg.arg1), adjoint(arg.arg2))
-end
-
-function Base.adjoint(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    arg1_ids = unique(get_free_indices(arg.arg1))
-    arg2_ids = unique(get_free_indices(arg.arg2))
-
-    @assert length(unique(arg1_ids)) == length(unique(arg2_ids))
-
-    arg1_t = arg.arg1
-    arg2_t = arg.arg2
-
-    for i ∈ arg1_ids
-        tmp_letter = get_next_letter(arg1_t, arg2_t)
-        arg1_t = BinaryOperation{Mult}(
-            BinaryOperation{Mult}(arg1_t, KrD(flip(i), flip_to(i, tmp_letter))),
-            KrD(same_to(i, tmp_letter), flip(i)),
-        )
-    end
-
-    for i ∈ arg2_ids
-        tmp_letter = get_next_letter(arg1_t, arg2_t)
-        arg2_t = BinaryOperation{Mult}(
-            BinaryOperation{Mult}(arg2_t, KrD(flip(i), flip_to(i, tmp_letter))),
-            KrD(same_to(i, tmp_letter), flip(i)),
-        )
-    end
-
-    return evaluate(BinaryOperation{Op}(arg1_t, arg2_t))
+function Base.adjoint(arg::BinaryOperation{Op}) where {Op}
+    return evaluate(BinaryOperation{Op}(adjoint(arg.arg1), adjoint(arg.arg2)))
 end
 
 function Base.adjoint(arg::Union{Monomial,KrD,Zero})
