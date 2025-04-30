@@ -240,10 +240,10 @@ end
     @test to_std_string(mul(x, x)) == "x ⊙ x"
     @test to_std_string(mul(x, y)) == "x ⊙ y"
     @test to_std_string(mul(mul(x, y), z)) == "x ⊙ y ⊙ z"
-    @test to_std_string(mul(z, mul(x, y))) == "z ⊙ x ⊙ y"
+    @test to_std_string(mul(z, mul(x, y))) == "x ⊙ y ⊙ z"
     @test to_std_string(mul(mul(mul(x, y), z), v)) == "x ⊙ y ⊙ z ⊙ v"
-    @test to_std_string(mul(v, mul(mul(x, y), z))) == "v ⊙ x ⊙ y ⊙ z"
-    @test to_std_string(mul(v, mul(z, mul(x, y)))) == "v ⊙ z ⊙ x ⊙ y"
+    @test to_std_string(mul(v, mul(mul(x, y), z))) == "x ⊙ y ⊙ z ⊙ v"
+    @test to_std_string(mul(v, mul(z, mul(x, y)))) == "x ⊙ y ⊙ z ⊙ v"
     @test to_std_string(mul(mul(z, v), mul(x, y))) == "z ⊙ v ⊙ x ⊙ y"
 end
 
