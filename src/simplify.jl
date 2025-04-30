@@ -10,12 +10,8 @@ function simplify(arg::UnaryOperation{Op}) where {Op}
     return UnaryOperation{Op}(simplify(arg.arg))
 end
 
-function simplify(arg::BinaryOperation{Mult})
-    return simplify(Mult(), simplify(arg.arg1), simplify(arg.arg2))
-end
-
-function simplify(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    return simplify(Op(), simplify(arg.arg1), simplify(arg.arg2))
+function simplify(arg::BinaryOperation{Op}) where {Op}
+    return evaluate(simplify(Op(), simplify(arg.arg1), simplify(arg.arg2)))
 end
 
 function simplify(::Mult, arg1::Monomial, arg2::Monomial)
