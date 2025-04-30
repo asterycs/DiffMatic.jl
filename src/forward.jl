@@ -163,9 +163,6 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Monomial)
     end
 
     is_elementwise = is_elementwise_multiplication(arg1.arg1, arg1.arg2)
-    arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
-
-    contracting_indices = eliminated_indices([arg1_indices; arg2_indices])
 
     if can_contract(arg1.arg2, arg2) && !is_elementwise
         new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
