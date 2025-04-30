@@ -441,7 +441,8 @@ end
     @test dc.evaluate(dc.BinaryOperation{dc.Mult}(d2, d1)) == KrD(Upper(1), Lower(3))
 end
 
-@testset "evaluate fully collapsible Mult * Mult" begin
+# TODO: Move to SimplifyTest.jl
+@testset "simplify fully collapsible Mult * Mult" begin
     d1 = KrD(Upper(1), Lower(2))
     d2 = KrD(Upper(2), Lower(3))
     d3 = KrD(Upper(3), Lower(4))
@@ -452,7 +453,7 @@ end
         dc.BinaryOperation{dc.Mult}(A, d2),
     )
 
-    @test dc.evaluate(op) == Monomial("A", Upper(1), Lower(5))
+    @test dc.simplify(op) == Monomial("A", Upper(1), Lower(5))
 end
 
 @testset "evaluate BinaryOperation with outer product" begin
@@ -687,6 +688,7 @@ end
     @test isempty(dc.get_free_indices(evaluate(op2)))
 end
 
+# TODO: Move to SimplifyTest.jl
 @testset "KrD collapsed correctly on element wise multiplications" begin
     x = Monomial("x", Upper(1))
     y = Monomial("y", Upper(2))
@@ -696,12 +698,16 @@ end
 
     expected = dc.BinaryOperation{dc.Mult}(Monomial("y", Lower(1)), Monomial("x", Lower(1)))
 
-    @test equivalent(evaluate(dc.diff(e, Monomial("z", Upper(9)))), expected)
+    # TODO: simplify should be sufficient here - remove evaluate
+    @test equivalent(
+        dc.simplify(dc.evaluate(dc.diff(e, Monomial("z", Upper(9))))),
+        expected,
+    )
 
     expected = dc.BinaryOperation{dc.Mult}(Monomial("y", Upper(1)), Monomial("x", Upper(1)))
-    @test equivalent(evaluate(dc.diff(e, Monomial("z", Upper(9)))'), expected)
-    @test equivalent(evaluate(dc.diff(e', Monomial("z", Upper(9)))), expected)
-    @test equivalent(evaluate(evaluate(dc.diff(e, Monomial("z", Upper(9))))'), expected)
+    @test equivalent(dc.simplify(dc.diff(e, Monomial("z", Upper(9)))'), expected)
+    @test equivalent(dc.simplify(dc.diff(e', Monomial("z", Upper(9)))), expected)
+    @test equivalent(dc.simplify(dc.diff(e, Monomial("z", Upper(9)))'), expected)
 end
 
 @testset "KrD collapsed correctly on element wise multiplications (mirrored)" begin
@@ -713,12 +719,16 @@ end
 
     expected = dc.BinaryOperation{dc.Mult}(Monomial("y", Lower(1)), Monomial("x", Lower(1)))
 
-    @test equivalent(evaluate(dc.diff(e, Monomial("z", Upper(9)))), expected)
+    # TODO: simplify should be sufficient here - remove evaluate
+    @test equivalent(
+        dc.simplify(dc.evaluate(dc.diff(e, Monomial("z", Upper(9))))),
+        expected,
+    )
 
     expected = dc.BinaryOperation{dc.Mult}(Monomial("y", Upper(1)), Monomial("x", Upper(1)))
-    @test equivalent(evaluate(dc.diff(e, Monomial("z", Upper(9)))'), expected)
-    @test equivalent(evaluate(dc.diff(e', Monomial("z", Upper(9)))), expected)
-    @test equivalent(evaluate(evaluate(dc.diff(e, Monomial("z", Upper(9))))'), expected)
+    @test equivalent(dc.simplify(dc.diff(e, Monomial("z", Upper(9)))'), expected)
+    @test equivalent(dc.simplify(dc.diff(e', Monomial("z", Upper(9)))), expected)
+    @test equivalent(dc.simplify(dc.diff(e, Monomial("z", Upper(9)))'), expected)
 end
 
 @testset "Differentiate Ax" begin
