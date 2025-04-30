@@ -360,6 +360,7 @@ end
     @test to_std_string(gradient(((A .* (B .* C)) * C * x)' * x, x)) ==
           "(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x"
     @test to_std_string(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
+    to_std_string(gradient((x .^ 2 .* y)' * c, x)) == "2x ⊙ y ⊙ c"
 end
 
 @testset "to_std_string of jacobian" begin
