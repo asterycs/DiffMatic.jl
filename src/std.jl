@@ -691,13 +691,7 @@ function to_std_string(arg)
             throw_not_std(arg)
         end
     elseif length(free_indices) == 1
-        if typeof(free_indices[1]) == Lower
-            to_standard(arg)
-        elseif typeof(free_indices[1]) == Upper
-            to_standard(arg)
-        else
-            throw_not_std(arg)
-        end
+        to_standard(arg)
     else
         to_standard(arg)
     end
