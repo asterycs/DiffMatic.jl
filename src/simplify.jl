@@ -143,7 +143,41 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function simplify(::Mult, arg1::Value, arg2::Value)
+function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Monomial)
+    if is_diag(arg1) && !is_elementwise_multiplication(arg1, arg2)
+        d = get_diag_delta(arg1)
+
+        @assert !isnothing(d)
+
+        target_indices = eliminate_indices(vcat(get_free_indices(arg1), get_indices(arg2)))
+        factors = collect_factors(arg1)
+        reshaped = []
+
+        for f ∈ factors
+            if f isa KrD
+                continue
+            end
+
+            free_ids = get_free_indices(f)
+            if isempty(free_ids)
+                push!(reshaped, f)
+            elseif length(free_ids) == 1
+                @assert length(target_indices) == 1
+                push!(reshaped, reshape(f, target_indices...))
+            else
+                @assert false "Not implemented, please open an issue with your input"
+            end
+        end
+
+        if length(get_free_indices(arg2)) == 1
+            push!(reshaped, reshape(arg2, target_indices...))
+        else
+            @assert false "Not implemented, please open an issue with your input"
+        end
+
+        return to_binary_operation(Mult(), reshaped)
+    end
+
     return BinaryOperation{Mult}(arg1, arg2)
 end
 

@@ -167,30 +167,7 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Monomial)
 
     contracting_indices = eliminated_indices([arg1_indices; arg2_indices])
 
-    if is_elementwise &&
-       is_diag(arg1) &&
-       !isempty(contracting_indices) &&
-       length(arg2_indices) == 1
-        new_index = setdiff(arg1_indices, contracting_indices)
-        old_index = intersect(arg1_indices, contracting_indices)
-
-        @assert length(new_index) == 1
-        @assert length(old_index) == 1
-        new_index = new_index[1]
-        old_index = old_index[1]
-
-        # Either arg1.arg1 OR arg1.arg2 is a KrD when is_diag is true
-        left_tensor = typeof(arg1.arg1) == KrD ? arg1.arg2 : arg1.arg1
-
-        arg1 = evaluate(
-            update_index(left_tensor, old_index, new_index, allow_shape_change = true),
-        )
-        arg2 = evaluate(
-            update_index(arg2, flip(old_index), new_index, allow_shape_change = true),
-        )
-
-        return BinaryOperation{Mult}(arg1, arg2)
-    elseif can_contract(arg1.arg2, arg2) && !is_elementwise
+    if can_contract(arg1.arg2, arg2) && !is_elementwise
         new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
         return BinaryOperation{Mult}(arg1.arg1, new_arg2)
     elseif can_contract(arg1.arg1, arg2) && !is_elementwise
