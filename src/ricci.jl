@@ -165,7 +165,8 @@ function is_permutation(l::AbstractArray{T}, r::AbstractArray{T}) where {T}
     r_element_count = count_values(r)
 
     for index ∈ keys(l_element_count)
-        if l_element_count[index] != r_element_count[index]
+        if !haskey(r_element_count, index) ||
+           l_element_count[index] != r_element_count[index]
             return false
         end
     end

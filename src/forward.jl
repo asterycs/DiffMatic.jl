@@ -72,11 +72,11 @@ function replace_bound_letters(arg::Tensor, letters_to_skip::Tensor...)
 end
 
 function collect_factors(arg::BinaryOperation{Mult})
-    return [collect_factors(arg.arg1); collect_factors(arg.arg2)]
+    return Value[collect_factors(arg.arg1); collect_factors(arg.arg2)]
 end
 
 function collect_factors(arg)
-    return [arg]
+    return Value[arg]
 end
 
 function evaluate(arg::Union{Monomial,KrD,Zero,Real})
@@ -626,7 +626,7 @@ function _add_to_product(arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Sub}
 end
 
 function _add_to_product(arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
-    if evaluate(arg1) == evaluate(arg2)
+    if is_permutation(collect_factors(arg1), collect_factors(arg2))
         return BinaryOperation{Mult}(2, evaluate(arg1))
     end
 
