@@ -40,6 +40,8 @@ struct Monomial <: Tensor
     end
 end
 
+Base.hash(m::Monomial, h::UInt) = hash(Monomial, hash(m.id, hash(m.indices, h)))
+
 function are_unique(arg::AbstractArray)
     return length(unique(arg)) == length(arg)
 end
@@ -58,6 +60,8 @@ struct KrD <: Tensor
     end
 end
 
+Base.hash(m::KrD, h::UInt) = hash(KrD, hash(m.indices, h))
+
 struct Zero <: Tensor
     indices::IndexList
 
@@ -72,10 +76,14 @@ struct Zero <: Tensor
     end
 end
 
+Base.hash(m::Zero, h::UInt) = hash(Zero, hash(m.indices, h))
+
 struct BinaryOperation{Op} <: Tensor where {Op}
     arg1::Value
     arg2::Value
 end
+
+Base.hash(op::BinaryOperation{Op}, h::UInt) where {Op} = hash(op.arg1, hash(op.arg1, h))
 
 abstract type AdditiveOperation end
 struct Add <: AdditiveOperation end
@@ -87,9 +95,13 @@ struct Power <: Tensor
     exponent::Int
 end
 
+Base.hash(op::Power, h::UInt) = hash(op.exponent, hash(op.base, hash(Power, h)))
+
 struct UnaryOperation{Op} <: Tensor where {Op}
     arg::Value
 end
+
+Base.hash(op::UnaryOperation{Op}, h::UInt) where {Op} = hash(op.arg, hash(Op, h))
 
 struct Sin end
 struct Cos end
