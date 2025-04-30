@@ -181,6 +181,10 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Monomial)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
+function simplify(::Mult, arg1::Value, arg2::Value)
+    return evaluate(BinaryOperation{Mult}(arg1, arg2))
+end
+
 function simplify(::Op, arg1::Value, arg2::Value) where {Op<:AdditiveOperation}
-    return BinaryOperation{Op}(arg1, arg2)
+    return evaluate(BinaryOperation{Op}(arg1, arg2))
 end
