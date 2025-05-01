@@ -92,7 +92,7 @@ struct Mult end
 
 struct Power <: Tensor
     base::Value
-    exponent::Int
+    exponent::Union{Int,Rational{Int}}
 end
 
 Base.hash(op::Power, h::UInt) = hash(op.exponent, hash(op.base, hash(Power, h)))
