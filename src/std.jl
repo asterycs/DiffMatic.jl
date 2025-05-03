@@ -515,30 +515,6 @@ function to_ir(arg::Power)
     return ir.Power(to_ir(arg.base), arg.exponent)
 end
 
-function parenthesize_std(arg)
-    return _to_std_string(arg)
-end
-
-function parenthesize_std(arg::Real)
-    if arg < 0
-        return "(" * _to_std_string(arg) * ")"
-    end
-
-    return _to_std_string(arg)
-end
-
-function parenthesize_std(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    return "(" * _to_std_string(arg) * ")"
-end
-
-function parenthesize_std(arg::BinaryOperation{Mult})
-    if is_elementwise_multiplication(arg.arg1, arg.arg2)
-        return "(" * _to_std_string(arg) * ")"
-    end
-
-    return _to_std_string(arg)
-end
-
 function is_trace(arg)
     terms = collect_factors(arg)
 
