@@ -11,7 +11,7 @@ export gradient
 export jacobian
 export hessian
 
-export to_std_string
+export to_std
 
 function create_matrix(name::String)
     T = Monomial(name, Upper(1), Lower(2))
@@ -211,9 +211,9 @@ function throw_not_std(arg::Tensor)
 end
 
 """
-Returns a string representation of the input expression. The input must be in standard form.
+Returns an intermediate representation of the input expression. The input must be in standard form.
 """
-function _to_std_string end
+function to_ir end
 
 function is_standard_form(arg::Tensor)
     free_ids = unique(get_free_indices(arg))
@@ -234,88 +234,80 @@ function is_standard_form(arg::Tensor)
     return true
 end
 
-function _to_std_string(arg::Monomial)
+function to_ir(arg::Monomial)
     @assert is_standard_form(arg)
 
     ids = get_indices(arg)
 
     if length(ids) == 2
         if flip(ids[1]) == ids[2]
-            return "tr(" * arg.id * ")"
+            return ir.Trace(ir.Mat(arg.id))
         elseif typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
-            return arg.id
+            return ir.Mat(arg.id)
         elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
-            return arg.id * "ᵀ"
+            return ir.Transpose(ir.Mat(arg.id))
         end
     elseif length(ids) == 1
         if typeof(ids[1]) == Upper
-            return arg.id
+            return ir.Vec(arg.id)
         elseif typeof(ids[1]) == Lower
-            return arg.id * "ᵀ"
+            return ir.Transpose(ir.Vec(arg.id))
         end
     end
 
-    return arg.id
+    return ir.Scal(arg.id)
 end
 
-function _to_std_string(arg::KrD)
+function to_ir(arg::KrD)
     @assert is_standard_form(arg)
 
     ids = get_indices(arg)
 
     if typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
-        return "I"
+        return ir.Identity()
     elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
-        return "Iᵀ"
+        return ir.Transpose(ir.Identity())
     end
 end
 
-function _to_std_string(arg::Zero)
+function to_ir(arg::Zero)
     @assert is_standard_form(arg)
 
     ids = get_indices(arg)
 
     if length(ids) == 2
         if typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
-            return "mat(0)"
+            return ir.Mat(0)
         elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
-            return "mat(0)ᵀ"
+            return ir.Transpose(ir.Mat(0))
         end
     elseif length(ids) == 1
         if typeof(ids[1]) == Upper
-            return "vec(0)"
+            return ir.Vec(0)
         elseif typeof(ids[1]) == Lower
-            return "vec(0)ᵀ"
+            return ir.Transpose(ir.Vec(0))
         end
     end
 end
 
-function _to_std_string(arg::Real)
-    return to_string(arg)
+function to_ir(arg::Real)
+    return ir.Scal(arg)
 end
 
-function _to_std_string(arg::UnaryOperation{Sin})
-    return "sin(" * _to_std_string(arg.arg) * ")"
+function to_ir(arg::UnaryOperation{Sin})
+    return ir.Sin(to_ir(arg.arg))
 end
 
-function _to_std_string(arg::UnaryOperation{Cos})
-    return "cos(" * _to_std_string(arg.arg) * ")"
+function to_ir(arg::UnaryOperation{Cos})
+    return ir.Cos(to_ir(arg.arg))
 end
 
-function _to_std_string(::Add)
-    return "+"
+function to_ir(arg::BinaryOperation{Add})
+    return ir.Add(to_ir(arg.arg1), to_ir(arg.arg2))
 end
 
-function _to_std_string(::Sub)
-    return "-"
-end
-
-function _to_std_string(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    return _to_std_string(arg.arg1) *
-           " " *
-           _to_std_string(Op()) *
-           " " *
-           _to_std_string(arg.arg2)
+function to_ir(arg::BinaryOperation{Sub})
+    return ir.Sub(to_ir(arg.arg1), to_ir(arg.arg2))
 end
 
 function get_contra_covariant_matrix(arg1::Tensor, arg2::Tensor)
@@ -340,7 +332,7 @@ function get_contra_covariant_matrix(arg1::Tensor, arg2::Tensor)
     throw_not_std(to_binary_operation(Mult(), (arg1, arg2)))
 end
 
-function _to_std_string(arg::BinaryOperation{Mult})
+function to_ir(arg::BinaryOperation{Mult})
     @assert is_standard_form(arg)
 
     indices = get_indices(arg)
@@ -363,22 +355,16 @@ function _to_std_string(arg::BinaryOperation{Mult})
                 m_ids = get_indices(matrix)
                 v_ids = get_indices(vector)
 
-                matrix_str = if matrix isa KrD
-                    ""
-                else
-                    _to_std_string(matrix)
-                end
-
                 if m_ids[1] == v_ids[1]
-                    return "diag(" * _to_std_string(vector) * ")" * matrix_str
+                    return ir.Product(ir.Diag(to_ir(vector)), to_ir(matrix))
                 elseif m_ids[2] == v_ids[1]
-                    return matrix_str * " diag(" * _to_std_string(vector) * ")"
+                    return ir.Product(to_ir(matrix), ir.Diag(to_ir(vector)))
                 end
             end
 
             if length(arg1_free_ids) == length(arg2_free_ids) &&
                all(arg1_free_ids .== arg2_free_ids)
-                return _to_std_string(terms[1]) * " ⊙ " * _to_std_string(terms[2])
+                return ir.HadamardProduct(to_ir(terms[1]), to_ir(terms[2]))
             end
 
             throw_not_std(arg)
@@ -388,15 +374,15 @@ function _to_std_string(arg::BinaryOperation{Mult})
     if length(target_indices) == 1
         if all(length.(unique(get_free_indices.(terms))) .== 1)
             return reduce(
-                (l, r) -> l * " ⊙ " * _to_std_string(r),
+                (l, r) -> ir.HadamardProduct(l, to_ir(r)),
                 terms[2:end];
-                init = _to_std_string(terms[1]),
+                init = to_ir(terms[1]),
             )
         elseif all(typeof.(terms) .== KrD)
             if typeof(target_indices[1]) == Upper
-                return "vec(1)"
+                return ir.Vec(1)
             else
-                return "vec(1)ᵀ"
+                return ir.Transpose(ir.Vec(1))
             end
         elseif (arg.arg1 isa KrD && is_trace(arg.arg1)) ||
                (arg.arg2 isa KrD && is_trace(arg.arg2))
@@ -407,15 +393,15 @@ function _to_std_string(arg::BinaryOperation{Mult})
             end
 
             if typeof(target_indices[1]) == Upper
-                return _to_std_string(tensor) * "vec(1)"
+                return ir.Product(to_ir(tensor), ir.Vec(1))
             else
-                return "vec(1)ᵀ" * _to_std_string(tensor)
+                return ir.Product(ir.Transpose(ir.Vec(1)), to_ir(tensor))
             end
         end
     end
 
     if is_trace(arg)
-        return "tr(" * _to_std_string(arg.arg1) * _to_std_string(arg.arg2) * ")"
+        return ir.Trace(ir.Product(to_ir(arg.arg1), to_ir(arg.arg2)))
     end
 
     if isempty(target_indices) && (typeof(terms[1]) == KrD || typeof(terms[2]) == KrD)
@@ -428,7 +414,7 @@ function _to_std_string(arg::BinaryOperation{Mult})
         tensor_free_ids = get_free_indices(tensor)
 
         if length(tensor_free_ids) == 1
-            return "sum(" * _to_std_string(tensor) * ")"
+            return ir.Sum(to_ir(tensor))
         end
 
         throw_not_std(arg)
@@ -437,7 +423,7 @@ function _to_std_string(arg::BinaryOperation{Mult})
     if length(arg1_free_ids) == 2 && length(arg2_free_ids) == 2
         contra, covariant = get_contra_covariant_matrix(arg.arg1, arg.arg2)
 
-        return parenthesize_std(covariant) * parenthesize_std(contra)
+        return ir.Product(to_ir(covariant), to_ir(contra))
     end
 
     if (length(arg1_free_ids) == 2 && length(arg2_free_ids) == 1) ||
@@ -464,13 +450,13 @@ function _to_std_string(arg::BinaryOperation{Mult})
         end
 
         if typeof(last(mat_ids)) == Lower && flip(last(mat_ids)) == first(vec_ids)
-            return parenthesize_std(mat) * parenthesize_std(vec)
+            return ir.Product(to_ir(mat), to_ir(vec))
         elseif typeof(first(mat_ids)) == Lower && flip(first(mat_ids)) == first(vec_ids)
-            return parenthesize_std(mat) * parenthesize_std(vec)
+            return ir.Product(to_ir(mat), to_ir(vec))
         elseif typeof(first(mat_ids)) == Upper && flip(first(mat_ids)) == first(vec_ids)
-            return parenthesize_std(vec) * parenthesize_std(mat)
+            return ir.Product(to_ir(vec), to_ir(mat))
         elseif typeof(last(mat_ids)) == Upper && flip(last(mat_ids)) == first(vec_ids)
-            return parenthesize_std(vec) * parenthesize_std(mat)
+            return ir.Product(to_ir(vec), to_ir(mat))
         end
     end
 
@@ -478,18 +464,18 @@ function _to_std_string(arg::BinaryOperation{Mult})
         if isempty(get_free_indices(arg))
             if typeof(first(arg1_free_ids)) == Lower &&
                typeof(first(arg2_free_ids)) == Upper
-                return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+                return ir.Product(to_ir(arg.arg1), to_ir(arg.arg2))
             elseif typeof(first(arg1_free_ids)) == Upper &&
                    typeof(first(arg2_free_ids)) == Lower
-                return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
+                return ir.Product(to_ir(arg.arg2), to_ir(arg.arg1))
             end
         else
             if typeof(first(arg1_free_ids)) == Lower &&
                typeof(first(arg2_free_ids)) == Upper
-                return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
+                return ir.Product(to_ir(arg.arg2), to_ir(arg.arg1))
             elseif typeof(first(arg1_free_ids)) == Upper &&
                    typeof(first(arg2_free_ids)) == Lower
-                return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+                return ir.Product(to_ir(arg.arg1), to_ir(arg.arg2))
             end
         end
     end
@@ -507,30 +493,26 @@ function _to_std_string(arg::BinaryOperation{Mult})
             arg.arg2
         end
 
-        return parenthesize_std(scalar) * parenthesize_std(tensor)
+        return ir.Product(to_ir(scalar), to_ir(tensor))
     end
 
     if (isempty(arg1_free_ids) && isempty(arg2_free_ids))
         if arg.arg1 isa Real
-            return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+            return ir.Product(to_ir(arg.arg1), to_ir(arg.arg2))
         elseif arg.arg2 isa Real
-            return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
+            return ir.Product(to_ir(arg.arg2), to_ir(arg.arg1))
         elseif arg.arg1 isa Monomial
-            return parenthesize_std(arg.arg1) * parenthesize_std(arg.arg2)
+            return ir.Product(to_ir(arg.arg1), to_ir(arg.arg2))
         elseif arg.arg2 isa Monomial
-            return parenthesize_std(arg.arg2) * parenthesize_std(arg.arg1)
+            return ir.Product(to_ir(arg.arg2), to_ir(arg.arg1))
         end
     end
 
     throw_not_std(arg)
 end
 
-function _to_std_string(arg::Power)
-    if arg.base isa UnaryOperation || arg.base isa Real || arg.base isa Monomial
-        return parenthesize_std(arg.base) * script(Upper(arg.exponent))
-    end
-
-    return "(" * _to_std_string(arg.base) * ")" * script(Upper(arg.exponent))
+function to_ir(arg::Power)
+    return ir.Power(to_ir(arg.base), arg.exponent)
 end
 
 function parenthesize_std(arg)
@@ -663,22 +645,117 @@ function to_standard(arg::BinaryOperation{Mult})
     throw_not_std(arg)
 end
 
-"""
-    to_std_string(expr)
+struct Ir end
+struct StdStr end
 
-Convert the expression `expr` to standard matrix notation. `expr` must be a scalar and `wrt` a vector. Example:
-```jldoctest
-@matrix A
-@vector x
+function to_std_str(arg::ir.Mat)
+    if arg.id isa String
+        return arg.id
+    end
 
-to_std_string(gradient(x' * A * x, x))
+    return "mat(" * to_std_str(arg.id) * ")"
+end
 
-# output
+function to_std_str(arg::ir.Vec)
+    if arg.id isa String
+        return arg.id
+    end
 
-"Aᵀx + Ax"
-```
-"""
-function to_std_string(arg)
+    return "vec(" * to_std_str(arg.id) * ")"
+end
+
+function to_std_str(arg::ir.Scal)
+    return to_std_str(arg.id)
+end
+
+function to_std_str(arg::String)
+    return arg
+end
+
+function to_std_str(arg::ir.Real)
+    out = string(arg)
+
+    if arg < 0
+        out = "(" * out * ")"
+    end
+
+    return out
+end
+
+function to_std_str(arg::ir.Identity)
+    return "I"
+end
+
+function to_std_str(arg::ir.Sin)
+    return "sin(" * to_std_str(arg.arg) * ")"
+end
+
+function to_std_str(arg::ir.Cos)
+    return "cos(" * to_std_str(arg.arg) * ")"
+end
+
+function parenthesize(f, arg::ir.Add)
+    return "(" * f(arg) * ")"
+end
+
+function parenthesize(f, arg::ir.Sub)
+    return "(" * f(arg) * ")"
+end
+
+function parenthesize(f, arg::ir.HadamardProduct)
+    return "(" * f(arg.l) * " ⊙ " * f(arg.r) * ")"
+end
+
+function parenthesize(f, arg)
+    return f(arg)
+end
+
+function to_std_str(arg::ir.Add)
+    return parenthesize(to_std_str, arg.l) * " + " * parenthesize(to_std_str, arg.r)
+end
+
+function to_std_str(arg::ir.Sub)
+    return parenthesize(to_std_str, arg.l) * " - " * parenthesize(to_std_str, arg.r)
+end
+
+function to_std_str(arg::ir.Product)
+    return parenthesize(to_std_str, arg.l) * parenthesize(to_std_str, arg.r)
+end
+
+function to_std_str(arg::ir.HadamardProduct)
+    return to_std_str(arg.l) * " ⊙ " * to_std_str(arg.r)
+end
+
+function to_std_str(arg::ir.Power)
+    out = to_std_str(arg.base)
+
+    if arg.base isa ir.Product ||
+       arg.base isa ir.HadamardProduct ||
+       arg.base isa ir.Add ||
+       arg.base isa ir.Sub
+        out = "(" * out * ")"
+    end
+
+    return out * script(Upper(arg.exponent))
+end
+
+function to_std_str(arg::ir.Trace)
+    return "tr(" * to_std_str(arg.arg) * ")"
+end
+
+function to_std_str(arg::ir.Diag)
+    return "diag(" * to_std_str(arg.arg) * ")"
+end
+
+function to_std_str(arg::ir.Transpose)
+    return parenthesize(to_std_str, arg.arg) * "ᵀ"
+end
+
+function to_std_str(arg::ir.Sum)
+    return "sum(" * to_std_str(arg.arg) * ")"
+end
+
+function standardize(arg)
     arg = simplify(arg)
     free_indices = unique(get_free_indices(arg))
 
@@ -696,5 +773,36 @@ function to_std_string(arg)
         to_standard(arg)
     end
 
-    return _to_std_string(standardized)
+    return standardized
+end
+
+"""
+    to_std(expr)
+
+Convert the expression `expr` to standard matrix notation. Example:
+```jldoctest
+@matrix A
+@vector x
+
+to_std(gradient(x' * A * x, x))
+
+# output
+
+"Aᵀx + Ax"
+```
+"""
+function to_std(arg; format = StdStr())
+    return _to_std(format, arg)
+end
+
+function _to_std(format::StdStr, arg)
+    standardized = standardize(arg)
+
+    return to_std_str(to_ir(standardized))
+end
+
+function _to_std(format::Ir, arg)
+    standardized = standardize(arg)
+
+    return to_ir(standardized)
 end

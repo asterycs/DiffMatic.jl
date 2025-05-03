@@ -40,9 +40,9 @@ H = hessian(expr, x)
 # output
 A₇⁶ + A⁶₇
 ```
-Convert the gradient into standard notation using `to_std_string`:
+Convert the gradient into standard notation using `to_std`:
 ```jldoctest intro
-to_std_string(g)
+to_std(g)
 
 # output
 
@@ -51,7 +51,7 @@ to_std_string(g)
 
 Convert the the Hessian into standard notation:
 ```jldoctest intro
-to_std_string(H)
+to_std(H)
 
 # output
 
@@ -61,7 +61,7 @@ to_std_string(H)
 Jacobians can be computed with `jacobian`:
 
 ```jldoctest intro
-to_std_string(jacobian(A * x, x))
+to_std(jacobian(A * x, x))
 
 # output
 
@@ -71,16 +71,16 @@ to_std_string(jacobian(A * x, x))
 The method `derivative` can be used to compute arbitrary derivatives.
 
 ```jldoctest intro
-to_std_string(derivative(tr(A), A))
+to_std(derivative(tr(A), A))
 
 # output
 
 "I"
 ```
-The method `to_std_string` will throw an exception when given an expression that that cannot be converted to
+The method `to_std` will throw an exception when given an expression that that cannot be converted to
 standard notation:
 ```jldoctest intro
-to_std_string(derivative(A, A))
+to_std(derivative(A, A))
 
 # output
 
