@@ -28,29 +28,29 @@ Compute the gradient and the Hessian with respect to the vector `x`.
 g = gradient(expr, x)
 H = hessian(expr, x)
 ```
-Convert the gradient and the Hessian into standard notation using `to_std_string`:
+Convert the gradient and the Hessian to standard notation using `to_std`:
 ```julia
-to_std_string(g) # "Aᵀx + Ax"
-to_std_string(H) # "Aᵀ + A"
+to_std(g) # "Aᵀx + Ax"
+to_std(H) # "Aᵀ + A"
 ```
 
 Jacobians can be computed with `jacobian`:
 
 ```julia
-to_std_string(jacobian(A * x, x)) # "A"
+to_std(jacobian(A * x, x)) # "A"
 ```
 
-The method `derivative` can be used to compute arbitrary derivatives.
+The function `derivative` can be used to compute arbitrary derivatives.
 
 ```julia
-to_std_string(derivative(tr(A), A)) # "I"
+to_std(derivative(tr(A), A)) # "I"
 ```
-The method `to_std_string` will throw an exception when given an expression that that cannot be converted to
+The function `to_std` will throw an exception when given an expression that that cannot be converted to
 standard notation.
 
 ### Supported operators
 
-`tr`, `sum`, `sin`, `cos`, `+`, `-`, `*`, `'`, `.*`, `.^`
+`tr`, `sum`, `sin`, `cos`, `+`, `-`, `'`, `*`, `.*`, `.^`, `^`
 
 ### Installation
 
