@@ -1,6 +1,6 @@
 # DiffMatic.jl
 
-DiffMatic is a package for computing derivatives of matrix expressions, also known as matrix calculus. Provided are methods for computing gradients, Jacobians, Hessians and general matrix derivatives.
+DiffMatic is a package for computing derivatives of matrix expressions, also known as matrix calculus. Provided are functions for computing gradients, Jacobians, Hessians and general matrix derivatives.
 
 ## Installation
 The package is currently unregistered and can only be installed from GitHub:
@@ -68,7 +68,7 @@ to_std(jacobian(A * x, x))
 "A"
 ```
 
-The method `derivative` can be used to compute arbitrary derivatives.
+The function `derivative` can be used to compute arbitrary derivatives.
 
 ```jldoctest intro
 to_std(derivative(tr(A), A))
@@ -77,7 +77,7 @@ to_std(derivative(tr(A), A))
 
 "I"
 ```
-The method `to_std` will throw an exception when given an expression that that cannot be converted to
+The function `to_std` will throw an exception when given an expression that that cannot be converted to
 standard notation:
 ```jldoctest intro
 to_std(derivative(A, A))
