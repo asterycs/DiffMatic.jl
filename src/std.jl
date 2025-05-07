@@ -333,7 +333,7 @@ function to_std_str(arg::String)
     return arg
 end
 
-function to_std_str(arg::ir.Real)
+function to_std_str(arg::Real)
     out = string(arg)
 
     if arg < 0
@@ -341,6 +341,12 @@ function to_std_str(arg::ir.Real)
     end
 
     return out
+end
+
+function to_std_str(arg::Rational)
+    out = string(arg)
+
+    return "(" * out * ")"
 end
 
 function to_std_str(arg::ir.Identity)
@@ -397,7 +403,7 @@ function to_std_str(arg::ir.Power)
         out = "(" * out * ")"
     end
 
-    return out * script(Upper(arg.exponent))
+    return out * "^" * to_std_str(arg.exponent)
 end
 
 function to_std_str(arg::ir.Trace)
