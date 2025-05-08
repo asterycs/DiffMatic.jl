@@ -307,16 +307,16 @@ function to_standard(arg::BinaryOperation{Mult})
 end
 
 function to_std_str(arg::ir.Mat)
-    if arg.id isa String
-        return arg.id
+    if arg.id isa ir.Var
+        return to_std_str(arg.id)
     end
 
     return "mat(" * to_std_str(arg.id) * ")"
 end
 
 function to_std_str(arg::ir.Vec)
-    if arg.id isa String
-        return arg.id
+    if arg.id isa ir.Var
+        return to_std_str(arg.id)
     end
 
     return "vec(" * to_std_str(arg.id) * ")"
@@ -326,8 +326,12 @@ function to_std_str(arg::ir.Scal)
     return to_std_str(arg.id)
 end
 
-function to_std_str(arg::String)
-    return arg
+function to_std_str(arg::ir.Var)
+    return arg.id
+end
+
+function to_std_str(arg::ir.Const)
+    return to_std_str(arg.value)
 end
 
 function to_std_str(arg::Real)
