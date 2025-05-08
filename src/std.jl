@@ -422,6 +422,16 @@ function to_std_str(arg::ir.Sum)
     return "sum(" * to_std_str(arg.arg) * ")"
 end
 
+function to_std_str(arg::ir.PartialSum)
+    if arg.dim == 1
+        return "vec(1)ᵀ" * to_std_str(arg.arg)
+    elseif arg.dim == 2
+        return to_std_str(arg.arg) * "vec(1)"
+    end
+
+    throw(RuntimeError("Encountered a sum over an unsupported index"))
+end
+
 function standardize(arg)
     arg = simplify(arg)
     free_indices = unique(get_free_indices(arg))

@@ -73,6 +73,11 @@ struct Sum <: IR
     arg::IR
 end
 
+struct PartialSum <: IR
+    arg::IR
+    dim::Int
+end
+
 end
 
 """
