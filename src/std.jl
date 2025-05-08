@@ -306,9 +306,6 @@ function to_standard(arg::BinaryOperation{Mult})
     throw_not_std(arg)
 end
 
-struct Ir end
-struct StdStr end
-
 function to_std_str(arg::ir.Mat)
     if arg.id isa String
         return arg.id
@@ -453,6 +450,10 @@ function standardize(arg)
     return standardized
 end
 
+struct Ir end
+struct StdStr end
+struct Julia end
+
 """
     to_std(expr)
 
@@ -472,14 +473,29 @@ function to_std(arg; format = StdStr())
     return _to_std(format, arg)
 end
 
+function _to_std(format::Ir, arg)
+    standardized = standardize(arg)
+
+    return to_ir(standardized)
+end
+
 function _to_std(format::StdStr, arg)
     standardized = standardize(arg)
 
     return to_std_str(to_ir(standardized))
 end
 
-function _to_std(format::Ir, arg)
+function _to_std(format::Julia, arg)
     standardized = standardize(arg)
 
-    return to_ir(standardized)
+    ir = to_ir(standardized)
+    op = to_julia(ir)
+
+    variables = DiffMatic.ir.get_variables(ir)
+
+    return quote
+        function derivative($(Symbol.(variables)...))
+            return $(op)
+        end
+    end
 end
