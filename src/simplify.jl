@@ -14,7 +14,7 @@ function simplify(arg::BinaryOperation{Op}) where {Op}
     return evaluate(simplify(Op(), simplify(arg.arg1), simplify(arg.arg2)))
 end
 
-function simplify(::Mult, arg1::Monomial, arg2::Monomial)
+function simplify(::Mult, arg1::Variable, arg2::Variable)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
@@ -50,8 +50,8 @@ function get_diag_delta(arg)
     return nothing
 end
 
-function reshape(term::Monomial, indices::LowerOrUpperIndex...)
-    return Monomial(term.id, indices...)
+function reshape(term::Variable, indices::LowerOrUpperIndex...)
+    return Variable(term.id, indices...)
 end
 
 function reshape(term::UnaryOperation{Op}, indices::LowerOrUpperIndex...) where {Op}
@@ -139,7 +139,7 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Monomial)
+function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Variable)
     if is_diag(arg1) && !is_elementwise_multiplication(arg1, arg2)
         d = get_diag_delta(arg1)
 

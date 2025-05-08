@@ -91,7 +91,7 @@ function is_standard_form(arg::Tensor)
     return true
 end
 
-function to_ir(arg::Monomial)
+function to_ir(arg::Variable)
     @assert is_standard_form(arg)
 
     ids = get_indices(arg)
@@ -358,9 +358,9 @@ function to_ir(arg::BinaryOperation{Mult})
             return ir.Product(to_ir(arg.arg1), to_ir(arg.arg2))
         elseif arg.arg2 isa Real
             return ir.Product(to_ir(arg.arg2), to_ir(arg.arg1))
-        elseif arg.arg1 isa Monomial
+        elseif arg.arg1 isa Variable
             return ir.Product(to_ir(arg.arg1), to_ir(arg.arg2))
-        elseif arg.arg2 isa Monomial
+        elseif arg.arg2 isa Variable
             return ir.Product(to_ir(arg.arg2), to_ir(arg.arg1))
         end
     end

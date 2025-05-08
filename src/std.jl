@@ -14,19 +14,19 @@ export hessian
 export to_std
 
 function create_matrix(name::String)
-    T = Monomial(name, Upper(1), Lower(2))
+    T = Variable(name, Upper(1), Lower(2))
 
     return T
 end
 
 function create_vector(name::String)
-    T = Monomial(name, Upper(1))
+    T = Variable(name, Upper(1))
 
     return T
 end
 
 function create_scalar(name::String)
-    T = Monomial(name)
+    T = Variable(name)
 
     return T
 end
@@ -98,8 +98,8 @@ derivative(x' * x, x)
 2x₄
 ```
 """
-function derivative(expr, wrt::Monomial)
-    ∂ = Monomial(wrt.id)
+function derivative(expr, wrt::Variable)
+    ∂ = Variable(wrt.id)
 
     for index ∈ wrt.indices
         push!(∂.indices, same_to(index, get_next_letter(expr, ∂)))
@@ -125,7 +125,7 @@ gradient(x' * A * x, x)
 x⁴A₄⁶ + A⁶⁵x₅
 ```
 """
-function gradient(expr, wrt::Monomial)
+function gradient(expr, wrt::Variable)
     free_indices = get_free_indices(evaluate(expr))
 
     if !isempty(free_indices)
@@ -157,7 +157,7 @@ jacobian(A * x, x)
 A¹₅
 ```
 """
-function jacobian(expr, wrt::Monomial)
+function jacobian(expr, wrt::Variable)
     free_indices = get_free_indices(evaluate(expr))
 
     if length(free_indices) != 1 || typeof(free_indices[1]) != Upper
@@ -188,7 +188,7 @@ hessian(x' * A * x, x)
 A₇⁶ + A⁶₇
 ```
 """
-function hessian(expr, wrt::Monomial)
+function hessian(expr, wrt::Variable)
     free_indices = get_free_indices(evaluate(expr))
 
     if !isempty(free_indices)
@@ -218,19 +218,19 @@ function to_standard(term::Power)
     return Power(to_standard(term.base), term.exponent)
 end
 
-function to_standard(term::Monomial)
+function to_standard(term::Variable)
     ids = term.indices
 
     if length(ids) == 2
         if typeof(last(term.indices)) == Lower
-            return Monomial(term.id, Upper(ids[1].letter), Lower(ids[2].letter))
+            return Variable(term.id, Upper(ids[1].letter), Lower(ids[2].letter))
         else
-            return Monomial(term.id, Lower(ids[1].letter), Upper(ids[2].letter))
+            return Variable(term.id, Lower(ids[1].letter), Upper(ids[2].letter))
         end
     elseif length(ids) == 1
         return term
     elseif isempty(ids)
-        return Monomial(term.id)
+        return Variable(term.id)
     end
 
     throw_not_std(term)

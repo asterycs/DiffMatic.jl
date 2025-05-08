@@ -24,11 +24,11 @@ function get_indices(arg::Real)
     return LowerOrUpperIndex[]
 end
 
-struct Monomial <: Tensor
+struct Variable <: Tensor
     id::String
     indices::IndexList
 
-    function Monomial(id, indices::LowerOrUpperIndex...)
+    function Variable(id, indices::LowerOrUpperIndex...)
         # Convert type
         indices = LowerOrUpperIndex[i for i ∈ indices]
 
@@ -40,7 +40,7 @@ struct Monomial <: Tensor
     end
 end
 
-Base.hash(m::Monomial, h::UInt) = hash(Monomial, hash(m.id, hash(m.indices, h)))
+Base.hash(m::Variable, h::UInt) = hash(Variable, hash(m.id, hash(m.indices, h)))
 
 function are_unique(arg::AbstractArray)
     return length(unique(arg)) == length(arg)
@@ -181,7 +181,7 @@ function is_permutation(arg1::Tensor, arg2::Tensor)
     return is_permutation(unique(arg1_indices), unique(arg2_indices))
 end
 
-function get_indices(arg::Union{Monomial,KrD,Zero})
+function get_indices(arg::Union{Variable,KrD,Zero})
     @assert length(unique(arg.indices)) == length(arg.indices)
 
     return arg.indices
@@ -346,7 +346,7 @@ function replace_letters(
     )
 end
 
-function replace_letters(arg::Union{Monomial,Zero,KrD}, letter_map::Dict)
+function replace_letters(arg::Union{Variable,Zero,KrD}, letter_map::Dict)
     new_indices = LowerOrUpperIndex[]
 
     for i ∈ arg.indices
@@ -598,7 +598,7 @@ function Base.adjoint(arg::BinaryOperation{Op}) where {Op}
     return evaluate(BinaryOperation{Op}(adjoint(arg.arg1), adjoint(arg.arg2)))
 end
 
-function Base.adjoint(arg::Union{Monomial,KrD,Zero})
+function Base.adjoint(arg::Union{Variable,KrD,Zero})
     free_indices = unique(get_free_indices(arg))
 
     if length(free_indices) > 2
@@ -665,7 +665,7 @@ function script(index::Upper)
     return join(text)
 end
 
-function to_string(arg::Monomial)
+function to_string(arg::Variable)
     scripts = [script(i) for i ∈ arg.indices]
 
     return arg.id * join(scripts)

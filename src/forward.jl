@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-function diff(arg::Monomial, wrt::Monomial)
+function diff(arg::Variable, wrt::Variable)
     if arg.id == wrt.id
         @assert length(arg.indices) == length(wrt.indices)
 
@@ -21,25 +21,25 @@ function diff(arg::Monomial, wrt::Monomial)
     return Zero(unique(indices)...)
 end
 
-function diff(arg::KrD, wrt::Monomial)
+function diff(arg::KrD, wrt::Variable)
     indices = union(arg.indices, [flip(i) for i ∈ wrt.indices])
 
     return Zero(unique(indices)...)
 end
 
-function diff(arg::Real, wrt::Monomial)
+function diff(arg::Real, wrt::Variable)
     return Zero([flip(i) for i ∈ wrt.indices]...)
 end
 
-function diff(arg::UnaryOperation{Sin}, wrt::Monomial)
+function diff(arg::UnaryOperation{Sin}, wrt::Variable)
     return BinaryOperation{Mult}(UnaryOperation{Cos}(arg.arg), diff(arg.arg, wrt))
 end
 
-function diff(arg::UnaryOperation{Cos}, wrt::Monomial)
+function diff(arg::UnaryOperation{Cos}, wrt::Variable)
     return BinaryOperation{Mult}(-UnaryOperation{Sin}(arg.arg), diff(arg.arg, wrt))
 end
 
-function diff(arg::Power, wrt::Monomial)
+function diff(arg::Power, wrt::Variable)
     outer = replace_bound_letters(arg.base, wrt)
 
     return BinaryOperation{Mult}(
@@ -48,14 +48,14 @@ function diff(arg::Power, wrt::Monomial)
     )
 end
 
-function diff(arg::BinaryOperation{Mult}, wrt::Monomial)
+function diff(arg::BinaryOperation{Mult}, wrt::Variable)
     return BinaryOperation{Add}(
         BinaryOperation{Mult}(arg.arg1, diff(arg.arg2, wrt)),
         BinaryOperation{Mult}(diff(arg.arg1, wrt), arg.arg2),
     )
 end
 
-function diff(arg::BinaryOperation{Op}, wrt::Monomial) where {Op<:AdditiveOperation}
+function diff(arg::BinaryOperation{Op}, wrt::Variable) where {Op<:AdditiveOperation}
     return BinaryOperation{Op}(diff(arg.arg1, wrt), diff(arg.arg2, wrt))
 end
 
@@ -79,7 +79,7 @@ function collect_factors(arg)
     return Value[arg]
 end
 
-function evaluate(arg::Union{Monomial,KrD,Zero,Real})
+function evaluate(arg::Union{Variable,KrD,Zero,Real})
     return arg
 end
 
@@ -133,7 +133,7 @@ function is_diag(arg1::KrD, arg2::KrD)
     return false
 end
 
-function is_diag(arg::Union{Monomial,KrD,Zero})
+function is_diag(arg::Union{Variable,KrD,Zero})
     return false
 end
 
@@ -153,11 +153,11 @@ function is_diag(arg1::Value, arg2::Value)
     return is_diag(arg1) || is_diag(arg2)
 end
 
-function evaluate(::Mult, arg1::Monomial, arg2::BinaryOperation{Mult})
+function evaluate(::Mult, arg1::Variable, arg2::BinaryOperation{Mult})
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Monomial)
+function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Variable)
     if arg1.arg1 isa Real
         return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
     end
@@ -350,11 +350,11 @@ function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperati
     return BinaryOperation{Mult}(evaluate(arg2), evaluate(arg1))
 end
 
-function evaluate(::Mult, arg1::Monomial, arg2::KrD)
+function evaluate(::Mult, arg1::Variable, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::KrD, arg2::Monomial)
+function evaluate(::Mult, arg1::KrD, arg2::Variable)
     return _multiply_with_krd(arg2, arg1)
 end
 
@@ -362,7 +362,7 @@ function evaluate(::Mult, arg1::KrD, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
 
-function _multiply_with_krd(arg1::Union{Monomial,KrD}, arg2::KrD)
+function _multiply_with_krd(arg1::Union{Variable,KrD}, arg2::KrD)
     arg1_indices = get_free_indices(arg1)
     contracting_index = eliminated_indices([arg1_indices; get_indices(arg2)])
 

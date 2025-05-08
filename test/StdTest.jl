@@ -4,7 +4,7 @@
 using DiffMatic
 using Test
 
-using DiffMatic: Monomial, KrD, Zero
+using DiffMatic: Variable, KrD, Zero
 using DiffMatic: evaluate
 using DiffMatic: Upper, Lower
 
@@ -15,27 +15,27 @@ dc = DiffMatic
     @vector y A
 
     # TODO: Find a better way to keep track of the indices and remove all "equivalent"
-    @test equivalent(x, Monomial("x", Upper(1)))
-    @test equivalent(y, Monomial("y", Upper(2)))
-    @test equivalent(A, Monomial("A", Upper(3)))
+    @test equivalent(x, Variable("x", Upper(1)))
+    @test equivalent(y, Variable("y", Upper(2)))
+    @test equivalent(A, Variable("A", Upper(3)))
 end
 
 @testset "create matrix" begin
     @matrix A
     @matrix B X
 
-    @test equivalent(A, Monomial("A", Upper(4), Lower(5)))
-    @test equivalent(B, Monomial("B", Upper(6), Lower(7)))
-    @test equivalent(X, Monomial("X", Upper(8), Lower(9)))
+    @test equivalent(A, Variable("A", Upper(4), Lower(5)))
+    @test equivalent(B, Variable("B", Upper(6), Lower(7)))
+    @test equivalent(X, Variable("X", Upper(8), Lower(9)))
 end
 
 @testset "create scalar" begin
     @scalar a
     @scalar b c
 
-    @test equivalent(a, Monomial("a"))
-    @test equivalent(b, Monomial("b"))
-    @test equivalent(c, Monomial("c"))
+    @test equivalent(a, Variable("a"))
+    @test equivalent(b, Variable("b"))
+    @test equivalent(c, Variable("c"))
 end
 
 @testset "to_std output is correct with standard form KrD" begin
@@ -55,13 +55,13 @@ end
     @test to_std(Zero(Lower(2), Upper(1))) == "mat(0)ᵀ"
 end
 
-@testset "to_std output is correct with scalar-Monomial multiplication" begin
-    A = Monomial("A", Upper(1), Lower(2))
-    At = Monomial("A", Lower(1), Upper(2))
-    x = Monomial("x", Upper(2))
-    xt = Monomial("x", Lower(2))
-    a = Monomial("a")
-    b = Monomial("b")
+@testset "to_std output is correct with scalar-Variable multiplication" begin
+    A = Variable("A", Upper(1), Lower(2))
+    At = Variable("A", Lower(1), Upper(2))
+    x = Variable("x", Upper(2))
+    xt = Variable("x", Lower(2))
+    a = Variable("a")
+    b = Variable("b")
 
     function mult(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -79,12 +79,12 @@ end
 end
 
 @testset "to_std output is correct with matrix-vector contraction" begin
-    A = Monomial("A", Upper(1), Lower(2))
-    At = Monomial("A", Lower(1), Upper(2))
-    x = Monomial("x", Upper(2))
-    xt = Monomial("x", Lower(2))
-    y = Monomial("y", Upper(1))
-    yt = Monomial("y", Lower(1))
+    A = Variable("A", Upper(1), Lower(2))
+    At = Variable("A", Lower(1), Upper(2))
+    x = Variable("x", Upper(2))
+    xt = Variable("x", Lower(2))
+    y = Variable("y", Upper(1))
+    yt = Variable("y", Lower(1))
 
     function contract(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -109,25 +109,25 @@ end
         return dc.BinaryOperation{dc.Add}(l, r)
     end
 
-    trA = Monomial("A", Upper(2), Lower(2))
+    trA = Variable("A", Upper(2), Lower(2))
 
-    A = Monomial("A", Upper(3), Lower(4))
-    B = Monomial("B", Upper(4), Lower(5))
-    x = Monomial("x", Upper(4))
+    A = Variable("A", Upper(3), Lower(4))
+    B = Variable("B", Upper(4), Lower(5))
+    x = Variable("x", Upper(4))
 
     @test to_std(trA) == "tr(A)"
     @test to_std(mul(trA, A)) == "tr(A)A"
     @test to_std(mul(A, trA)) == "tr(A)A"
     @test to_std(mul(mul(trA, A), x)) == "tr(A)Ax"
 
-    trAB = mul(Monomial("A", Upper(1), Lower(2)), Monomial("B", Upper(2), Lower(1)))
+    trAB = mul(Variable("A", Upper(1), Lower(2)), Variable("B", Upper(2), Lower(1)))
 
     @test to_std(trAB) == "tr(AB)"
     @test to_std(mul(trAB, A)) == "tr(AB)A"
     @test to_std(mul(trAB, B)) == "tr(AB)B"
     @test to_std(mul(mul(trAB, A), x)) == "tr(AB)Ax"
 
-    trApB = add(Monomial("A", Upper(2), Lower(2)), Monomial("B", Upper(2), Lower(2)))
+    trApB = add(Variable("A", Upper(2), Lower(2)), Variable("B", Upper(2), Lower(2)))
 
     @test to_std(trApB) == "tr(A) + tr(B)"
     @test to_std(mul(trApB, A)) == "(tr(A) + tr(B))A"
@@ -136,9 +136,9 @@ end
 end
 
 @testset "to_std output is correct with all covariant bilinar form-vector contraction" begin
-    A = Monomial("A", Lower(1), Lower(2))
-    x = Monomial("x", Upper(2))
-    y = Monomial("y", Upper(1))
+    A = Variable("A", Lower(1), Lower(2))
+    x = Variable("x", Upper(2))
+    y = Variable("y", Upper(1))
 
     function contract(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -151,9 +151,9 @@ end
 end
 
 @testset "to_std output is correct with all contravariant bilinear form-vector contraction" begin
-    A = Monomial("A", Upper(1), Upper(2))
-    x = Monomial("x", Lower(2))
-    y = Monomial("y", Lower(1))
+    A = Variable("A", Upper(1), Upper(2))
+    x = Variable("x", Lower(2))
+    y = Variable("y", Lower(1))
 
     function contract(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -166,10 +166,10 @@ end
 end
 
 @testset "to_std output is correct with matrix-matrix contraction" begin
-    A = Monomial("A", Upper(1), Lower(2))
-    B = Monomial("B", Upper(2), Lower(3))
-    C = Monomial("C", Lower(1), Upper(3))
-    D = Monomial("D", Lower(3), Upper(2))
+    A = Variable("A", Upper(1), Lower(2))
+    B = Variable("B", Upper(2), Lower(3))
+    C = Variable("C", Lower(1), Upper(3))
+    D = Variable("D", Lower(3), Upper(2))
 
     function contract(l, r)
         return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
@@ -186,8 +186,8 @@ end
 end
 
 @testset "to_std output is correct with matrix-matrix element wise multiplication" begin
-    A = Monomial("A", Upper(1), Lower(2))
-    B = Monomial("B", Upper(1), Lower(2))
+    A = Variable("A", Upper(1), Lower(2))
+    B = Variable("B", Upper(1), Lower(2))
 
     @test to_std(A .* B) == "A ⊙ B"
     @test to_std(A .* A) == "A ⊙ A"
@@ -198,9 +198,9 @@ end
 end
 
 @testset "to_std output is correct with matrix-matrix sum" begin
-    A = Monomial("A", Upper(1), Lower(2))
-    B = Monomial("B", Upper(1), Lower(2))
-    C = Monomial("C", Lower(2), Upper(1))
+    A = Variable("A", Upper(1), Lower(2))
+    B = Variable("B", Upper(1), Lower(2))
+    C = Variable("C", Lower(2), Upper(1))
 
     function sum(l, r)
         return evaluate(dc.BinaryOperation{dc.Add}(l, r))
@@ -213,9 +213,9 @@ end
 end
 
 @testset "to_std output is correct with vector-matrix element wise multiplication" begin
-    A = Monomial("A", Upper(1), Lower(2))
-    x = Monomial("x", Upper(1))
-    y = Monomial("y", Lower(2))
+    A = Variable("A", Upper(1), Lower(2))
+    x = Variable("x", Upper(1))
+    y = Variable("y", Lower(2))
 
     function mul(l, r)
         return dc.BinaryOperation{dc.Mult}(l, r)
@@ -228,10 +228,10 @@ end
 end
 
 @testset "to_std output is correct with vector-vector element wise multiplication" begin
-    x = Monomial("x", Upper(1))
-    y = Monomial("y", Upper(1))
-    z = Monomial("z", Upper(1))
-    v = Monomial("v", Upper(1))
+    x = Variable("x", Upper(1))
+    y = Variable("y", Upper(1))
+    z = Variable("z", Upper(1))
+    v = Variable("v", Upper(1))
 
     function mul(l, r)
         return dc.BinaryOperation{dc.Mult}(l, r)
@@ -248,8 +248,8 @@ end
 end
 
 @testset "to_std output is correct with vector sum" begin
-    x = Monomial("x", Upper(1))
-    y = Monomial("y", Lower(2))
+    x = Variable("x", Upper(1))
+    y = Variable("y", Lower(2))
 
     function mul(l, r)
         return dc.BinaryOperation{dc.Mult}(l, r)
@@ -279,9 +279,9 @@ end
 end
 
 @testset "to_std output is correct with complex expression" begin
-    x = Monomial("x", Upper(1))
-    y = Monomial("y", Upper(2))
-    a = Monomial("a")
+    x = Variable("x", Upper(1))
+    y = Variable("y", Upper(2))
+    a = Variable("a")
 
     @test to_std(evaluate(a * sin(x)' * y)) == "asin(xᵀ)y"
     @test to_std(evaluate(sin(x)' * a * y)) == "asin(xᵀ)y"

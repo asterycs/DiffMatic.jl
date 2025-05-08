@@ -4,7 +4,7 @@
 
 using DiffMatic
 
-using DiffMatic: Monomial, KrD, Zero
+using DiffMatic: Variable, KrD, Zero
 using DiffMatic: BinaryOperation, UnaryOperation
 using DiffMatic: IndexList
 
@@ -42,7 +42,7 @@ function equivalent(left, right)
     return can_remap(left_ids, right_ids)
 end
 
-function equivalent(left::Monomial, right::Monomial)
+function equivalent(left::Variable, right::Variable)
     left_ids, right_ids = DiffMatic.get_free_indices.((left, right))
 
     return left.id == right.id && can_remap(left_ids, right_ids)
