@@ -78,6 +78,88 @@ struct PartialSum <: IR
     dim::Int
 end
 
+function _get_variables(arg::Mat)
+    if arg.id isa String
+        return arg.id
+    end
+
+    return nothing
+end
+
+function _get_variables(arg::Vec)
+    if arg.id isa String
+        return arg.id
+    end
+
+    return nothing
+end
+
+function _get_variables(arg::Scal)
+    if arg.id isa String
+        return arg.id
+    end
+
+    return nothing
+end
+
+function _get_variables(arg::Real)
+    return nothing
+end
+
+function _get_variables(arg::Identity)
+    return nothing
+end
+
+function _get_variables(arg::Sin)
+    return _get_variables(arg.arg)
+end
+
+function _get_variables(arg::Cos)
+    return _get_variables(arg.arg)
+end
+
+function _get_variables(arg::Add)
+    return [_get_variables(arg.l); _get_variables(arg.r)]
+end
+
+function _get_variables(arg::Sub)
+    return [_get_variables(arg.l); _get_variables(arg.r)]
+end
+
+function _get_variables(arg::Product)
+    return [_get_variables(arg.l); _get_variables(arg.r)]
+end
+
+function _get_variables(arg::HadamardProduct)
+    return [_get_variables(arg.l); _get_variables(arg.r)]
+end
+
+function _get_variables(arg::Power)
+    return [_get_variables(arg.base); _get_variables(arg.exponent)]
+end
+
+function _get_variables(arg::Trace)
+    return _get_variables(arg.arg)
+end
+
+function _get_variables(arg::Diag)
+    return _get_variables(arg.arg)
+end
+
+function _get_variables(arg::Transpose)
+    return _get_variables(arg.arg)
+end
+
+function _get_variables(arg::Sum)
+    return _get_variables(arg.arg)
+end
+
+function get_variables(arg::IR)
+    s = [_get_variables(arg);]
+
+    return filter(x -> !isnothing(x), unique(s))
+end
+
 end
 
 """
