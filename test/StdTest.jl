@@ -365,7 +365,7 @@ end
 end
 
 @testset "to_std of jacobian" begin
-    @matrix A
+    @matrix A B C
     @vector x y
 
     @test to_std(jacobian(A * x, x)) == "A"
