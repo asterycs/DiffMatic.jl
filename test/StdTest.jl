@@ -371,7 +371,8 @@ end
     @test to_std(jacobian(A * x, x)) == "A"
     @test to_std(jacobian(A' * x, x)) == "Aᵀ"
     @test to_std(jacobian(sin(A * x + y), x)) == "diag(cos(Ax + y))A"
-    # TODO: check correctness @test to_std(jacobian(((A .* B) * C * x)' * x * x, x)) == "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"
+    @test to_std(jacobian(((A .* B) * C * x)' * x * x, x)) ==
+          "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"
 end
 
 @testset "to_std of derivative {A, A'} * x" begin
