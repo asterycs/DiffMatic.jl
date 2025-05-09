@@ -79,27 +79,23 @@ struct PartialSum <: IR
 end
 
 function _get_variables(arg::Mat)
-    if arg.id isa String
-        return arg.id
-    end
-
-    return nothing
+    return _get_variables(arg.id)
 end
 
 function _get_variables(arg::Vec)
-    if arg.id isa String
-        return arg.id
-    end
-
-    return nothing
+    return _get_variables(arg.id)
 end
 
 function _get_variables(arg::Scal)
-    if arg.id isa String
-        return arg.id
-    end
+    return _get_variables(arg.id)
+end
 
-    return nothing
+function _get_variables(arg::Var)
+    return arg.id
+end
+
+function _get_variables(arg::Const)
+    return arg.value
 end
 
 function _get_variables(arg::Real)
