@@ -23,5 +23,9 @@ end
     include("StdTest.jl")
 end
 
+@testset "StdStrTest" begin
+    include("StdStrTest.jl")
+end
+
 DocMeta.setdocmeta!(DiffMatic, :DocTestSetup, :(using DiffMatic); recursive = true)
 doctest(DiffMatic)
