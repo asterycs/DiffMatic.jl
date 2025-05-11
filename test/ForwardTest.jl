@@ -535,7 +535,6 @@ end
     end
 end
 
-# TODO: Store the original degree in Variable
 @testset "evaluate trace" begin
     A = Variable("A", Upper(1), Lower(2))
     B = Variable("B", Upper(2), Lower(3))
@@ -570,11 +569,7 @@ end
     y = Variable("y", Upper(3))
     A = Variable("A", Upper(4), Lower(5))
 
-    # TODO: Making this work would require passing a list of all indices down the
-    # tree in diff() since we need to have a safe (as in unused) temporary index
-    # when splitting the trace.
-    # @test dc.diff(x, x) ==
-    #   dc.BinaryOperation{dc.Mult}(KrD(Upper(2), Lower(3)), KrD(Upper(3), Lower(2)))
+    @test dc.diff(x, x) == KrD(Upper(2), Lower(2))
     @test dc.diff(y, x) == Zero(Upper(3), Lower(2))
     @test dc.diff(A, x) == Zero(Upper(4), Lower(5), Lower(2))
 
@@ -783,8 +778,7 @@ end
 
     D = dc.diff(A * (x + 2 * x), Variable("x", Upper(5)))
 
-    # TODO: Make evaluate work until the rersult doesn't change anymore
-    @test equivalent(dc.evaluate(dc.evaluate(dc.evaluate(D))), 3 * A)
+    @test equivalent(dc.evaluate(D), 3 * A)
 end
 
 @testset "Differentiate A(x + 2x)" begin
@@ -812,14 +806,9 @@ end
 
     D = dc.diff(A * (x + 2 * x), Variable("x", Upper(5)))
 
-    # TODO: Make evaluate work until the rersult doesn't change anymore
-    @test equivalent(dc.evaluate(dc.evaluate(dc.evaluate(D))), 3 * A)
+    @test equivalent(dc.evaluate(D), 3 * A)
 end
 
-# TODO: The order of the terms can be different.
-# Need to either:
-#  - Sort them e.g. lexigraphically or
-#  - Overload the equality operator
 @testset "evaluated derivative is equal to derivative of evaluated expression" begin
     A = Variable("A", Upper(1), Lower(2))
     x = Variable("x", Upper(3))

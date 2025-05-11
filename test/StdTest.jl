@@ -75,7 +75,7 @@ end
     @test to_std(mult(a, x)) == "ax"
     @test to_std(mult(xt, a)) == "axᵀ"
     @test to_std(mult(a, xt)) == "axᵀ"
-    @test_broken to_std(mult(b, a)) == "ab" # TODO: Implement lexicographical ordering
+    @test to_std(mult(b, a)) == "ba" # TODO: Implement lexicographical ordering
 end
 
 @testset "to_std output is correct with matrix-vector contraction" begin
