@@ -95,7 +95,7 @@ function _get_variables(arg::Var)
 end
 
 function _get_variables(arg::Const)
-    return arg.value
+    return _get_variables(arg.value)
 end
 
 function _get_variables(arg::Real)

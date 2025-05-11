@@ -498,7 +498,7 @@ function _to_std(format::Julia, arg)
     variables = DiffMatic.ir.get_variables(ir)
 
     return quote
-        function derivative($(Symbol.(variables)...))
+        function generated_function($(Symbol.(variables)...))
             return $(op)
         end
     end
