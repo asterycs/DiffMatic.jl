@@ -55,15 +55,15 @@ using LinearAlgebra: diagm, I
     end
 
     @testset "jacobian of sin(A * x + y)" begin
-        jgrad = eval(to_std(jacobian(sin(A * x + y), x); format = dc.Julia()))
+        jjac = eval(to_std(jacobian(sin(A * x + y), x); format = dc.Julia()))
 
-        @test jgrad(Â, x̂, ŷ) ≈ ForwardDiff.jacobian(x -> sin.(Â * x + ŷ), x̂)
+        @test jjac(Â, x̂, ŷ) ≈ ForwardDiff.jacobian(x -> sin.(Â * x + ŷ), x̂)
     end
 
     @testset "jacobian of (A .* B) * C * x)' * x * x" begin
-        jgrad = eval(to_std(jacobian(((A .* B) * C * x)' * x * x, x); format = dc.Julia()))
+        jjac = eval(to_std(jacobian(((A .* B) * C * x)' * x * x, x); format = dc.Julia()))
 
-        @test jgrad(x̂, Ĉ, Â, B̂) ≈
+        @test jjac(x̂, Ĉ, Â, B̂) ≈
               ForwardDiff.jacobian(x -> ((Â .* B̂) * Ĉ * x)' * x * x, x̂)
     end
 end
