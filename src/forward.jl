@@ -31,6 +31,10 @@ function diff(arg::Real, wrt::Variable)
     return Zero([flip(i) for i ∈ wrt.indices]...)
 end
 
+function diff(arg::UnaryOperation{Abs}, wrt::Variable)
+    return BinaryOperation{Mult}(UnaryOperation{Sgn}(arg.arg), diff(arg.arg, wrt))
+end
+
 function diff(arg::UnaryOperation{Sin}, wrt::Variable)
     return BinaryOperation{Mult}(UnaryOperation{Cos}(arg.arg), diff(arg.arg, wrt))
 end

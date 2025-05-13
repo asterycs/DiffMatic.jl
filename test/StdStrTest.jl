@@ -12,6 +12,7 @@
     @test to_std(gradient(sin(tr(x * x')), x)) == "cos(xᵀx)2x"
     @test to_std(gradient(cos(tr(x * x')), x)) == "(-1)sin(xᵀx)2x"
     @test to_std(gradient(tr(A), x)) == "vec(0)"
+    @test to_std(gradient(abs(x' * x), x)) == "sgn(xᵀx)2x"
     @test to_std(gradient(x' * B' * A * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std(gradient((A' * B * x)' * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std(gradient(a * sin(y)' * x, x)) == "asin(y)"
@@ -48,6 +49,7 @@ end
 
     @test to_std(jacobian(A * x, x)) == "A"
     @test to_std(jacobian(A' * x, x)) == "Aᵀ"
+    @test to_std(jacobian(abs(x), x)) == "diag(sgn(x))I"
     @test to_std(jacobian(sin(A * x + y), x)) == "diag(cos(Ax + y))A"
     @test to_std(jacobian(((A .* B) * C * x)' * x * x, x)) ==
           "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"

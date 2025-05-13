@@ -103,6 +103,8 @@ end
 
 Base.hash(op::UnaryOperation{Op}, h::UInt) where {Op} = hash(op.arg, hash(Op, h))
 
+struct Abs end
+struct Sgn end
 struct Sin end
 struct Cos end
 
@@ -263,6 +265,14 @@ function Base.sum(arg::Tensor)
     end
 
     return BinaryOperation{Mult}(arg, KrD(first(free_ids), flip(first(free_ids))))
+end
+
+function Base.abs(arg::Tensor)
+    return UnaryOperation{Abs}(arg)
+end
+
+function Base.sign(arg::Tensor)
+    return UnaryOperation{Sgn}(arg)
 end
 
 function Base.broadcasted(::typeof(*), arg1::Tensor, arg2::Tensor)
@@ -685,6 +695,14 @@ function to_string(arg::Zero)
     scripts = [script(i) for i ∈ arg.indices]
 
     return "0" * join(scripts)
+end
+
+function to_string(arg::UnaryOperation{Abs})
+    return "|$(arg.arg)|"
+end
+
+function to_string(arg::UnaryOperation{Sgn})
+    return "sgn($(arg.arg))"
 end
 
 function to_string(arg::UnaryOperation{Sin})

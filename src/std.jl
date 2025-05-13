@@ -354,6 +354,14 @@ function to_std_str(arg::ir.Identity)
     return "I"
 end
 
+function to_std_str(arg::ir.Abs)
+    return "abs(" * to_std_str(arg.arg) * ")"
+end
+
+function to_std_str(arg::ir.Sgn)
+    return "sgn(" * to_std_str(arg.arg) * ")"
+end
+
 function to_std_str(arg::ir.Sin)
     return "sin(" * to_std_str(arg.arg) * ")"
 end

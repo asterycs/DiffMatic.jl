@@ -70,6 +70,26 @@ end
     @test left != Zero()
 end
 
+@testset "Abs constructor" begin
+    a = KrD(Upper(1), Lower(2))
+    b = Variable("b", Upper(2))
+
+    op = abs(a * b)
+
+    @test typeof(op) == dc.UnaryOperation{dc.Abs}
+    @test typeof(op.arg) == dc.BinaryOperation{dc.Mult}
+end
+
+@testset "Sgn constructor" begin
+    a = KrD(Upper(1), Lower(2))
+    b = Variable("b", Upper(2))
+
+    op = sign(a * b)
+
+    @test typeof(op) == dc.UnaryOperation{dc.Sgn}
+    @test typeof(op.arg) == dc.BinaryOperation{dc.Mult}
+end
+
 @testset "Sin constructor" begin
     a = KrD(Upper(1), Lower(2))
     b = Variable("b", Upper(2))

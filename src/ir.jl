@@ -24,6 +24,14 @@ end
 
 struct Identity <: IR end
 
+struct Abs <: IR
+    arg::IR
+end
+
+struct Sgn <: IR
+    arg::IR
+end
+
 struct Sin <: IR
     arg::IR
 end
@@ -240,6 +248,14 @@ end
 
 function to_ir(arg::Real)
     return ir.Scal(ir.Const(arg))
+end
+
+function to_ir(arg::UnaryOperation{Abs})
+    return ir.Abs(to_ir(arg.arg))
+end
+
+function to_ir(arg::UnaryOperation{Sgn})
+    return ir.Sgn(to_ir(arg.arg))
 end
 
 function to_ir(arg::UnaryOperation{Sin})

@@ -626,6 +626,19 @@ end
     @test equivalent(evaluate(D), KrD(Upper(1), Lower(2)))
 end
 
+@testset "diff abs" begin
+    x = Variable("x", Upper(2))
+
+    op = abs(x)
+
+    D = dc.diff(op, Variable("x", Upper(3)))
+
+    @test equivalent(
+        D,
+        dc.BinaryOperation{dc.Mult}(dc.UnaryOperation{dc.Sgn}(x), KrD(Upper(2), Lower(3))),
+    )
+end
+
 @testset "diff sin" begin
     x = Variable("x", Upper(2))
 

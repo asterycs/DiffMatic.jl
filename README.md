@@ -50,7 +50,7 @@ standard notation.
 
 ### Supported operators
 
-`tr`, `sum`, `sin`, `cos`, `+`, `-`, `'`, `*`, `.*`, `.^`, `^`
+`tr`, `sum`, `sin`, `cos`, `+`, `-`, `'`, `*`, `.*`, `.^`, `^`, `abs`
 
 ### Installation
 

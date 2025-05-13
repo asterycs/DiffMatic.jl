@@ -263,6 +263,32 @@ end
     @test to_std(sum(y)) == "sum(yᵀ)"
 end
 
+@testset "to_std output is correct with abs" begin
+    x = Variable("x", Upper(2))
+    A = Variable("A", Upper(1), Lower(2))
+
+    function mul(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    @test to_std(dc.UnaryOperation{dc.Abs}(1)) == "abs(1)"
+    @test to_std(dc.UnaryOperation{dc.Abs}(x)) == "abs(x)"
+    @test to_std(dc.UnaryOperation{dc.Abs}(mul(A, x))) == "abs(Ax)"
+end
+
+@testset "to_std output is correct with sgn" begin
+    x = Variable("x", Upper(2))
+    A = Variable("A", Upper(1), Lower(2))
+
+    function mul(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    @test to_std(dc.UnaryOperation{dc.Sgn}(1)) == "sgn(1)"
+    @test to_std(dc.UnaryOperation{dc.Sgn}(x)) == "sgn(x)"
+    @test to_std(dc.UnaryOperation{dc.Sgn}(mul(A, x))) == "sgn(Ax)"
+end
+
 @testset "to_std output is correct with KrD-KrD and one free index" begin
     l = KrD(Upper(1), Lower(2))
     u = KrD(Upper(2), Lower(1))
