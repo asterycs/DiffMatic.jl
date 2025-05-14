@@ -110,6 +110,40 @@ end
     @test typeof(op.arg) == dc.BinaryOperation{dc.Mult}
 end
 
+@testset "norm2 throws for inputs other than vectors" begin
+    c = Variable("c")
+    A = Variable("A", Upper(1), Lower(2))
+
+    @test_throws DomainError norm2(c)
+    @test_throws DomainError norm2(A)
+end
+
+@testset "norm1 throws for inputs other than vectors" begin
+    c = Variable("c")
+    A = Variable("A", Upper(1), Lower(2))
+
+    @test_throws DomainError norm1(c)
+    @test_throws DomainError norm1(A)
+end
+
+@testset "norm2 output" begin
+    x = Variable("x", Upper(2))
+
+    op = norm2(x)
+
+    @test typeof(op) == dc.Power
+    @test op.base == sum(x .^ 2)
+    @test op.exponent == 1//2
+end
+
+@testset "norm1 output" begin
+    x = Variable("x", Upper(2))
+
+    op = norm1(x)
+
+    @test op == sum(abs(x))
+end
+
 @testset "UnaryOperation equality operator" begin
     a = KrD(Upper(1), Lower(2))
     b = Variable("b", Upper(2))

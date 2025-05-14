@@ -6,6 +6,7 @@ import LinearAlgebra.tr
 
 export tr
 export sum
+export norm1, norm2
 
 abstract type Tensor end
 
@@ -255,6 +256,28 @@ function tr(arg::Tensor)
     end
 
     return evaluate(BinaryOperation{Mult}(arg, KrD(flip(free_ids[2]), flip(free_ids[1]))))
+end
+
+function norm2(arg::Tensor)
+    free_ids = get_free_indices(arg)
+
+    if length(free_ids) != 1
+        throw(DomainError("Norms are currently implemented only for vectors."))
+    end
+
+    p = 2
+
+    return sum(arg .^ p)^(1//p)
+end
+
+function norm1(arg::Tensor)
+    free_ids = get_free_indices(arg)
+
+    if length(free_ids) != 1
+        throw(DomainError("Norms are currently implemented only for vectors."))
+    end
+
+    return sum(abs(arg))
 end
 
 function Base.sum(arg::Tensor)

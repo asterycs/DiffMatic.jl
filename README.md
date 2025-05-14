@@ -48,9 +48,9 @@ to_std(derivative(tr(A), A)) # "I"
 The function `to_std` will throw an exception when given an expression that that cannot be converted to
 standard notation.
 
-### Supported operators
+### Supported functions and operators
 
-`tr`, `sum`, `sin`, `cos`, `+`, `-`, `'`, `*`, `.*`, `.^`, `^`, `abs`
+`tr`, `sum`, `sin`, `cos`, `+`, `-`, `'`, `*`, `.*`, `.^`, `^`, `abs`, `norm2`, `norm1`
 
 ### Installation
 
