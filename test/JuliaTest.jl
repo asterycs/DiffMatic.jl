@@ -55,7 +55,7 @@ using LinearAlgebra: diagm, I
     end
 
     @testset "jacobian of sin(A * x + y)" begin
-        jjac = eval(to_std(jacobian(sin(A * x + y), x); format = dc.Julia()))
+        jjac = eval(to_std(jacobian(sin.(A * x + y), x); format = dc.Julia()))
 
         @test jjac(Â, x̂, ŷ) ≈ ForwardDiff.jacobian(x -> sin.(Â * x + ŷ), x̂)
     end

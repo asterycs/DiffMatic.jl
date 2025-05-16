@@ -309,9 +309,9 @@ end
     y = Variable("y", Upper(2))
     a = Variable("a")
 
-    @test to_std(evaluate(a * sin(x)' * y)) == "asin(xᵀ)y"
-    @test to_std(evaluate(sin(x)' * a * y)) == "asin(xᵀ)y"
-    @test to_std(evaluate(sin(x)' * y * a)) == "asin(xᵀ)y"
+    @test to_std(evaluate(a * sin.(x)' * y)) == "asin(xᵀ)y"
+    @test to_std(evaluate(sin.(x)' * a * y)) == "asin(xᵀ)y"
+    @test to_std(evaluate(sin.(x)' * y * a)) == "asin(xᵀ)y"
 end
 
 @testset "derivative interface checks" begin

@@ -110,10 +110,30 @@ struct Sin end
 struct Cos end
 
 function Base.sin(arg::Tensor)
+    if !isempty(get_free_indices(arg))
+        throw(
+            DomainError(arg, "Argument is not a scalar. Did you mean to use 'sin.(...)'?"),
+        )
+    end
+
+    return UnaryOperation{Sin}(arg)
+end
+
+function Base.broadcasted(::typeof(sin), arg::Tensor)
     return UnaryOperation{Sin}(arg)
 end
 
 function Base.cos(arg::Tensor)
+    if !isempty(get_free_indices(arg))
+        throw(
+            DomainError(arg, "Argument is not a scalar. Did you mean to use 'cos.(...)'?"),
+        )
+    end
+
+    return UnaryOperation{Cos}(arg)
+end
+
+function Base.broadcasted(::typeof(cos), arg::Tensor)
     return UnaryOperation{Cos}(arg)
 end
 
@@ -277,7 +297,7 @@ function norm1(arg::Tensor)
         throw(DomainError("Norms are currently implemented only for vectors."))
     end
 
-    return sum(abs(arg))
+    return sum(abs.(arg))
 end
 
 function Base.sum(arg::Tensor)
@@ -290,11 +310,31 @@ function Base.sum(arg::Tensor)
     return BinaryOperation{Mult}(arg, KrD(first(free_ids), flip(first(free_ids))))
 end
 
-function Base.abs(arg::Tensor)
+function Base.broadcasted(::typeof(abs), arg::Tensor)
     return UnaryOperation{Abs}(arg)
 end
 
+function Base.abs(arg::Tensor)
+    if !isempty(get_free_indices(arg))
+        throw(
+            DomainError(arg, "Argument is not a scalar. Did you mean to use 'abs.(...)'?"),
+        )
+    end
+
+    return UnaryOperation{Abs}(arg)
+end
+
+function Base.broadcasted(::typeof(sign), arg::Tensor)
+    return UnaryOperation{Sgn}(arg)
+end
+
 function Base.sign(arg::Tensor)
+    if !isempty(get_free_indices(arg))
+        throw(
+            DomainError(arg, "Argument is not a scalar. Did you mean to use 'sign.(...)'?"),
+        )
+    end
+
     return UnaryOperation{Sgn}(arg)
 end
 
@@ -344,7 +384,7 @@ end
 
 function Base.:(^)(base::Tensor, exponent::Union{Int,Rational{Int}})
     if !isempty(get_free_indices(base))
-        throw(DomainError(base, " is not a scalar, use .^ for element-wise power"))
+        throw(DomainError(base, "Argument is not a scalar, use .^ for element-wise power."))
     end
 
     return Power(base, exponent)
@@ -352,7 +392,7 @@ end
 
 function Base.literal_pow(f::typeof(^), base::Tensor, exponent::Val{E}) where {E}
     if !isempty(get_free_indices(base))
-        throw(DomainError(base, " is not a scalar, use .^ for element-wise power"))
+        throw(DomainError(base, "Argument is not a scalar, use .^ for element-wise power."))
     end
 
     return Power(base, E)

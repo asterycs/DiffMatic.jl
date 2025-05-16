@@ -629,7 +629,7 @@ end
 @testset "diff abs" begin
     x = Variable("x", Upper(2))
 
-    op = abs(x)
+    op = abs.(x)
 
     D = dc.diff(op, Variable("x", Upper(3)))
 
@@ -642,7 +642,7 @@ end
 @testset "diff sin" begin
     x = Variable("x", Upper(2))
 
-    op = sin(x)
+    op = sin.(x)
 
     D = dc.diff(op, Variable("x", Upper(3)))
 
@@ -655,7 +655,7 @@ end
 @testset "diff cos" begin
     x = Variable("x", Upper(2))
 
-    op = cos(x)
+    op = cos.(x)
 
     D = dc.diff(op, Variable("x", Upper(3)))
 
@@ -848,7 +848,7 @@ end
         x' * (x - y), #
         sin(tr(x * x')), #
         cos(tr(x * x')), #
-        tr(sin(x * x')), #
+        tr(sin.(x * x')), #
         tr(A), #
         sum((x + y) .^ 2), #
     )

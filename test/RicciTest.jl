@@ -70,44 +70,23 @@ end
     @test left != Zero()
 end
 
-@testset "Abs constructor" begin
+@testset "Construct unary operations" begin
     a = KrD(Upper(1), Lower(2))
     b = Variable("b", Upper(2))
+    c = Variable("c")
 
-    op = abs(a * b)
+    funs = (abs, sign, sin, cos)
+    ops = (dc.Abs, dc.Sgn, dc.Sin, dc.Cos)
 
-    @test typeof(op) == dc.UnaryOperation{dc.Abs}
-    @test typeof(op.arg) == dc.BinaryOperation{dc.Mult}
-end
+    for (fun, op) ∈ zip(funs, ops)
+        @test_throws DomainError fun(a * b)
+        @test typeof(fun(c)) == dc.UnaryOperation{op}
 
-@testset "Sgn constructor" begin
-    a = KrD(Upper(1), Lower(2))
-    b = Variable("b", Upper(2))
+        v = fun.(a * b)
 
-    op = sign(a * b)
-
-    @test typeof(op) == dc.UnaryOperation{dc.Sgn}
-    @test typeof(op.arg) == dc.BinaryOperation{dc.Mult}
-end
-
-@testset "Sin constructor" begin
-    a = KrD(Upper(1), Lower(2))
-    b = Variable("b", Upper(2))
-
-    op = sin(a * b)
-
-    @test typeof(op) == dc.UnaryOperation{dc.Sin}
-    @test typeof(op.arg) == dc.BinaryOperation{dc.Mult}
-end
-
-@testset "Cos constructor" begin
-    a = KrD(Upper(1), Lower(2))
-    b = Variable("b", Upper(2))
-
-    op = cos(a * b)
-
-    @test typeof(op) == dc.UnaryOperation{dc.Cos}
-    @test typeof(op.arg) == dc.BinaryOperation{dc.Mult}
+        @test typeof(v) == dc.UnaryOperation{op}
+        @test typeof(v.arg) == dc.BinaryOperation{dc.Mult}
+    end
 end
 
 @testset "norm2 throws for inputs other than vectors" begin
@@ -141,7 +120,7 @@ end
 
     op = norm1(x)
 
-    @test op == sum(abs(x))
+    @test op == sum(abs.(x))
 end
 
 @testset "UnaryOperation equality operator" begin
@@ -150,7 +129,7 @@ end
 
     inner = a * b
 
-    left = sin(inner)
+    left = sin.(inner)
 
     @test left == dc.UnaryOperation{dc.Sin}(inner)
     @test left != dc.UnaryOperation{dc.Cos}(inner)
@@ -477,7 +456,7 @@ end
 
     for (op, type) ∈ zip(ops, types)
         op1 = op(y * x)'
-        op2 = op(x)'
+        op2 = op.(x)'
 
         @test typeof(op1) == dc.UnaryOperation{type}
         @test dc.get_free_indices(op1.arg) == dc.get_free_indices(y * x)
@@ -489,7 +468,7 @@ end
     A = Variable("A", Upper(1), Lower(2))
     x = Variable("x", Upper(3))
 
-    ops = (A, x, A * x, A + A, sin(x), cos(x), tr(A))
+    ops = (A, x, A * x, A + A, sin.(x), cos.(x), abs.(x), sign.(x), tr(A))
 
     for op ∈ ops
         @test typeof(-op) == dc.BinaryOperation{dc.Mult}
