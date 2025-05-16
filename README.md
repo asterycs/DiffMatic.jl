@@ -53,7 +53,8 @@ standard notation.
 `+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos`
 
 Element-wise operations `sin.`, `cos.`, `abs.`, `.*` and `.^` are supported.  
-Vector 1-norm and 2-norm can be computed with `norm1` and `norm2`. Sums of vectors can be computed with `sum`.  
+Vector 1-norm and 2-norm can be computed with `norm1` and `norm2`.  
+Sums of vectors can be computed with `sum`.  
 Matrix traces can be computed with `tr`.
 
 ### Installation
