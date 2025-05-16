@@ -462,14 +462,32 @@ function standardize(arg)
     return standardized
 end
 
-struct Ir end
+"""
+    StdStr()
+
+String format of an expression in standard form.
+"""
 struct StdStr end
+
+"""
+    Julia()
+
+Julia format of an expression in standard form.
+"""
 struct Julia end
 
 """
-    to_std(expr)
+    IR()
 
-Convert the expression `expr` to standard matrix notation. Example:
+Internal intermediate representation format of an expression in standard form.
+"""
+struct Ir end
+
+"""
+    to_std(expr; format = StdStr())
+
+Convert the expression `expr` to standard notation. The keyword argument 'format'
+determines the output format. Example:
 ```jldoctest
 @matrix A
 @vector x
