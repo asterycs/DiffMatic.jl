@@ -526,12 +526,12 @@ end
 @testset "evaluate unary operations" begin
     A = Variable("A", Upper(1), Lower(2))
 
-    ops = (sin, cos)
-    types = (dc.Sin, dc.Cos)
+    ops = (sin, cos, abs, sign)
+    types = (dc.Sin, dc.Cos, dc.Abs, dc.Sgn)
 
     for (op, type) ∈ zip(ops, types)
-        @test typeof(op(A)) == UnaryOperation{type}
-        @test op(A).arg == A
+        @test typeof(op.(A)) == UnaryOperation{type}
+        @test op.(A).arg == A
     end
 end
 
