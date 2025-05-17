@@ -789,7 +789,13 @@ function parenthesize(arg::BinaryOperation{Sub})
 end
 
 function to_string(arg::Power)
-    return parenthesize(arg.base) * ".^" * to_string(arg.exponent)
+    b = to_string(arg.base)
+
+    if arg.base isa BinaryOperation || arg.base isa UnaryOperation
+        b = "(" * b * ")"
+    end
+
+    return b * ".^" * to_string(arg.exponent)
 end
 
 function to_string(arg::BinaryOperation{Mult})
