@@ -37,31 +37,32 @@ using LinearAlgebra: diagm, I
     ]
 
     @testset "gradient of x'*x" begin
-        jgrad = eval(to_std(gradient(x' * x, x); format = dc.Julia()))
+        jgrad = eval(to_std(gradient(x' * x, x); format = dc.JuliaFunc()))
 
         @test jgrad(x̂) ≈ ForwardDiff.gradient(x -> x' * x, x̂)
     end
 
     @testset "gradient of sum(x.^2)^2" begin
-        jgrad = eval(to_std(gradient(sum(x .^ 2)^2, x); format = dc.Julia()))
+        jgrad = eval(to_std(gradient(sum(x .^ 2)^2, x); format = dc.JuliaFunc()))
 
         @test jgrad(x̂) ≈ ForwardDiff.gradient(x -> sum(x .^ 2)^2, x̂)
     end
 
     @testset "gradient of cos(tr(x * x'))" begin
-        jgrad = eval(to_std(gradient(cos(tr(x * x')), x); format = dc.Julia()))
+        jgrad = eval(to_std(gradient(cos(tr(x * x')), x); format = dc.JuliaFunc()))
 
         @test jgrad(x̂) ≈ ForwardDiff.gradient(x -> cos(tr(x * x')), x̂)
     end
 
     @testset "jacobian of sin(A * x + y)" begin
-        jjac = eval(to_std(jacobian(sin.(A * x + y), x); format = dc.Julia()))
+        jjac = eval(to_std(jacobian(sin.(A * x + y), x); format = dc.JuliaFunc()))
 
         @test jjac(Â, x̂, ŷ) ≈ ForwardDiff.jacobian(x -> sin.(Â * x + ŷ), x̂)
     end
 
     @testset "jacobian of (A .* B) * C * x)' * x * x" begin
-        jjac = eval(to_std(jacobian(((A .* B) * C * x)' * x * x, x); format = dc.Julia()))
+        jjac =
+            eval(to_std(jacobian(((A .* B) * C * x)' * x * x, x); format = dc.JuliaFunc()))
 
         @test jjac(x̂, Ĉ, Â, B̂) ≈
               ForwardDiff.jacobian(x -> ((Â .* B̂) * Ĉ * x)' * x * x, x̂)

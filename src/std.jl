@@ -470,11 +470,11 @@ String format of an expression in standard form.
 struct StdStr end
 
 """
-    Julia()
+    JuliaFunc()
 
 Julia function that evaluates an expression in standard form.
 """
-struct Julia end
+struct JuliaFunc end
 
 """
     IR()
@@ -515,7 +515,7 @@ function _to_std(format::StdStr, arg)
     return to_std_str(to_ir(standardized))
 end
 
-function _to_std(format::Julia, arg)
+function _to_std(format::JuliaFunc, arg)
     standardized = standardize(arg)
 
     ir = to_ir(standardized)
