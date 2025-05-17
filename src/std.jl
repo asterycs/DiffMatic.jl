@@ -472,7 +472,7 @@ struct StdStr end
 """
     Julia()
 
-Julia format of an expression in standard form.
+Julia function that evaluates an expression in standard form.
 """
 struct Julia end
 
