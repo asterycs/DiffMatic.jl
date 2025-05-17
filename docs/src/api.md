@@ -8,5 +8,7 @@ derivative
 gradient
 jacobian
 hessian
+JuliaFunc
+StdStr
 to_std
 ```
