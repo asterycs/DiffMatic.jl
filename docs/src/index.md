@@ -28,6 +28,7 @@ Creating an expression:
 expr = x' * A * x
 
 # output
+
 x₄A⁴₅x⁵
 ```
 The variable `expr` now contains an internal representation of the expression `x' * A * x`.
