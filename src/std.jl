@@ -546,7 +546,7 @@ function _to_std(format::JuliaFunc, arg)
     variables = DiffMatic.ir.get_variables(ir)
 
     return quote
-        function generated_function($(Symbol.(variables)...))
+        function ($(Symbol.(variables)...))
             return $(op)
         end
     end
