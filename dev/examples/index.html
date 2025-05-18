@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples · DiffMatic</title><meta name="title" content="Examples · DiffMatic"/><meta property="og:title" content="Examples · DiffMatic"/><meta property="twitter:title" content="Examples · DiffMatic"/><meta name="description" content="Documentation for DiffMatic."/><meta property="og:description" content="Documentation for DiffMatic."/><meta property="twitter:description" content="Documentation for DiffMatic."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">DiffMatic</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Quick Start</a></li><li><span class="tocitem">Detailed Usage</span><ul><li><a class="tocitem" href="../usage/">Differentiating Matrix Expressions</a></li><li class="is-active"><a class="tocitem" href>Examples</a><ul class="internal"><li><a class="tocitem" href="#Creating-Variables"><span>Creating Variables</span></a></li><li><a class="tocitem" href="#Creating-Expressions"><span>Creating Expressions</span></a></li><li><a class="tocitem" href="#Derivatives-in-Standard-Notation"><span>Derivatives in Standard Notation</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Detailed Usage</a></li><li class="is-active"><a href>Examples</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Examples</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/asterycs/DiffMatic.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/asterycs/DiffMatic.jl/blob/trunk/docs/src/examples.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h1><h2 id="Creating-Variables"><a class="docs-heading-anchor" href="#Creating-Variables">Creating Variables</a><a id="Creating-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Creating-Variables" title="Permalink"></a></h2><pre><code class="language-julia hljs">using DiffMatic
+
+@matrix A B C
+@vector x y z
+@scalar c</code></pre><h2 id="Creating-Expressions"><a class="docs-heading-anchor" href="#Creating-Expressions">Creating Expressions</a><a id="Creating-Expressions-1"></a><a class="docs-heading-anchor-permalink" href="#Creating-Expressions" title="Permalink"></a></h2><h3 id="Matrix-Multiplication-and-Transpose"><a class="docs-heading-anchor" href="#Matrix-Multiplication-and-Transpose">Matrix Multiplication and Transpose</a><a id="Matrix-Multiplication-and-Transpose-1"></a><a class="docs-heading-anchor-permalink" href="#Matrix-Multiplication-and-Transpose" title="Permalink"></a></h3><pre><code class="language-julia hljs">expr = x&#39; * A * x
+
+# output
+
+x₄A⁴₅x⁵</code></pre><pre><code class="language-julia hljs">expr = x&#39; * A&#39; * x
+
+# output
+
+x₄A₅⁴x⁵</code></pre><pre><code class="language-julia hljs">expr = A * B * x
+
+# output
+
+A¹₅B⁵₇x⁷</code></pre><h4 id="Hadamard/Element-wise-Product"><a class="docs-heading-anchor" href="#Hadamard/Element-wise-Product">Hadamard/Element-wise Product</a><a id="Hadamard/Element-wise-Product-1"></a><a class="docs-heading-anchor-permalink" href="#Hadamard/Element-wise-Product" title="Permalink"></a></h4><pre><code class="language-julia hljs">expr = A .* B .* C
+
+# output
+
+A¹₂B¹₂C¹₂</code></pre><pre><code class="language-julia hljs">expr = x .* y .* z
+
+# output
+
+x¹y¹z¹</code></pre><h4 id="Powers-and-Element-wise-Powers"><a class="docs-heading-anchor" href="#Powers-and-Element-wise-Powers">Powers and Element-wise Powers</a><a id="Powers-and-Element-wise-Powers-1"></a><a class="docs-heading-anchor-permalink" href="#Powers-and-Element-wise-Powers" title="Permalink"></a></h4><pre><code class="language-julia hljs">expr = (x&#39; * A * x)^2
+
+# output
+
+(x₄A⁴₅x⁵).^2</code></pre><pre><code class="language-julia hljs">expr = (x .* y).^2
+
+# output
+
+(x¹y¹).^2</code></pre><pre><code class="language-julia hljs">expr = (A * x).^2
+
+# output
+
+(A¹₄x⁴).^2</code></pre><h4 id="Trigonometric-Functions"><a class="docs-heading-anchor" href="#Trigonometric-Functions">Trigonometric Functions</a><a id="Trigonometric-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Trigonometric-Functions" title="Permalink"></a></h4><pre><code class="language-julia hljs">expr = sin.(A * x)
+
+# output
+
+sin(A¹₄x⁴)</code></pre><pre><code class="language-julia hljs">expr = cos(x&#39; * x)
+
+# output
+
+cos(x₃x³)</code></pre><h4 id="Absolute-Value"><a class="docs-heading-anchor" href="#Absolute-Value">Absolute Value</a><a id="Absolute-Value-1"></a><a class="docs-heading-anchor-permalink" href="#Absolute-Value" title="Permalink"></a></h4><pre><code class="language-julia hljs">expr = abs.(A * x)
+
+# output
+
+|A¹₄x⁴|</code></pre><pre><code class="language-julia hljs">expr = abs(x&#39; * x)
+
+# output
+
+|x₃x³|</code></pre><h4 id="Sum-of-a-vector"><a class="docs-heading-anchor" href="#Sum-of-a-vector">Sum of a vector</a><a id="Sum-of-a-vector-1"></a><a class="docs-heading-anchor-permalink" href="#Sum-of-a-vector" title="Permalink"></a></h4><pre><code class="language-julia hljs">expr = sum(x .* y)
+
+# output
+
+x¹y¹δ¹₁</code></pre><pre><code class="language-julia hljs">expr = sum(A * x)
+
+# output
+
+A¹₄x⁴δ¹₁</code></pre><h4 id="Vector-Norms"><a class="docs-heading-anchor" href="#Vector-Norms">Vector Norms</a><a id="Vector-Norms-1"></a><a class="docs-heading-anchor-permalink" href="#Vector-Norms" title="Permalink"></a></h4><pre><code class="language-julia hljs">expr = norm2(A * x)
+
+# output
+
+((A¹₄x⁴).^2δ¹₁).^1//2</code></pre><pre><code class="language-julia hljs">expr = norm1(A * x)
+
+# output
+
+|A¹₄x⁴|δ¹₁</code></pre><h4 id="Matrix-Trace"><a class="docs-heading-anchor" href="#Matrix-Trace">Matrix Trace</a><a id="Matrix-Trace-1"></a><a class="docs-heading-anchor-permalink" href="#Matrix-Trace" title="Permalink"></a></h4><pre><code class="language-julia hljs">expr = tr(A)
+
+# output
+
+A²₂</code></pre><pre><code class="language-julia hljs">expr = tr(A*B*B&#39;*C)
+
+# output
+
+B⁵₇A¹₅B₉⁷C⁹₁</code></pre><h2 id="Derivatives-in-Standard-Notation"><a class="docs-heading-anchor" href="#Derivatives-in-Standard-Notation">Derivatives in Standard Notation</a><a id="Derivatives-in-Standard-Notation-1"></a><a class="docs-heading-anchor-permalink" href="#Derivatives-in-Standard-Notation" title="Permalink"></a></h2><h3 id="Gradient"><a class="docs-heading-anchor" href="#Gradient">Gradient</a><a id="Gradient-1"></a><a class="docs-heading-anchor-permalink" href="#Gradient" title="Permalink"></a></h3><pre><code class="language-julia hljs">to_std(gradient(tr(x * x&#39;), x))
+
+# output
+
+&quot;2x&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(tr(x * x&#39;), x))
+
+# output
+
+&quot;2x&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient((x .* y)&#39; * x, x))
+
+# output
+
+&quot;2(x ⊙ y)&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient((x - y)&#39; * x, x))
+
+# output
+
+&quot;2x - y&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(sin(tr(x * x&#39;)), x))
+
+# output
+
+&quot;cos(xᵀx)2x&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(abs(x&#39; * x), x))
+
+# output
+
+&quot;sgn(xᵀx)2x&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(2 * sum(cos.(A * x + y)), x))
+
+# output
+
+&quot;(-2)Aᵀsin(Ax + y)&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient((x&#39; * A * x) ^ (-2), x))
+
+# output
+
+&quot;(-2)(xᵀAᵀx)^(-3)(Aᵀx + Ax)&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(((A .* (B .* C)) * C * x)&#39; * x, x))
+
+# output
+
+&quot;(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(sum((A .* B) * C * x), x))
+
+# output
+
+&quot;Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)&quot;</code></pre><h3 id="Jacobian"><a class="docs-heading-anchor" href="#Jacobian">Jacobian</a><a id="Jacobian-1"></a><a class="docs-heading-anchor-permalink" href="#Jacobian" title="Permalink"></a></h3><pre><code class="language-julia hljs">to_std(jacobian(A * x, x))
+
+# output
+
+&quot;A&quot;</code></pre><pre><code class="language-julia hljs">to_std(jacobian(A&#39; * x, x))
+
+# output
+
+&quot;Aᵀ&quot;</code></pre><pre><code class="language-julia hljs">to_std(jacobian(sin.(A * x + y), x))
+
+# output
+
+&quot;diag(cos(Ax + y))A&quot;</code></pre><pre><code class="language-julia hljs">to_std(jacobian(((A .* B) * C * x)&#39; * x * x, x))
+
+# output
+
+&quot;xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../usage/">« Differentiating Matrix Expressions</a><a class="docs-footer-nextpage" href="../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.4 on <span class="colophon-date" title="Sunday 18 May 2025 21:24">Sunday 18 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
