@@ -3,9 +3,10 @@
 DiffMatic is a package for computing derivatives of matrix expressions, also known as matrix calculus. Provided are functions for computing gradients, Jacobians, Hessians and general matrix derivatives.
 
 ## Installation
-The package is currently unregistered and can only be installed from GitHub:
+Installation from the general registry:
+
 ```julia
-julia> using Pkg; Pkg.add("https://github.com/asterycs/DiffMatic.jl.git")
+using Pkg; Pkg.add("DiffMatic")
 ```
 
 ## Usage

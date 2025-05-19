@@ -1,5 +1,6 @@
 # DiffMatic.jl
 
+[![Documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://asterycs.github.io/DiffMatic.jl/stable)
 [![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://asterycs.github.io/DiffMatic.jl/dev)
 [![Run tests](https://github.com/asterycs/DiffMatic.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/asterycs/DiffMatic.jl/actions/workflows/CI.yml)
 [![codecov](https://codecov.io/gh/asterycs/DiffMatic.jl/graph/badge.svg?token=XIVXM5EPAC)](https://codecov.io/gh/asterycs/DiffMatic.jl)
@@ -59,10 +60,10 @@ Matrix traces can be computed with `tr`.
 
 ### Installation
 
-This library is not yet published in the general registry. To install it directly from Github:
+Installation from the general registry:
 
 ```julia
-using Pkg; Pkg.add("https://github.com/asterycs/DiffMatic.jl.git")
+using Pkg; Pkg.add("DiffMatic")
 ```
 
 ### Acknowledgements
