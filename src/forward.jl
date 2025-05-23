@@ -340,6 +340,17 @@ function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperati
     return BinaryOperation{Mult}(evaluate(arg2), evaluate(arg1))
 end
 
+function evaluate(::Mult, arg1::Power, arg2::KrD)
+    attempt = Power(evaluate(Mult(), evaluate(arg1.base), evaluate(arg2)), arg1.exponent)
+
+    # This ensures that arg1.base and arg2 can contract and that the contraction is simple
+    if length(get_free_indices(attempt)) == length(get_free_indices(arg1))
+        return attempt
+    end
+
+    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+end
+
 function evaluate(::Mult, arg1::Variable, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end

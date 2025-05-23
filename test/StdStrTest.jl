@@ -21,6 +21,7 @@
     @test to_std(gradient(sin.(x)' * y * a, x)) == "a(cos(x) ⊙ y)"
     @test to_std(gradient(x' * sin.(y) * a, x)) == "asin(y)"
     @test to_std(gradient(y' * sin.(x) * a, x)) == "a(cos(x) ⊙ y)"
+    @test to_std(gradient(sin.(x .* y)' * x, x)) == "(cos(x ⊙ y) ⊙ y ⊙ x) + sin(x ⊙ y)"
     @test to_std(gradient(sum(x), x)) == "vec(1)"
     @test to_std(gradient(2 * sum(x), x)) == "2vec(1)"
     @test to_std(gradient(sum(2 * x), x)) == "2vec(1)"

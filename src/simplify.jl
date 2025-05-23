@@ -50,28 +50,6 @@ function get_diag_delta(arg)
     return nothing
 end
 
-function reshape(term::Variable, indices::LowerOrUpperIndex...)
-    return Variable(term.id, indices...)
-end
-
-function reshape(term::UnaryOperation{Op}, indices::LowerOrUpperIndex...) where {Op}
-    return UnaryOperation{Op}(reshape(term.arg, indices...))
-end
-
-function reshape(
-    term::BinaryOperation{Op},
-    indices::LowerOrUpperIndex...,
-) where {Op<:AdditiveOperation}
-    return BinaryOperation{Op}(
-        reshape(term.arg1, indices...),
-        reshape(term.arg2, indices...),
-    )
-end
-
-function reshape(arg::Power, indices::LowerOrUpperIndex...)
-    return Power(reshape(arg.base, indices...), arg.exponent)
-end
-
 function get_last_letter(indices::IndexList)
     current_last = Upper(0)
 
@@ -110,7 +88,15 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
                 target_indices =
                     eliminate_indices(vcat(get_free_indices(arg1), get_indices(arg2)))
                 @assert length(target_indices) == 1
-                push!(reshaped, reshape(f, target_indices...))
+
+                current_idx = intersect(free_ids, get_free_indices(d))
+                f = update_index(
+                    f,
+                    only(current_idx),
+                    only(target_indices);
+                    allow_shape_change = true,
+                )
+                push!(reshaped, f)
             end
         end
 
@@ -159,14 +145,30 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Variable)
                 push!(reshaped, f)
             elseif length(free_ids) == 1
                 @assert length(target_indices) == 1
-                push!(reshaped, reshape(f, target_indices...))
+
+                current_idx = intersect(free_ids, get_free_indices(d))
+                f = update_index(
+                    f,
+                    only(current_idx),
+                    only(target_indices);
+                    allow_shape_change = true,
+                )
+                push!(reshaped, f)
             else
                 @assert false "Not implemented, please open an issue with your input"
             end
         end
 
-        if length(get_free_indices(arg2)) == 1
-            push!(reshaped, reshape(arg2, target_indices...))
+        arg2_ids = get_free_indices(arg2)
+
+        if length(arg2_ids) == 1
+            arg2 = update_index(
+                arg2,
+                only(arg2_ids),
+                only(target_indices);
+                allow_shape_change = true,
+            )
+            push!(reshaped, arg2)
         else
             @assert false "Not implemented, please open an issue with your input"
         end
