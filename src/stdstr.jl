@@ -42,7 +42,7 @@ function to_std_str(arg::Real)
 end
 
 function to_std_str(arg::Rational)
-    out = string(arg)
+    out = string(arg.num) * "/" * string(arg.den)
 
     return "(" * out * ")"
 end
