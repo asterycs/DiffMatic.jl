@@ -11,5 +11,6 @@ include("simplify.jl")
 include("std.jl")
 include("forward.jl")
 include("julia.jl")
+include("stdstr.jl")
 
 end
