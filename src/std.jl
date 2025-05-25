@@ -239,6 +239,24 @@ function to_standard(term::Variable)
     throw_not_std(term)
 end
 
+function to_standard(term::Literal)
+    ids = term.indices
+
+    if length(ids) == 2
+        if typeof(last(term.indices)) == Lower
+            return Literal(term.value, Upper(ids[1].letter), Lower(ids[2].letter))
+        else
+            return Literal(term.value, Lower(ids[1].letter), Upper(ids[2].letter))
+        end
+    elseif length(ids) == 1
+        return term
+    elseif isempty(ids)
+        return Literal(term.value)
+    end
+
+    throw_not_std(term)
+end
+
 function to_standard(term::Union{KrD,Zero})
     ids = term.indices
 

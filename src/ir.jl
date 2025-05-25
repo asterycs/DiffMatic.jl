@@ -214,6 +214,30 @@ function to_ir(arg::Variable)
     return ir.Scal(ir.Var(arg.id))
 end
 
+function to_ir(arg::Literal)
+    @assert is_standard_form(arg)
+
+    ids = get_indices(arg)
+
+    if length(ids) == 2
+        if flip(ids[1]) == ids[2]
+            return ir.Trace(ir.Mat(ir.Const(arg.value)))
+        elseif typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
+            return ir.Mat(ir.Const(arg.value))
+        elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
+            return ir.Transpose(ir.Mat(ir.Const(arg.value)))
+        end
+    elseif length(ids) == 1
+        if typeof(ids[1]) == Upper
+            return ir.Vec(ir.Const(arg.value))
+        elseif typeof(ids[1]) == Lower
+            return ir.Transpose(ir.Vec(ir.Const(arg.value)))
+        end
+    end
+
+    return ir.Scal(ir.Const(arg.value))
+end
+
 function to_ir(arg::KrD)
     @assert is_standard_form(arg)
 

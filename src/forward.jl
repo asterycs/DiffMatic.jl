@@ -21,6 +21,12 @@ function diff(arg::Variable, wrt::Variable)
     return Zero(unique(indices)...)
 end
 
+function diff(arg::Literal, wrt::Variable)
+    indices = union(arg.indices, [flip(i) for i ∈ wrt.indices])
+
+    return Zero(unique(indices)...)
+end
+
 function diff(arg::KrD, wrt::Variable)
     indices = union(arg.indices, [flip(i) for i ∈ wrt.indices])
 
@@ -69,7 +75,7 @@ function collect_factors(arg)
     return Value[arg]
 end
 
-function evaluate(arg::Union{Variable,KrD,Zero,Real})
+function evaluate(arg::Union{Variable,Literal,KrD,Zero,Real})
     return arg
 end
 
@@ -123,7 +129,7 @@ function is_diag(arg1::KrD, arg2::KrD)
     return false
 end
 
-function is_diag(arg::Union{Variable,KrD,Zero})
+function is_diag(arg::Union{Variable,Literal,KrD,Zero})
     return false
 end
 
@@ -143,11 +149,11 @@ function is_diag(arg1::Value, arg2::Value)
     return is_diag(arg1) || is_diag(arg2)
 end
 
-function evaluate(::Mult, arg1::Variable, arg2::BinaryOperation{Mult})
+function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::BinaryOperation{Mult})
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Variable)
+function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Literal})
     if arg1.arg1 isa Real
         return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
     end
@@ -351,11 +357,11 @@ function evaluate(::Mult, arg1::Power, arg2::KrD)
     return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
 end
 
-function evaluate(::Mult, arg1::Variable, arg2::KrD)
+function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::KrD, arg2::Variable)
+function evaluate(::Mult, arg1::KrD, arg2::Union{Variable,Literal})
     return _multiply_with_krd(arg2, arg1)
 end
 
@@ -363,7 +369,7 @@ function evaluate(::Mult, arg1::KrD, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
 
-function _multiply_with_krd(arg1::Union{Variable,KrD}, arg2::KrD)
+function _multiply_with_krd(arg1::Union{Variable,Literal,KrD}, arg2::KrD)
     arg1_indices = get_free_indices(arg1)
     contracting_index = eliminated_indices([arg1_indices; get_indices(arg2)])
 
@@ -405,7 +411,7 @@ end
 function evaluate(
     ::Mult,
     arg1::BinaryOperation{Op},
-    arg2::KrD,
+    arg2::Union{Literal,KrD},
 ) where {Op<:AdditiveOperation}
     return evaluate(
         Op(),
@@ -416,7 +422,7 @@ end
 
 function evaluate(
     ::Mult,
-    arg1::KrD,
+    arg1::Union{Literal,KrD},
     arg2::BinaryOperation{Op},
 ) where {Op<:AdditiveOperation}
     return evaluate(

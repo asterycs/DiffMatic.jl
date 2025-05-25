@@ -5,7 +5,7 @@
 using DiffMatic
 using Test
 
-using DiffMatic: Variable, KrD, Zero
+using DiffMatic: Variable, Literal, KrD, Zero
 using DiffMatic: evaluate
 using DiffMatic: Upper, Lower
 
@@ -22,6 +22,18 @@ end
     @test !isnothing(Variable("x", Upper(1)))
     @test !isnothing(Variable("y", Lower(1)))
     @test !isnothing(Variable("z"))
+end
+
+@testset "Literal constructor throws on invalid input" begin
+    @test_throws DomainError Literal(2, Lower(2), Lower(2))
+end
+
+@testset "Literal constructor succeeds on valid input" begin
+    @test Literal(0.6, Upper(1), Lower(2)) isa Literal
+    @test Literal(5//1, Lower(1), Lower(2)) isa Literal
+    @test Literal(4.0, Upper(1)) isa Literal
+    @test Literal(3, Lower(1)) isa Literal
+    @test Literal(2) isa Literal
 end
 
 @testset "index equality operator" begin

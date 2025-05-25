@@ -43,6 +43,29 @@ end
 
 Base.hash(m::Variable, h::UInt) = hash(Variable, hash(m.id, hash(m.indices, h)))
 
+struct Literal <: Tensor
+    value::Real
+    indices::IndexList
+
+    function Literal(value::Real, indices::LowerOrUpperIndex...)
+        # Convert type
+        indices = LowerOrUpperIndex[i for i ∈ indices]
+
+        if length(unique(indices)) != length(indices)
+            throw(
+                DomainError(
+                    indices,
+                    "Indices of literal with value '$(string(value))' are invalid",
+                ),
+            )
+        end
+
+        new(value, indices)
+    end
+end
+
+Base.hash(l::Literal, h::UInt) = hash(Literal, hash(l.value, hash(l.indices, h)))
+
 function are_unique(arg::AbstractArray)
     return length(unique(arg)) == length(arg)
 end
@@ -204,7 +227,7 @@ function is_permutation(arg1::Tensor, arg2::Tensor)
     return is_permutation(unique(arg1_indices), unique(arg2_indices))
 end
 
-function get_indices(arg::Union{Variable,KrD,Zero})
+function get_indices(arg::Union{Variable,Literal,KrD,Zero})
     @assert length(unique(arg.indices)) == length(arg.indices)
 
     return arg.indices
@@ -419,7 +442,7 @@ function replace_letters(
     )
 end
 
-function replace_letters(arg::Union{Variable,Zero,KrD}, letter_map::Dict)
+function replace_letters(arg::Union{Variable,Literal,Zero,KrD}, letter_map::Dict)
     new_indices = LowerOrUpperIndex[]
 
     for i ∈ arg.indices
@@ -671,7 +694,7 @@ function Base.adjoint(arg::BinaryOperation{Op}) where {Op}
     return evaluate(BinaryOperation{Op}(adjoint(arg.arg1), adjoint(arg.arg2)))
 end
 
-function Base.adjoint(arg::Union{Variable,KrD,Zero})
+function Base.adjoint(arg::Union{Variable,Literal,KrD,Zero})
     free_indices = unique(get_free_indices(arg))
 
     if length(free_indices) > 2
@@ -742,6 +765,12 @@ function to_string(arg::Variable)
     scripts = [script(i) for i ∈ arg.indices]
 
     return arg.id * join(scripts)
+end
+
+function to_string(arg::Literal)
+    scripts = [script(i) for i ∈ arg.indices]
+
+    return string(arg.value) * join(scripts)
 end
 
 function to_string(arg::KrD)
