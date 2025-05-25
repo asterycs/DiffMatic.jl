@@ -71,7 +71,7 @@ function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
     return BinaryOperation{Op}(to_binary_operation(op, terms[1:(end-1)]), terms[end])
 end
 
-function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
+function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
     if is_diag(arg1)
         d = get_diag_delta(arg1)
 
@@ -103,21 +103,16 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
         return to_binary_operation(Mult(), reshaped)
     end
 
-    if is_trace(arg2)
-        s = first(arg2.indices)
-
+    if can_contract(arg1, arg2) && length(get_free_indices(arg2)) == 1
         elwise_ids = elementwise_indices(arg1.arg1, arg1.arg2)
-        last_index = get_last_letter(union(get_free_indices(arg1), get_free_indices(arg2)))
+        remaining_index =
+            eliminate_indices(union(get_free_indices(arg1), get_free_indices(arg2)))
 
-        if !isempty(elwise_ids)
-            if s ∈ elwise_ids || flip(s) ∈ elwise_ids
-                if last_index ∈ get_free_indices(arg1.arg1)
-                    return evaluate(BinaryOperation{Mult}(arg1.arg1, adjoint(arg1.arg2)))
-                elseif last_index ∈ get_free_indices(arg1.arg2)
-                    return evaluate(BinaryOperation{Mult}(adjoint(arg1.arg1), arg1.arg2))
-                end
-
-                @assert false "Unreachable"
+        if length(elwise_ids) == 1 && length(remaining_index) == 1
+            if only(remaining_index) ∈ get_free_indices(arg1.arg1)
+                return evaluate(BinaryOperation{Mult}(arg1.arg1, adjoint(arg1.arg2)))
+            elseif only(remaining_index) ∈ get_free_indices(arg1.arg2)
+                return evaluate(BinaryOperation{Mult}(adjoint(arg1.arg1), arg1.arg2))
             end
         end
     end

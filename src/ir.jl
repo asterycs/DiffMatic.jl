@@ -243,7 +243,9 @@ function to_ir(arg::KrD)
 
     ids = get_indices(arg)
 
-    if typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
+    if flip(ids[1]) == ids[2]
+        return ir.Trace(ir.Identity())
+    elseif typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
         return ir.Identity()
     elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
         return ir.Transpose(ir.Identity())
@@ -372,9 +374,8 @@ function to_ir(arg::BinaryOperation{Mult})
             else
                 return ir.Transpose(ir.Vec(ir.Const(1)))
             end
-        elseif (arg.arg1 isa KrD && is_trace(arg.arg1)) ||
-               (arg.arg2 isa KrD && is_trace(arg.arg2))
-            tensor = if arg.arg1 isa KrD
+        elseif arg.arg1 isa Literal || arg.arg2 isa Literal
+            tensor = if arg.arg1 isa Literal
                 arg.arg2
             else
                 arg.arg1
@@ -392,8 +393,8 @@ function to_ir(arg::BinaryOperation{Mult})
         return ir.Trace(ir.Product(to_ir(arg.arg1), to_ir(arg.arg2)))
     end
 
-    if isempty(target_indices) && (typeof(terms[1]) == KrD || typeof(terms[2]) == KrD)
-        tensor = if typeof(first(terms)) == KrD
+    if isempty(target_indices) && (first(terms) isa Literal || last(terms) isa Literal)
+        tensor = if first(terms) == Literal
             last(terms)
         else
             first(terms)

@@ -247,7 +247,7 @@ end
     @test to_std(mul(mul(z, v), mul(x, y))) == "z ⊙ v ⊙ x ⊙ y"
 end
 
-@testset "to_std output is correct with vector sum" begin
+@testset "to_std output is correct with vector and trace of identity" begin
     x = Variable("x", Upper(1))
     y = Variable("y", Lower(2))
 
@@ -255,10 +255,18 @@ end
         return dc.BinaryOperation{dc.Mult}(l, r)
     end
 
-    @test to_std(mul(x, KrD(Upper(1), Lower(1)))) == "sum(x)"
-    @test to_std(mul(KrD(Upper(1), Lower(1)), x)) == "sum(x)"
-    @test to_std(mul(y, KrD(Upper(2), Lower(2)))) == "sum(yᵀ)"
-    @test to_std(mul(KrD(Upper(2), Lower(2)), y)) == "sum(yᵀ)"
+    # Such expression are not ever created by * but if they were,
+    # the output should be this.
+    @test to_std(mul(x, KrD(Upper(1), Lower(1)))) == "tr(I)x"
+    @test to_std(mul(KrD(Upper(1), Lower(1)), x)) == "tr(I)x"
+    @test to_std(mul(y, KrD(Upper(2), Lower(2)))) == "tr(I)yᵀ"
+    @test to_std(mul(KrD(Upper(2), Lower(2)), y)) == "tr(I)yᵀ"
+end
+
+@testset "to_std output is correct with vector sum" begin
+    x = Variable("x", Upper(1))
+    y = Variable("y", Lower(2))
+
     @test to_std(sum(x)) == "sum(x)"
     @test to_std(sum(y)) == "sum(yᵀ)"
 end

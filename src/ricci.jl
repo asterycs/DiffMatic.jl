@@ -330,7 +330,7 @@ function Base.sum(arg::Tensor)
         throw(DomainError("Sum is defined only for vectors"))
     end
 
-    return BinaryOperation{Mult}(arg, KrD(first(free_ids), flip(first(free_ids))))
+    return BinaryOperation{Mult}(arg, Literal(1, flip(only(free_ids))))
 end
 
 function Base.broadcasted(::typeof(abs), arg::Tensor)

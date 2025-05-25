@@ -108,14 +108,14 @@ expr = sum(x .* y)
 
 # output
 
-x¹y¹δ¹₁
+x¹y¹1₁
 ```
 ```jldoctest usage
 expr = sum(A * x)
 
 # output
 
-A¹₄x⁴δ¹₁
+A¹₄x⁴1₁
 ```
 #### Vector Norms
 ```jldoctest usage
@@ -123,14 +123,14 @@ expr = norm2(A * x)
 
 # output
 
-((A¹₄x⁴).^2δ¹₁).^1//2
+((A¹₄x⁴).^21₁).^1//2
 ```
 ```jldoctest usage
 expr = norm1(A * x)
 
 # output
 
-|A¹₄x⁴|δ¹₁
+|A¹₄x⁴|1₁
 ```
 #### Matrix Trace
 ```jldoctest usage
