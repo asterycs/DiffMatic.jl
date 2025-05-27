@@ -387,6 +387,25 @@ end
     @test evaluate(op3) == dc.BinaryOperation{dc.Mult}(4, a)
 end
 
+@testset "evaluate product of products" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Upper(1))
+    c = Variable("c", Upper(1))
+    d = Variable("d", Upper(1))
+
+    function mult(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    op1 = mult(mult(-1, a), mult(-1, b))
+    op2 = mult(mult(-1, a), mult(b, c))
+    op3 = mult(mult(a, b), mult(-1, c))
+
+    @test evaluate(op1) == mult(a, b)
+    @test evaluate(op2) == mult(-1, mult(a, mult(b, c)))
+    @test evaluate(op3) == mult(-1, mult(c, mult(a, b)))
+end
+
 # TODO: evaluate is a no-op here, remove evaluate and move to RicciTest
 @testset "evaluate adjoint is consistent" begin
     A = Variable("A", Upper(1), Lower(2))
