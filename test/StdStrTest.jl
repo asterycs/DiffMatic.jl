@@ -61,7 +61,7 @@ end
     @matrix A B C X
     @vector x y z
 
-    @test_broken to_std(derivative(sum(-y .* (X*z)), X)) == "(-1)zyᵀ"
+    @test to_std(derivative(sum(-y .* (X*z)), X)) == "(-1)zyᵀ"
     @test to_std(derivative(sum((A .* B) * C * x), x)) == "vec(1)ᵀ(A ⊙ B)C"
 end
 
