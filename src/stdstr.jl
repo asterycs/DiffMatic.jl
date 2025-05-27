@@ -27,7 +27,7 @@ function to_std_str(arg::ir.Var)
     return arg.id
 end
 
-function to_std_str(arg::ir.Const)
+function to_std_str(arg::ir.Literal)
     return to_std_str(arg.value)
 end
 

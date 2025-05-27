@@ -3,7 +3,7 @@ function to_julia(arg::ir.Var)
     return Symbol(arg.id)
 end
 
-function to_julia(arg::ir.Const)
+function to_julia(arg::ir.Literal)
     return :($(arg.value))
 end
 

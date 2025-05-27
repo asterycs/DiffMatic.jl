@@ -6,20 +6,20 @@ struct Var <: IR
     id::String
 end
 
-struct Const <: IR
+struct Literal <: IR
     value::Real
 end
 
 struct Mat <: IR
-    id::Union{Var,Const}
+    id::Union{Var,Literal}
 end
 
 struct Vec <: IR
-    id::Union{Var,Const}
+    id::Union{Var,Literal}
 end
 
 struct Scal <: IR
-    id::Union{Var,Const}
+    id::Union{Var,Literal}
 end
 
 struct Identity <: IR end
@@ -102,7 +102,7 @@ function _get_variables(arg::Var)
     return arg.id
 end
 
-function _get_variables(arg::Const)
+function _get_variables(arg::Literal)
     return _get_variables(arg.value)
 end
 
@@ -221,21 +221,21 @@ function to_ir(arg::Literal)
 
     if length(ids) == 2
         if flip(ids[1]) == ids[2]
-            return ir.Trace(ir.Mat(ir.Const(arg.value)))
+            return ir.Trace(ir.Mat(ir.Literal(arg.value)))
         elseif typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
-            return ir.Mat(ir.Const(arg.value))
+            return ir.Mat(ir.Literal(arg.value))
         elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
-            return ir.Transpose(ir.Mat(ir.Const(arg.value)))
+            return ir.Transpose(ir.Mat(ir.Literal(arg.value)))
         end
     elseif length(ids) == 1
         if typeof(ids[1]) == Upper
-            return ir.Vec(ir.Const(arg.value))
+            return ir.Vec(ir.Literal(arg.value))
         elseif typeof(ids[1]) == Lower
-            return ir.Transpose(ir.Vec(ir.Const(arg.value)))
+            return ir.Transpose(ir.Vec(ir.Literal(arg.value)))
         end
     end
 
-    return ir.Scal(ir.Const(arg.value))
+    return ir.Scal(ir.Literal(arg.value))
 end
 
 function to_ir(arg::KrD)
@@ -259,21 +259,21 @@ function to_ir(arg::Zero)
 
     if length(ids) == 2
         if typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
-            return ir.Mat(ir.Const(0))
+            return ir.Mat(ir.Literal(0))
         elseif typeof(ids[1]) == Lower && typeof(ids[2]) == Upper
-            return ir.Transpose(ir.Mat(ir.Const(0)))
+            return ir.Transpose(ir.Mat(ir.Literal(0)))
         end
     elseif length(ids) == 1
         if typeof(ids[1]) == Upper
-            return ir.Vec(ir.Const(0))
+            return ir.Vec(ir.Literal(0))
         elseif typeof(ids[1]) == Lower
-            return ir.Transpose(ir.Vec(ir.Const(0)))
+            return ir.Transpose(ir.Vec(ir.Literal(0)))
         end
     end
 end
 
 function to_ir(arg::Real)
-    return ir.Scal(ir.Const(arg))
+    return ir.Scal(ir.Literal(arg))
 end
 
 function to_ir(arg::UnaryOperation{Abs})
@@ -370,9 +370,9 @@ function to_ir(arg::BinaryOperation{Mult})
             )
         elseif all(typeof.(terms) .== KrD)
             if typeof(target_indices[1]) == Upper
-                return ir.Vec(ir.Const(1))
+                return ir.Vec(ir.Literal(1))
             else
-                return ir.Transpose(ir.Vec(ir.Const(1)))
+                return ir.Transpose(ir.Vec(ir.Literal(1)))
             end
         elseif arg.arg1 isa Literal || arg.arg2 isa Literal
             tensor = if arg.arg1 isa Literal
