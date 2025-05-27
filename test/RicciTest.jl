@@ -6,7 +6,6 @@ using DiffMatic
 using Test
 
 using DiffMatic: Variable, Literal, KrD, Zero
-using DiffMatic: evaluate
 using DiffMatic: Upper, Lower
 
 dc = DiffMatic
@@ -273,10 +272,10 @@ end
     A = Variable("A", Upper(1), Lower(2))
     B = Variable("B", Upper(1), Lower(2))
 
-    p1 = dc.evaluate(A * B)
-    p2 = dc.evaluate(A' * B)
-    p3 = dc.evaluate(A * B')
-    p4 = dc.evaluate(A' * B')
+    p1 = A * B
+    p2 = A' * B
+    p3 = A * B'
+    p4 = A' * B'
 
     @test length(dc.get_free_indices(p1)) == 2
     @test p1.arg1.indices[2].letter == p1.arg2.indices[1].letter
@@ -355,20 +354,20 @@ end
     op1 = A .* A
 
     @test typeof(op1) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op1.arg1), Variable("A", Upper(1), Lower(2)))
-    @test equivalent(evaluate(op1.arg2), Variable("A", Upper(1), Lower(2)))
+    @test equivalent(op1.arg1, Variable("A", Upper(1), Lower(2)))
+    @test equivalent(op1.arg2, Variable("A", Upper(1), Lower(2)))
 
     op2 = A .* B
 
     @test typeof(op2) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op2.arg1), Variable("A", Upper(3), Lower(4)))
-    @test equivalent(evaluate(op2.arg2), Variable("B", Upper(3), Lower(4)))
+    @test equivalent(op2.arg1, Variable("A", Upper(3), Lower(4)))
+    @test equivalent(op2.arg2, Variable("B", Upper(3), Lower(4)))
 
     op3 = A' .* B'
 
     @test typeof(op3) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op3.arg1), Variable("A", Lower(1), Upper(2)))
-    @test equivalent(evaluate(op3.arg2), Variable("B", Lower(3), Upper(4)))
+    @test equivalent(op3.arg1, Variable("A", Lower(1), Upper(2)))
+    @test equivalent(op3.arg2, Variable("B", Lower(3), Upper(4)))
 end
 
 @testset "elementwise multiplication vector-vector" begin
@@ -378,20 +377,20 @@ end
     op1 = x .* x
 
     @test typeof(op1) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op1.arg1), Variable("x", Upper(1)))
-    @test equivalent(evaluate(op1.arg2), Variable("x", Upper(1)))
+    @test equivalent(op1.arg1, Variable("x", Upper(1)))
+    @test equivalent(op1.arg2, Variable("x", Upper(1)))
 
     op2 = x .* y
 
     @test typeof(op2) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op2.arg1), Variable("x", Upper(2)))
-    @test equivalent(evaluate(op2.arg2), Variable("y", Upper(2)))
+    @test equivalent(op2.arg1, Variable("x", Upper(2)))
+    @test equivalent(op2.arg2, Variable("y", Upper(2)))
 
     op3 = x' .* y'
 
     @test typeof(op3) == dc.BinaryOperation{dc.Mult}
-    @test equivalent(evaluate(op3.arg1), Variable("x", Lower(2)))
-    @test equivalent(evaluate(op3.arg2), Variable("y", Lower(2)))
+    @test equivalent(op3.arg1, Variable("x", Lower(2)))
+    @test equivalent(op3.arg2, Variable("y", Lower(2)))
 end
 
 @testset "elementwise multiplication with ambiguous input fails" begin
@@ -439,14 +438,14 @@ end
     x = Variable("x", Upper(1))
     y = Variable("y", Lower(1))
 
-    @test equivalent(evaluate(x'), Variable("x", Lower(1)))
-    @test equivalent(evaluate(y'), Variable("y", Upper(1)))
+    @test equivalent(x', Variable("x", Lower(1)))
+    @test equivalent(y', Variable("y", Upper(1)))
 end
 
 @testset "transpose KrD" begin
     d = KrD(Upper(1), Lower(2))
 
-    @test equivalent(evaluate(d'), KrD(Lower(1), Upper(2)))
+    @test equivalent(d', KrD(Lower(1), Upper(2)))
 end
 
 @testset "combined update_index and transpose vector" begin
@@ -454,7 +453,7 @@ end
 
     xt = x'
     x_indices = dc.get_free_indices(xt)
-    updated_transpose = evaluate(dc.update_index(xt, x_indices[1], Lower(1)))
+    updated_transpose = dc.update_index(xt, x_indices[1], Lower(1))
 
     @test equivalent(updated_transpose, Variable("x", Lower(1)))
 end
@@ -491,17 +490,16 @@ end
 @testset "transpose matrix" begin
     A = Variable("A", Upper(1), Lower(2))
 
-    At = evaluate(A')
-    @test equivalent(At, Variable("A", Lower(1), Upper(2)))
+    @test equivalent(A', Variable("A", Lower(1), Upper(2)))
 end
 
 @testset "transpose BinaryOperation{dc.Mult}" begin
     A = Variable("A", Upper(1), Lower(2))
     x = Variable("x", Upper(2))
 
-    op_t = evaluate((A * x)')
+    op_t = (A * x)'
     @test equivalent(
-        evaluate(op_t),
+        op_t,
         dc.BinaryOperation{dc.Mult}(
             Variable("A", Lower(1), Lower(2)),
             Variable("x", Upper(2)),
@@ -534,7 +532,7 @@ end
     B = Variable("B", Upper(2), Lower(3))
 
     @test equivalent(
-        evaluate(A + B),
+        A + B,
         dc.BinaryOperation{dc.Add}(
             Variable("A", Upper(1), Lower(2)),
             Variable("B", Upper(1), Lower(2)),
@@ -552,7 +550,7 @@ end
 
     for op ∈ (+, -)
         for args ∈ ((x, y), (A, B))
-            e = evaluate((op(args[1], args[2])))
+            e = op(args[1], args[2])
             @test e.arg1.indices == e.arg2.indices
         end
     end
@@ -565,7 +563,7 @@ end
 
     for op ∈ (+, -)
         for ags ∈ ((x, y), (x, z))
-            op_t = evaluate((op(x, y))')
+            op_t = op(x, y)'
             @test op_t.arg1.indices == op_t.arg2.indices
         end
     end

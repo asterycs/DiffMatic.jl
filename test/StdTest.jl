@@ -5,7 +5,6 @@ using DiffMatic
 using Test
 
 using DiffMatic: Variable, KrD, Zero
-using DiffMatic: evaluate
 using DiffMatic: Upper, Lower
 
 dc = DiffMatic
@@ -64,7 +63,7 @@ end
     b = Variable("b")
 
     function mult(l, r)
-        return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
+        return dc.BinaryOperation{dc.Mult}(l, r)
     end
 
     @test to_std(mult(A, a)) == "aA"
@@ -87,7 +86,7 @@ end
     yt = Variable("y", Lower(1))
 
     function contract(l, r)
-        return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
+        return dc.BinaryOperation{dc.Mult}(l, r)
     end
 
     @test to_std(contract(A, x)) == "Ax"
@@ -141,7 +140,7 @@ end
     y = Variable("y", Upper(1))
 
     function contract(l, r)
-        return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
+        return dc.BinaryOperation{dc.Mult}(l, r)
     end
 
     @test to_std(contract(A, x)) == "xᵀAᵀ"
@@ -156,7 +155,7 @@ end
     y = Variable("y", Lower(1))
 
     function contract(l, r)
-        return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
+        return dc.BinaryOperation{dc.Mult}(l, r)
     end
 
     @test to_std(contract(A, x)) == "Ax"
@@ -172,7 +171,7 @@ end
     D = Variable("D", Lower(3), Upper(2))
 
     function contract(l, r)
-        return evaluate(dc.BinaryOperation{dc.Mult}(l, r))
+        return dc.BinaryOperation{dc.Mult}(l, r)
     end
 
     @test to_std(contract(A, B)) == "AB"
@@ -191,10 +190,10 @@ end
 
     @test to_std(A .* B) == "A ⊙ B"
     @test to_std(A .* A) == "A ⊙ A"
-    @test to_std(dc.evaluate(A * (A .* B))) == "A(A ⊙ B)"
-    @test to_std(dc.evaluate((A .* B) * A)) == "(A ⊙ B)A"
-    @test to_std(dc.evaluate(A .* (A * B))) == "AB ⊙ A"
-    @test to_std(dc.evaluate((A * B) .* A)) == "AB ⊙ A"
+    @test to_std(A * (A .* B)) == "A(A ⊙ B)"
+    @test to_std((A .* B) * A) == "(A ⊙ B)A"
+    @test to_std(A .* (A * B)) == "AB ⊙ A"
+    @test to_std((A * B) .* A) == "AB ⊙ A"
 end
 
 @testset "to_std output is correct with matrix-matrix sum" begin
@@ -203,7 +202,7 @@ end
     C = Variable("C", Lower(2), Upper(1))
 
     function sum(l, r)
-        return evaluate(dc.BinaryOperation{dc.Add}(l, r))
+        return dc.BinaryOperation{dc.Add}(l, r)
     end
 
     @test to_std(sum(A, B)) == "A + B"
@@ -324,16 +323,16 @@ end
     y = Variable("y", Upper(2))
     a = Variable("a")
 
-    @test to_std(evaluate(a * sin.(x)' * y)) == "asin(xᵀ)y"
-    @test to_std(evaluate(sin.(x)' * a * y)) == "asin(xᵀ)y"
-    @test to_std(evaluate(sin.(x)' * y * a)) == "asin(xᵀ)y"
+    @test to_std(a * sin.(x)' * y) == "asin(xᵀ)y"
+    @test to_std(sin.(x)' * a * y) == "asin(xᵀ)y"
+    @test to_std(sin.(x)' * y * a) == "asin(xᵀ)y"
 end
 
 @testset "derivative interface checks" begin
     @matrix A
     @vector x
 
-    @test equivalent(derivative(x' * A * x, A), evaluate(x * x')) # scalar input works
+    @test equivalent(derivative(x' * A * x, A), x * x') # scalar input works
     @test equivalent(derivative(A * x, x), A) # vector input works
 end
 
