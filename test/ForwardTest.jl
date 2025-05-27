@@ -374,6 +374,19 @@ end
     @test evaluate(op6) == op6
 end
 
+@testset "evaluate product of real and product" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Upper(1))
+
+    op1 = 1 * dc.BinaryOperation{dc.Mult}(a, b)
+    op2 = 2 * dc.BinaryOperation{dc.Mult}(2, b)
+    op3 = 2 * dc.BinaryOperation{dc.Mult}(a, 2)
+
+    @test evaluate(op1) == dc.BinaryOperation{dc.Mult}(a, b)
+    @test evaluate(op2) == dc.BinaryOperation{dc.Mult}(4, b)
+    @test evaluate(op3) == dc.BinaryOperation{dc.Mult}(4, a)
+end
+
 # TODO: evaluate is a no-op here, remove evaluate and move to RicciTest
 @testset "evaluate adjoint is consistent" begin
     A = Variable("A", Upper(1), Lower(2))
