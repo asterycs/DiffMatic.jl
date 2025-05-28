@@ -50,19 +50,6 @@ function get_diag_delta(arg)
     return nothing
 end
 
-function get_last_letter(indices::IndexList)
-    current_last = Upper(0)
-
-    for i ∈ indices
-        if i.letter > current_last.letter
-            current_last = i
-        end
-    end
-
-    return current_last
-end
-
-
 function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
     if length(terms) == 1
         return first(terms)
