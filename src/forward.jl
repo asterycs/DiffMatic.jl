@@ -740,7 +740,7 @@ function evaluate(::Add, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Mult}
 end
 
 function evaluate(::Add, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Sub})
-    return evaluate(Add, arg2, arg2)
+    return evaluate(Add(), arg2, arg1)
 end
 
 function evaluate(::Add, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Add})

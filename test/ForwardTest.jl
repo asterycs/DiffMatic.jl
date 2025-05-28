@@ -114,6 +114,14 @@ end
     @test evaluate(dc.BinaryOperation{dc.Add}(z, d)) == d
 end
 
+@testset "evaluate sum of real and real" begin
+    function add(l, r)
+        return dc.BinaryOperation{dc.Add}(l, r)
+    end
+
+    @test evaluate(add(2, 2)) == 4
+end
+
 @testset "evaluate sum of addition and addition" begin
     a = Variable("a", Upper(1))
     b = Variable("b", Upper(1))
@@ -196,6 +204,24 @@ end
     sub = dc.BinaryOperation{dc.Sub}(a, b)
     add = dc.BinaryOperation{dc.Add}(sub, add_inner)
     @test evaluate(add) == add
+
+    # c + d + a - b
+    add_inner = dc.BinaryOperation{dc.Add}(c, d)
+    sub = dc.BinaryOperation{dc.Sub}(a, b)
+    add = dc.BinaryOperation{dc.Add}(add_inner, sub)
+    @test evaluate(add) == add
+end
+
+@testset "evaluate sum of subtraction and zero" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Upper(1))
+    c = Variable("c", Upper(1))
+
+    # a + b - (c - c)
+    add = dc.BinaryOperation{dc.Add}(a, b)
+    sub = dc.BinaryOperation{dc.Sub}(c, c)
+    add = dc.BinaryOperation{dc.Add}(add, sub)
+    @test evaluate(add) == dc.BinaryOperation{dc.Add}(a, b)
 end
 
 @testset "evaluate sum of subtraction and subtraction" begin
@@ -595,6 +621,16 @@ end
 
     @test dc.evaluate(sub(prod, Z)) == prod
     @test dc.evaluate(sub(Z, prod)) == -prod
+end
+
+@testset "evaluate subtraction with real and real" begin
+    function sub(l, r)
+        return dc.BinaryOperation{dc.Sub}(l, r)
+    end
+
+    @test dc.evaluate(sub(3, 2)) == 1
+    @test dc.evaluate(sub(3, 3)) == 0
+    @test dc.evaluate(sub(2, 3)) == -1
 end
 
 @testset "evaluate unary operations" begin
