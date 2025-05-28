@@ -460,18 +460,6 @@ end
     @test evaluate(op2) == mult(mult(mult(y, b), a), z)
 end
 
-# TODO: evaluate is a no-op here, remove evaluate and move to RicciTest
-@testset "evaluate adjoint is consistent" begin
-    A = Variable("A", Upper(1), Lower(2))
-    B = Variable("B", Upper(3), Lower(4))
-    x = Variable("x", Upper(5))
-    y = Variable("y", Upper(6))
-
-    @test equivalent(evaluate(x' * A'), evaluate((A * x)'))
-    @test equivalent(evaluate(x' * A), evaluate((A' * x)'))
-    @test equivalent(evaluate(x' * A * x), evaluate((A' * x)' * x))
-end
-
 @testset "evaluate BinaryOperation vector * KrD" begin
     x = Variable("x", Upper(2))
     d1 = KrD(Lower(2), Upper(3))

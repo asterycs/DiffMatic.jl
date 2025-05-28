@@ -569,6 +569,17 @@ end
     end
 end
 
+@testset "adjoint of BinaryOperation and BinaryOpeartion of adjoints is consistent" begin
+    A = Variable("A", Upper(1), Lower(2))
+    B = Variable("B", Upper(3), Lower(4))
+    x = Variable("x", Upper(5))
+    y = Variable("y", Upper(6))
+
+    @test equivalent(x' * A', (A * x)')
+    @test equivalent(x' * A, (A' * x)')
+    @test equivalent(x' * A * x, (A' * x)' * x)
+end
+
 @testset "trace with matrix input works" begin
     A = Variable("A", Upper(1), Lower(2))
     B = Variable("B", Upper(2), Lower(3))
