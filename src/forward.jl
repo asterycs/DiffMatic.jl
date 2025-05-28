@@ -179,10 +179,16 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Lite
         return BinaryOperation{Mult}(arg1, arg2)
     end
 
-    if can_contract(arg1.arg2, arg2) || is_elementwise_multiplication(arg1.arg2, arg2)
+    if is_elementwise_multiplication(arg1.arg2, arg2)
         new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
         return BinaryOperation{Mult}(arg1.arg1, new_arg2)
-    elseif can_contract(arg1.arg1, arg2) || is_elementwise_multiplication(arg1.arg1, arg2)
+    elseif is_elementwise_multiplication(arg1.arg1, arg2)
+        new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
+        return BinaryOperation{Mult}(new_arg1, arg1.arg2)
+    elseif can_contract(arg1.arg2, arg2)
+        new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
+        return BinaryOperation{Mult}(arg1.arg1, new_arg2)
+    elseif can_contract(arg1.arg1, arg2)
         new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
         return BinaryOperation{Mult}(new_arg1, arg1.arg2)
     end
@@ -205,30 +211,33 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
         )
     end
 
-    new_args = []
+    grouped_factors = []
 
     available1 = Any[arg1.arg1; arg1.arg2]
-    if is_elementwise_multiplication(arg1.arg1, arg1.arg2)
-        available1 = Any[arg1]
-    end
-
     available2 = Any[arg2.arg1; arg2.arg2]
-    if is_elementwise_multiplication(arg2.arg1, arg2.arg2)
-        available2 = Any[arg2]
-    end
-
 
     for i ∈ eachindex(available1)
-        if isnothing(available1[i])
-            continue
+        for j ∈ eachindex(available2)
+            if isnothing(available2[j]) || isnothing(available1[i])
+                continue
+            end
+
+            if is_elementwise_multiplication(available1[i], available2[j])
+                push!(grouped_factors, BinaryOperation{Mult}(available1[i], available2[j]))
+                available1[i] = nothing
+                available2[j] = nothing
+            end
         end
+    end
+
+    for i ∈ eachindex(available1)
         for j ∈ eachindex(available2)
             if isnothing(available2[j]) || isnothing(available1[i])
                 continue
             end
 
             if can_contract(available1[i], available2[j])
-                push!(new_args, evaluate(Mult(), available1[i], available2[j]))
+                push!(grouped_factors, BinaryOperation{Mult}(available1[i], available2[j]))
                 available1[i] = nothing
                 available2[j] = nothing
             end
@@ -237,24 +246,24 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
 
     for i ∈ available1
         if !isnothing(i)
-            push!(new_args, i)
+            push!(grouped_factors, i)
         end
     end
 
     for i ∈ available2
         if !isnothing(i)
-            push!(new_args, i)
+            push!(grouped_factors, i)
         end
     end
 
     new_arg = nothing
 
-    for args ∈ Iterators.partition(new_args, 2)
+    for args ∈ Iterators.partition(grouped_factors, 2)
         if length(args) == 1
             if isnothing(new_arg)
-                return args[1]
+                return only(args)
             else
-                return BinaryOperation{Mult}(new_arg, args[1])
+                return BinaryOperation{Mult}(new_arg, only(args))
             end
         end
 
