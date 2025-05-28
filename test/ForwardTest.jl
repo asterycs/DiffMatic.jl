@@ -797,11 +797,7 @@ end
 
     expected = dc.BinaryOperation{dc.Mult}(Variable("y", Lower(1)), Variable("x", Lower(1)))
 
-    # TODO: simplify should be sufficient here - remove evaluate
-    @test equivalent(
-        dc.simplify(dc.evaluate(dc.diff(e, Variable("z", Upper(9))))),
-        expected,
-    )
+    @test equivalent(dc.simplify(dc.diff(e, Variable("z", Upper(9)))), expected)
 
     expected = dc.BinaryOperation{dc.Mult}(Variable("y", Upper(1)), Variable("x", Upper(1)))
     @test equivalent(dc.simplify(dc.diff(e, Variable("z", Upper(9)))'), expected)

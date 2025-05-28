@@ -7,15 +7,19 @@ function simplify(arg::Value)
 end
 
 function simplify(arg::UnaryOperation{Op}) where {Op}
-    return UnaryOperation{Op}(simplify(arg.arg))
+    return UnaryOperation{Op}(simplify(evaluate(arg.arg)))
 end
 
 function simplify(arg::BinaryOperation{Op}) where {Op}
-    return evaluate(simplify(Op(), simplify(arg.arg1), simplify(arg.arg2)))
+    return evaluate(
+        simplify(Op(), simplify(evaluate(arg.arg1)), simplify(evaluate(arg.arg2))),
+    )
 end
 
 function simplify(::Mult, arg1::Variable, arg2::Variable)
-    return BinaryOperation{Mult}(arg1, arg2)
+    return evaluate(
+        BinaryOperation{Mult}(simplify(evaluate(arg1)), simplify(evaluate(arg2))),
+    )
 end
 
 function elementwise_indices(arg1, arg2)
@@ -162,9 +166,11 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Variable)
 end
 
 function simplify(::Mult, arg1::Value, arg2::Value)
-    return evaluate(BinaryOperation{Mult}(arg1, arg2))
+    return evaluate(
+        BinaryOperation{Mult}(simplify(evaluate(arg1)), simplify(evaluate(arg2))),
+    )
 end
 
 function simplify(::Op, arg1::Value, arg2::Value) where {Op<:AdditiveOperation}
-    return evaluate(BinaryOperation{Op}(arg1, arg2))
+    return evaluate(BinaryOperation{Op}(simplify(evaluate(arg1)), simplify(evaluate(arg2))))
 end
