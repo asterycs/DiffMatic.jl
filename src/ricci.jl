@@ -789,6 +789,10 @@ function to_string(arg::Real)
     return string(arg)
 end
 
+function to_string(arg::Rational)
+    return string(arg.num) * "/" * string(arg.den)
+end
+
 function to_string(arg::Zero)
     scripts = [script(i) for i ∈ arg.indices]
 
@@ -815,6 +819,10 @@ function parenthesize(arg)
     return to_string(arg)
 end
 
+function parenthesize(arg::Rational)
+    return "(" * to_string(arg) * ")"
+end
+
 function parenthesize(arg::BinaryOperation{Add})
     return "(" * to_string(arg) * ")"
 end
@@ -830,7 +838,7 @@ function to_string(arg::Power)
         b = "(" * b * ")"
     end
 
-    return b * ".^" * to_string(arg.exponent)
+    return b * ".^" * parenthesize(arg.exponent)
 end
 
 function to_string(arg::BinaryOperation{Mult})

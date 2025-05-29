@@ -44,7 +44,7 @@ end
 function to_std_str(arg::Rational)
     out = string(arg.num) * "/" * string(arg.den)
 
-    return "(" * out * ")"
+    return out
 end
 
 function to_std_str(arg::ir.Identity)
@@ -65,6 +65,10 @@ end
 
 function to_std_str(arg::ir.Cos)
     return "cos(" * to_std_str(arg.arg) * ")"
+end
+
+function parenthesize(f, arg::Rational)
+    return "(" * f(arg) * ")"
 end
 
 function parenthesize(f, arg::ir.Add)
@@ -109,7 +113,7 @@ function to_std_str(arg::ir.Power)
         out = "(" * out * ")"
     end
 
-    return out * "^" * to_std_str(arg.exponent)
+    return out * "^" * parenthesize(to_std_str, arg.exponent)
 end
 
 function to_std_str(arg::ir.Trace)

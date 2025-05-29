@@ -124,7 +124,7 @@ expr = norm(A * x, 2)
 
 # output
 
-((A¹₄x⁴).^21₁).^1//2
+((A¹₄x⁴).^21₁).^(1/2)
 ```
 ```jldoctest usage
 expr = norm(A * x, 1)
