@@ -55,6 +55,11 @@ struct Product <: IR
     r::IR
 end
 
+struct Quotient <: IR
+    num::IR
+    den::IR
+end
+
 struct HadamardProduct <: IR
     l::IR
     r::IR
@@ -498,6 +503,10 @@ function to_ir(arg::BinaryOperation{Mult})
     end
 
     throw_not_std(arg)
+end
+
+function to_ir(arg::BinaryOperation{Div})
+    return ir.Quotient(to_ir(arg.arg1), to_ir(arg.arg2))
 end
 
 function to_ir(arg::Power)

@@ -165,6 +165,12 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Variable)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
+function simplify(::Div, arg1::Value, arg2::Value)
+    return evaluate(
+        BinaryOperation{Div}(simplify(evaluate(arg1)), simplify(evaluate(arg2))),
+    )
+end
+
 function simplify(::Mult, arg1::Value, arg2::Value)
     return evaluate(
         BinaryOperation{Mult}(simplify(evaluate(arg1)), simplify(evaluate(arg2))),

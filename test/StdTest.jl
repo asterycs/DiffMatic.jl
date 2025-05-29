@@ -315,6 +315,24 @@ end
     @test to_std(dc.UnaryOperation{dc.Sgn}(mul(A, x))) == "sgn(Ax)"
 end
 
+@testset "to_std output is correct with quotient" begin
+    x = Variable("x", Upper(1))
+    y = Variable("y", Upper(1))
+    z = Variable("z", Upper(2))
+    a = Variable("a")
+    lv = Literal(2, Upper(1))
+
+    function div(l, r)
+        return dc.BinaryOperation{dc.Div}(l, r)
+    end
+
+    @test to_std(div(x, y)) == "x ⊘ y"
+    @test to_std(div(lv, x)) == "vec(2) ⊘ x"
+    @test to_std(div(x, lv)) == "x ⊘ vec(2)"
+    # @test_throws to_std(div(a, x))
+    # @test_throws to_std(div(x, z))
+end
+
 @testset "to_std output is correct with KrD-KrD and one free index" begin
     l = KrD(Upper(1), Lower(2))
     u = KrD(Upper(2), Lower(1))

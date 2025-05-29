@@ -99,6 +99,10 @@ function to_std_str(arg::ir.Product)
     return parenthesize(to_std_str, arg.l) * parenthesize(to_std_str, arg.r)
 end
 
+function to_std_str(arg::ir.Quotient)
+    return parenthesize(to_std_str, arg.num) * " ⊘ " * parenthesize(to_std_str, arg.den)
+end
+
 function to_std_str(arg::ir.HadamardProduct)
     return to_std_str(arg.l) * " ⊙ " * to_std_str(arg.r)
 end

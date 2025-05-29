@@ -327,6 +327,10 @@ function to_standard(arg::BinaryOperation{Mult})
     throw_not_std(arg)
 end
 
+function to_standard(arg::BinaryOperation{Div})
+    return BinaryOperation{Div}(to_standard(arg.arg1), to_standard(arg.arg2))
+end
+
 function standardize(arg)
     arg = simplify(arg)
     free_indices = unique(get_free_indices(arg))

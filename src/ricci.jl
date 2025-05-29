@@ -109,6 +109,7 @@ abstract type AdditiveOperation end
 struct Add <: AdditiveOperation end
 struct Sub <: AdditiveOperation end
 struct Mult end
+struct Div end
 
 struct Power <: Tensor
     base::Value
@@ -234,6 +235,10 @@ function get_indices(arg::UnaryOperation)
 end
 
 function get_indices(arg::BinaryOperation{Mult})
+    return [get_indices(arg.arg1); get_indices(arg.arg2)]
+end
+
+function get_indices(arg::BinaryOperation{Div})
     return [get_indices(arg.arg1); get_indices(arg.arg2)]
 end
 
@@ -847,6 +852,10 @@ function to_string(arg::BinaryOperation{Mult})
     end
 
     return parenthesize(arg.arg1) * parenthesize(arg.arg2)
+end
+
+function to_string(arg::BinaryOperation{Div})
+    return parenthesize(arg.arg1) * "/" * parenthesize(arg.arg2)
 end
 
 function to_string(arg::BinaryOperation{Add})
