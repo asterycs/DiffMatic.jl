@@ -8,6 +8,8 @@ using Test
 using DiffMatic: Variable, Literal, KrD, Zero
 using DiffMatic: Upper, Lower
 
+using LinearAlgebra: norm, tr
+
 dc = DiffMatic
 
 @testset "Variable constructor throws on invalid input" begin
@@ -100,36 +102,36 @@ end
     end
 end
 
-@testset "norm2 throws for inputs other than vectors" begin
+@testset "norm(⋅, 2) throws for inputs other than vectors" begin
     c = Variable("c")
     A = Variable("A", Upper(1), Lower(2))
 
-    @test_throws DomainError norm2(c)
-    @test_throws DomainError norm2(A)
+    @test_throws DomainError norm(c, 2)
+    @test_throws DomainError norm(A, 2)
 end
 
-@testset "norm1 throws for inputs other than vectors" begin
+@testset "norm(⋅, 1) throws for inputs other than vectors" begin
     c = Variable("c")
     A = Variable("A", Upper(1), Lower(2))
 
-    @test_throws DomainError norm1(c)
-    @test_throws DomainError norm1(A)
+    @test_throws DomainError norm(c, 1)
+    @test_throws DomainError norm(A, 1)
 end
 
-@testset "norm2 output" begin
+@testset "norm(⋅, 2) output" begin
     x = Variable("x", Upper(2))
 
-    op = norm2(x)
+    op = norm(x, 2)
 
     @test typeof(op) == dc.Power
     @test op.base == sum(x .^ 2)
     @test op.exponent == 1//2
 end
 
-@testset "norm1 output" begin
+@testset "norm(⋅, 1) output" begin
     x = Variable("x", Upper(2))
 
-    op = norm1(x)
+    op = norm(x, 1)
 
     @test op == sum(abs.(x))
 end

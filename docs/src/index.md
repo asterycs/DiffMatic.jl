@@ -73,6 +73,8 @@ to_std(jacobian(A * x, x))
 The function `derivative` can be used to compute arbitrary derivatives.
 
 ```jldoctest intro
+using LinearAlgebra: tr
+
 to_std(derivative(tr(A), A))
 
 # output

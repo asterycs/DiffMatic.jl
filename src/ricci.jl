@@ -2,11 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import LinearAlgebra.tr
-
-export tr
-export sum
-export norm1, norm2
+import LinearAlgebra
 
 abstract type Tensor end
 
@@ -285,7 +281,7 @@ function can_contract(arg1::Value, arg2::Value)
     return false
 end
 
-function tr(arg::Tensor)
+function LinearAlgebra.tr(arg::Tensor)
     free_ids = get_free_indices(arg)
 
     de = DomainError("Trace is defined only for matrices")
@@ -299,6 +295,16 @@ function tr(arg::Tensor)
     end
 
     return evaluate(BinaryOperation{Mult}(arg, KrD(flip(free_ids[2]), flip(free_ids[1]))))
+end
+
+function LinearAlgebra.norm(arg::Tensor, p::Real)
+    if p == 1
+        return norm1(arg)
+    elseif p == 2
+        return norm2(arg)
+    end
+
+    throw(DomainError(p, "$p-norm not implemented for $arg"))
 end
 
 function norm2(arg::Tensor)

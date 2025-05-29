@@ -1,6 +1,7 @@
 # Examples
 ## Creating Variables
 ```jldoctest usage; output = false
+using LinearAlgebra: tr, norm
 using DiffMatic
 
 @matrix A B C
@@ -119,14 +120,14 @@ A¹₄x⁴1₁
 ```
 #### Vector Norms
 ```jldoctest usage
-expr = norm2(A * x)
+expr = norm(A * x, 2)
 
 # output
 
 ((A¹₄x⁴).^21₁).^1//2
 ```
 ```jldoctest usage
-expr = norm1(A * x)
+expr = norm(A * x, 1)
 
 # output
 
