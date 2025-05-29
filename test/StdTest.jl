@@ -54,6 +54,18 @@ end
     @test to_std(Zero(Lower(2), Upper(1))) == "mat(0)ᵀ"
 end
 
+@testset "to_std output is correct with standard form Literal" begin
+    @test to_std(Literal(2, Upper(1), Lower(2))) == "mat(2)"
+    @test to_std(Literal(0, Lower(1), Upper(2))) == "mat(0)ᵀ"
+    @test to_std(Literal(1, Upper(1))) == "vec(1)"
+    @test_broken to_std(Literal(1//2)) == "1/2"
+    @test to_std(Literal(3.5, Lower(2))) == "vec(3.5)ᵀ"
+end
+
+@testset "to_std output throws with non-standard Literal" begin
+    @test_throws DomainError to_std(Literal(2, Upper(1), Lower(2), Lower(3)))
+end
+
 @testset "to_std output is correct with scalar-Variable multiplication" begin
     A = Variable("A", Upper(1), Lower(2))
     At = Variable("A", Lower(1), Upper(2))
