@@ -107,6 +107,12 @@ function to_std_str(arg::ir.HadamardProduct)
     return to_std_str(arg.l) * " ⊙ " * to_std_str(arg.r)
 end
 
+function to_std_str(arg::ir.Log)
+    out = to_std_str(arg.arg)
+
+    return "log(" * out * ")"
+end
+
 function to_std_str(arg::ir.Power)
     out = to_std_str(arg.base)
 

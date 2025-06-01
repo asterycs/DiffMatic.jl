@@ -118,6 +118,12 @@ end
 
 Base.hash(op::Power, h::UInt) = hash(op.exponent, hash(op.base, hash(Power, h)))
 
+struct Log <: Tensor
+    arg::Value
+end
+
+Base.hash(op::Log, h::UInt) = hash(op.arg, hash(Log, h))
+
 struct UnaryOperation{Op} <: Tensor where {Op}
     arg::Value
 end
@@ -244,6 +250,10 @@ end
 
 function get_indices(arg::Power)
     return get_indices(arg.base)
+end
+
+function get_indices(arg::Log)
+    return get_indices(arg.arg)
 end
 
 function get_indices(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
@@ -432,11 +442,27 @@ function Base.literal_pow(f::typeof(^), base::Tensor, exponent::Val{E}) where {E
     return Power(base, E)
 end
 
+function Base.log(arg::Tensor)
+    if !isempty(get_free_indices(arg))
+        throw(DomainError(arg, "Argument is not a scalar, use log. for element-wise log."))
+    end
+
+    return Log(arg)
+end
+
+function Base.broadcasted(::typeof(log), arg::Tensor)
+    return Log(arg)
+end
+
 function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
     return BinaryOperation{Mult}(
         replace_letters(arg.arg1, letter_map),
         replace_letters(arg.arg2, letter_map),
     )
+end
+
+function replace_letters(arg::Log, letter_map::Dict)
+    return Log(replace_letters(arg.arg, letter_map))
 end
 
 function replace_letters(arg::Power, letter_map::Dict)
@@ -697,6 +723,10 @@ function Base.adjoint(arg::T) where {T<:UnaryOperation}
     return T(arg.arg')
 end
 
+function Base.adjoint(arg::Log)
+    return Log(adjoint(arg.arg))
+end
+
 function Base.adjoint(arg::Power)
     return Power(adjoint(arg.base), arg.exponent)
 end
@@ -844,6 +874,10 @@ function to_string(arg::Power)
     end
 
     return b * ".^" * parenthesize(arg.exponent)
+end
+
+function to_string(arg::Log)
+    return "log(" * to_string(arg.arg) * ")"
 end
 
 function to_string(arg::BinaryOperation{Mult})

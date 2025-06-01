@@ -118,6 +118,21 @@ expr = sum(A * x)
 
 A¹₄x⁴1₁
 ```
+#### Log and element-wise log
+```jldoctest usage
+expr = log(x' * y)
+
+# output
+
+log(x₃y³)
+```
+```jldoctest usage
+expr = log.(x)' * y
+
+# output
+
+log(x₃)y³
+```
 #### Vector Norms
 ```jldoctest usage
 expr = norm(A * x, 2)

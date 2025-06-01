@@ -51,9 +51,9 @@ standard notation.
 
 ### Supported functions and operators
 
-`+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos`
+`+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos`, `log`
 
-Element-wise operations `sin.`, `cos.`, `abs.`, `.*` and `.^` are supported.  
+Element-wise operations `sin.`, `cos.`, `abs.`, `.*`, `.^` and `log.` are supported.  
 Vector 1-norm and 2-norm can be computed with `LinearAlgebra.norm(..., 1)` and `LinearAlgebra.norm(..., 2)`.  
 Sums of vectors can be computed with `sum`.  
 Matrix traces can be computed with `LinearAlgebra.tr`.

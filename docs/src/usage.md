@@ -66,8 +66,8 @@ c * A
 cA¹₂
 ```
 Supported operators and functions when creating expressions:
-  - Basic operators `+`, `-`, `'`, `*`, `^`, `abs`, `sin` and `cos`
-  - Element-wise operators `sin.`, `cos.`, `abs.`, `.*` and `.^`
+  - Basic operators `+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos` and `log`
+  - Element-wise operators `sin.`, `cos.`, `abs.`, `.*`, `.^` and `log.`
   - Vector 1-norm and 2-norm can be computed with `norm1` and `norm2`
   - Sums of vectors can be computed with `sum`.
   - Matrix traces can be computed with `tr`.

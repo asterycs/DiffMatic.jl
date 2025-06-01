@@ -36,6 +36,9 @@
     @test to_std(gradient(sum((x + y) .^ 2), x)) == "2(x + y)"
     @test to_std(gradient(sum((x .* y) .^ 2), x)) == "2(x ⊙ y ⊙ y)"
     @test to_std(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
+    @test to_std(gradient(log.(x)'*x, x)) == "(vec(1) ⊘ x ⊙ x) + log(x)" # TODO: Add simplification rule for quotients
+    @test to_std(gradient(log.(x)'*log.(x), x)) ==
+          "diag(vec(1)ᵀ ⊘ xᵀ)Iᵀlog(x) + (vec(1) ⊘ x ⊙ log(x))"
     @test to_std(gradient((x' * A * x) ^ (-2), x)) == "(-2)(xᵀAᵀx)^(-3)(Aᵀx + Ax)"
     @test to_std(gradient((x' * A * x) ^ 2, x)) == "2xᵀAᵀx(Aᵀx + Ax)"
     @test to_std(gradient(((A .* B) * C * x)' * x, x)) == "(A ⊙ B)Cx + Cᵀ(Aᵀ ⊙ Bᵀ)x"
@@ -52,6 +55,7 @@ end
     @test to_std(jacobian(A * x, x)) == "A"
     @test to_std(jacobian(A' * x, x)) == "Aᵀ"
     @test to_std(jacobian(abs.(x), x)) == "diag(sgn(x))I"
+    @test to_std(jacobian(log.(x), x)) == "diag(vec(1) ⊘ x)I"
     @test to_std(jacobian(sin.(A * x + y), x)) == "diag(cos(Ax + y))A"
     @test to_std(jacobian(((A .* B) * C * x)' * x * x, x)) ==
           "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"

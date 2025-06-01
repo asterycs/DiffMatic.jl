@@ -49,6 +49,13 @@ function diff(arg::UnaryOperation{Cos}, wrt::Variable)
     return BinaryOperation{Mult}(-UnaryOperation{Sin}(arg.arg), diff(arg.arg, wrt))
 end
 
+function diff(arg::Log, wrt::Variable)
+    return BinaryOperation{Mult}(
+        BinaryOperation{Div}(Literal(1, get_free_indices(arg)...), arg.arg),
+        diff(arg.arg, wrt),
+    )
+end
+
 function diff(arg::Power, wrt::Variable)
     outer = replace_bound_letters(arg.base, wrt)
 
@@ -287,6 +294,20 @@ function evaluate(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
     return evaluate(Mult(), arg2, arg1)
 end
 
+function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::KrD)
+    attempt = BinaryOperation{Div}(
+        evaluate(Mult(), evaluate(arg1.arg1), evaluate(arg2)),
+        evaluate(Mult(), evaluate(arg1.arg2), evaluate(arg2)),
+    )
+
+    # This ensures that arg1.base and arg2 can contract and that the contraction is simple
+    if length(get_free_indices(attempt)) == length(get_free_indices(arg1))
+        return attempt
+    end
+
+    return BinaryOperation{Mult}(arg1, arg2)
+end
+
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     ci = indices_in_common(arg1.arg1, arg1.arg2)
 
@@ -375,6 +396,17 @@ function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperati
     end
 
     return BinaryOperation{Mult}(evaluate(arg2), evaluate(arg1))
+end
+
+function evaluate(::Mult, arg1::Log, arg2::KrD)
+    attempt = Log(evaluate(Mult(), evaluate(arg1.arg), evaluate(arg2)))
+
+    # This ensures that arg1.base and arg2 can contract and that the contraction is simple
+    if length(get_free_indices(attempt)) == length(get_free_indices(arg1))
+        return attempt
+    end
+
+    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
 end
 
 function evaluate(::Mult, arg1::Power, arg2::KrD)
@@ -872,6 +904,10 @@ function _sub_from_product(arg1::BinaryOperation{Mult}, arg2::Value)
     end
 
     return BinaryOperation{Sub}(evaluate(arg1), evaluate(arg2))
+end
+
+function evaluate(op::Log)
+    return Log(evaluate(op.arg))
 end
 
 function evaluate(op::Power)
