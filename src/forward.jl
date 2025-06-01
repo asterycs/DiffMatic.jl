@@ -269,6 +269,9 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
 
         if isnothing(new_arg)
             new_arg = BinaryOperation{Mult}(args[1], args[2])
+            if can_contract(args[1], args[2])
+                new_arg = evaluate(new_arg)
+            end
         else
             new_arg = BinaryOperation{Mult}(
                 new_arg,
