@@ -138,9 +138,9 @@ end
 
 function to_std_str(arg::ir.PartialSum)
     if arg.dim == 1
-        return "vec(1)ᵀ" * to_std_str(arg.arg)
+        return "vec(1)ᵀ" * parenthesize(to_std_str, arg.arg)
     elseif arg.dim == 2
-        return to_std_str(arg.arg) * "vec(1)"
+        return parenthesize(to_std_str, arg.arg) * "vec(1)"
     end
 
     throw(RuntimeError("Encountered a sum over an unsupported index"))
