@@ -21,7 +21,7 @@
     @test to_std(gradient(sin.(x)' * y * a, x)) == "a(cos(x) ⊙ y)"
     @test to_std(gradient(x' * sin.(y) * a, x)) == "asin(y)"
     @test to_std(gradient(y' * sin.(x) * a, x)) == "a(cos(x) ⊙ y)"
-    @test to_std(gradient(sin.(x .* y)' * x, x)) == "(cos(x ⊙ y) ⊙ y ⊙ x) + sin(x ⊙ y)"
+    @test to_std(gradient(sin.(x .* y)' * x, x)) == "(y ⊙ cos(x ⊙ y) ⊙ x) + sin(x ⊙ y)"
     @test to_std(gradient(sum(x), x)) == "vec(1)"
     @test to_std(gradient(2 * sum(x), x)) == "2vec(1)"
     @test to_std(gradient(sum(2 * x), x)) == "2vec(1)"
@@ -36,9 +36,8 @@
     @test to_std(gradient(sum((x + y) .^ 2), x)) == "2(x + y)"
     @test to_std(gradient(sum((x .* y) .^ 2), x)) == "2(x ⊙ y ⊙ y)"
     @test to_std(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
-    @test to_std(gradient(log.(x)'*x, x)) == "(vec(1) ⊘ x ⊙ x) + log(x)" # TODO: Add simplification rule for quotients
-    @test to_std(gradient(log.(x)'*log.(x), x)) ==
-          "diag(vec(1)ᵀ ⊘ xᵀ)Iᵀlog(x) + (vec(1) ⊘ x ⊙ log(x))"
+    @test to_std(gradient(log.(x)'*x, x)) == "vec(1) + log(x)"
+    @test to_std(gradient(log.(x)'*log.(x), x)) == "2(log(x) ⊘ x)"
     @test to_std(gradient((x' * A * x) ^ (-2), x)) == "(-2)(xᵀAᵀx)^(-3)(Aᵀx + Ax)"
     @test to_std(gradient((x' * A * x) ^ 2, x)) == "2xᵀAᵀx(Aᵀx + Ax)"
     @test to_std(gradient(((A .* B) * C * x)' * x, x)) == "(A ⊙ B)Cx + Cᵀ(Aᵀ ⊙ Bᵀ)x"

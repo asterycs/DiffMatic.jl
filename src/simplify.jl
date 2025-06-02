@@ -111,6 +111,10 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
+function simplify(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
+    return simplify(Mult(), arg2, arg1)
+end
+
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     if is_diag(arg1) && !is_elementwise_multiplication(arg1, arg2)
         d = get_diag_delta(arg1)
@@ -162,6 +166,10 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
         return to_binary_operation(Mult(), reshaped)
     end
 
+    return BinaryOperation{Mult}(arg1, arg2)
+end
+
+function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     return BinaryOperation{Mult}(arg1, arg2)
 end
 

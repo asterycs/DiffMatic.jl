@@ -308,6 +308,26 @@ function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::KrD)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
+function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::Tensor)
+    if arg1.arg2 == arg2
+        return simplify(arg1.arg1)
+    end
+
+    if arg1.arg1 isa Literal
+        if arg1.arg1.value == 1 && get_free_indices(arg1.arg1) == get_free_indices(arg2)
+            return BinaryOperation{Div}(arg2, arg1.arg2)
+        end
+    end
+
+    return BinaryOperation{Mult}(arg1, arg2)
+end
+
+function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::Zero)
+    free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
+
+    return Zero(free_indices...)
+end
+
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     ci = indices_in_common(arg1.arg1, arg1.arg2)
 
