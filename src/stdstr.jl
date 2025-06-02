@@ -83,6 +83,10 @@ function parenthesize(f, arg::ir.HadamardProduct)
     return "(" * f(arg.l) * " ⊙ " * f(arg.r) * ")"
 end
 
+function parenthesize(f, arg::ir.Quotient)
+    return "(" * f(arg) * ")"
+end
+
 function parenthesize(f, arg)
     return f(arg)
 end
