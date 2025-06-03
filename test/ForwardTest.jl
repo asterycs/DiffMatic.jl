@@ -5,9 +5,11 @@
 using DiffMatic
 using Test
 
-using DiffMatic: Variable, KrD, Zero
+using DiffMatic: Variable, Literal, KrD, Zero
 using DiffMatic: evaluate
 using DiffMatic: Upper, Lower
+
+using LinearAlgebra: tr
 
 dc = DiffMatic
 
@@ -48,6 +50,37 @@ end
     @test dc.evaluate(z') == Variable("z")
 end
 
+@testset "evaluate log" begin
+    x = Variable("x", Upper(1))
+    d = KrD(Upper(2), Lower(1))
+
+    function lgp(l, r)
+        return dc.UnaryOperation{dc.Log}(dc.BinaryOperation{dc.Mult}(l, r))
+    end
+
+    @test dc.evaluate(lgp(x, d)) == dc.UnaryOperation{dc.Log}(Variable("x", Upper(2)))
+    @test dc.evaluate(lgp(d, x)) == dc.UnaryOperation{dc.Log}(Variable("x", Upper(2)))
+end
+
+@testset "evaluate div" begin
+    l = Literal(2, Upper(2))
+    x = Variable("x", Upper(1))
+    d = KrD(Upper(2), Lower(1))
+
+    function prod(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    function div(n, d)
+        return dc.BinaryOperation{dc.Div}(n, d)
+    end
+
+    @test dc.evaluate(div(l, prod(x, d))) ==
+          dc.BinaryOperation{dc.Div}(l, Variable("x", Upper(2)))
+    @test dc.evaluate(div(prod(x, d), l)) ==
+          dc.BinaryOperation{dc.Div}(Variable("x", Upper(2)), l)
+end
+
 @testset "evaluate BinaryOperation{AdditiveOperation} Matrix and KrD" begin
     X = Variable("X", Upper(2), Lower(3))
     d = KrD(Upper(2), Lower(3))
@@ -58,6 +91,16 @@ end
         @test evaluate(op1) == op1
         @test evaluate(op2) == op2
     end
+end
+
+@testset "evaluate contracting and element-wise product of matrix and matrix" begin
+    d = KrD(Upper(2), Upper(3))
+    A = Variable("A", Upper(2), Lower(3))
+
+    op1 = dc.BinaryOperation{dc.Mult}(A, d)
+    op2 = dc.BinaryOperation{dc.Mult}(d, A)
+    @test evaluate(op1) == op1
+    @test evaluate(op2) == op2
 end
 
 @testset "evaluate Matrix + Zero" begin
@@ -114,12 +157,47 @@ end
     @test evaluate(dc.BinaryOperation{dc.Add}(z, d)) == d
 end
 
+@testset "evaluate sum of Zero and sum" begin
+    x = Variable("x", Upper(1))
+    y = Variable("y", Upper(1))
+    z = Zero(Upper(1))
+
+    d = dc.BinaryOperation{dc.Add}(x, y)
+
+    @test evaluate(dc.BinaryOperation{dc.Add}(z, d)) == d
+    @test evaluate(dc.BinaryOperation{dc.Add}(d, z)) == d
+end
+
 @testset "evaluate sum of real and real" begin
     function add(l, r)
         return dc.BinaryOperation{dc.Add}(l, r)
     end
 
     @test evaluate(add(2, 2)) == 4
+end
+
+@testset "evaluate sum of addition and Value" begin
+    a = Variable("a", Upper(1))
+    b = dc.UnaryOperation{dc.Log}(Variable("b", Upper(1)))
+
+    l = dc.BinaryOperation{dc.Add}(a, b)
+    s = dc.BinaryOperation{dc.Add}(l, b)
+    n = dc.BinaryOperation{dc.Add}(l, 2)
+
+    @test dc.evaluate(s) == dc.evaluate(2 * b + a)
+    @test dc.evaluate(n) == n
+end
+
+@testset "evaluate sum of difference and Value" begin
+    a = Variable("a", Upper(1))
+    b = dc.UnaryOperation{dc.Log}(Variable("b", Upper(1)))
+
+    l = dc.BinaryOperation{dc.Sub}(a, b)
+    s = dc.BinaryOperation{dc.Add}(l, b)
+    n = dc.BinaryOperation{dc.Add}(l, 2)
+
+    @test dc.evaluate(s) == a
+    @test dc.evaluate(n) == n
 end
 
 @testset "evaluate sum of addition and addition" begin
@@ -662,10 +740,12 @@ end
 @testset "diff Variable" begin
     x = Variable("x", Upper(2))
     y = Variable("y", Upper(3))
+    a = Variable("a")
     A = Variable("A", Upper(4), Lower(5))
 
     @test dc.diff(x, x) == KrD(Upper(2), Lower(2))
     @test dc.diff(y, x) == Zero(Upper(3), Lower(2))
+    @test dc.diff(a, x) == Zero(Lower(2))
     @test dc.diff(A, x) == Zero(Upper(4), Lower(5), Lower(2))
 
     @test dc.diff(x, Variable("x", Upper(1))) == KrD(Upper(2), Lower(1))
@@ -683,6 +763,18 @@ end
     @test dc.diff(d, x) == Zero(Upper(1), Lower(2), Lower(3))
     @test dc.diff(d, y) == Zero(Upper(1), Lower(2), Upper(4))
     @test dc.diff(d, A) == Zero(Upper(1), Lower(2), Lower(5), Upper(6))
+end
+
+@testset "diff Real" begin
+    a = 1
+    b = 0.0
+    c = 1//3
+
+    x = Variable("x", Upper(1))
+
+    @test dc.diff(a, x) == Zero(Lower(1))
+    @test dc.diff(b, x) == Zero(Lower(1))
+    @test dc.diff(c, x) == Zero(Lower(1))
 end
 
 @testset "diff BinaryOperation{dc.Mult}" begin
@@ -724,7 +816,7 @@ end
 @testset "diff abs" begin
     x = Variable("x", Upper(2))
 
-    op = abs.(x)
+    op = UnaryOperation{dc.Abs}(x)
 
     D = dc.diff(op, Variable("x", Upper(3)))
 
