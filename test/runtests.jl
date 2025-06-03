@@ -19,6 +19,10 @@ end
     include("ForwardTest.jl")
 end
 
+@testset "SimplifyTest" begin
+    include("SimplifyTest.jl")
+end
+
 @testset "StdTest" begin
     include("StdTest.jl")
 end
