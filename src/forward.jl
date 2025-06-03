@@ -308,6 +308,10 @@ function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::KrD)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
+function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Div})
+    return evaluate(Mult(), arg2, arg1)
+end
+
 function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::Tensor)
     if arg1.arg2 == arg2
         return evaluate(arg1.arg1)
@@ -320,6 +324,10 @@ function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::Tensor)
     end
 
     return BinaryOperation{Mult}(arg1, arg2)
+end
+
+function evaluate(::Mult, arg1::Zero, arg2::BinaryOperation{Div})
+    return evaluate(Mult(), arg2, arg1)
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::Zero)
