@@ -508,6 +508,23 @@ end
     @test evaluate(op3) == dc.BinaryOperation{dc.Mult}(4, a)
 end
 
+@testset "evaluate product of Zero and KrD" begin
+    z = Zero(Upper(1), Lower(2))
+    d = KrD(Upper(1), Lower(3))
+    d2 = KrD(Upper(2), Lower(3))
+
+    op1 = dc.BinaryOperation{dc.Mult}(z, d)
+    op2 = dc.BinaryOperation{dc.Mult}(d, z)
+
+    op3 = dc.BinaryOperation{dc.Mult}(z, d2)
+    op4 = dc.BinaryOperation{dc.Mult}(d2, z)
+
+    @test evaluate(op1) == Zero(Upper(1), Lower(2), Lower(3))
+    @test evaluate(op2) == Zero(Upper(1), Lower(2), Lower(3))
+    @test evaluate(op3) == Zero(Upper(1), Lower(3))
+    @test evaluate(op4) == Zero(Upper(1), Lower(3))
+end
+
 @testset "evaluate product of quotient and tensor 1" begin
     l = Literal(1, Upper(2))
     a = Variable("a", Upper(2))

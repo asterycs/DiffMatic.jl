@@ -400,15 +400,6 @@ function evaluate(::Mult, arg1::KrD, arg2::Zero)
 end
 
 function evaluate(::Mult, arg1::Zero, arg2::KrD)
-    contracting_index = eliminated_indices([get_indices(arg1); get_free_indices(arg2)])
-
-    if isempty(contracting_index)
-        return Zero(union(arg1.indices, arg2.indices)...)
-    end
-
-    @assert can_contract(arg1, arg2)
-    @assert length(arg2.indices) == 2
-
     free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
 
     return Zero(free_indices...)
