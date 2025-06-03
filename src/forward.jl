@@ -545,6 +545,14 @@ function evaluate(::Mult, arg1::Real, arg2::Zero)
     return evaluate(arg2)
 end
 
+function evaluate(::Div, arg1::Value, arg2::Value)
+    if arg1 == arg2
+        return Literal(1, get_free_indices(arg1)...)
+    end
+
+    return BinaryOperation{Div}(arg1, arg2)
+end
+
 function evaluate(::Add, arg1::Zero, arg2::Zero)
     @assert is_permutation(arg1, arg2)
 

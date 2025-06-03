@@ -81,6 +81,23 @@ end
           dc.BinaryOperation{dc.Div}(Variable("x", Upper(2)), l)
 end
 
+@testset "evaluate trivially simplifiable div" begin
+    x = Variable("x", Upper(1))
+    d = KrD(Upper(2), Lower(1))
+
+    function prod(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    function div(n, d)
+        return dc.BinaryOperation{dc.Div}(n, d)
+    end
+
+    @test dc.evaluate(div(prod(x, d), prod(x, d))) == Literal(1, Upper(2))
+    @test dc.evaluate(div(prod(x, d), prod(d, x))) == Literal(1, Upper(2))
+    @test dc.evaluate(div(prod(d, x), prod(x, d))) == Literal(1, Upper(2))
+end
+
 @testset "evaluate BinaryOperation{AdditiveOperation} Matrix and KrD" begin
     X = Variable("X", Upper(2), Lower(3))
     d = KrD(Upper(2), Lower(3))
