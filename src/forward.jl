@@ -331,7 +331,7 @@ end
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     ci = indices_in_common(arg1.arg1, arg1.arg2)
 
-    if !isempty(ci) && !is_trace(arg2)
+    if !isempty(ci)
         el = eliminated_indices([ci; arg2.indices[1]])
         er = eliminated_indices([ci; arg2.indices[2]])
 
@@ -354,10 +354,10 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
         end
     end
 
-    if can_contract(arg1.arg2, arg2) && !is_trace(arg2)
+    if can_contract(arg1.arg2, arg2)
         new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
         return BinaryOperation{Mult}(evaluate(arg1.arg1), new_arg2)
-    elseif can_contract(arg1.arg1, arg2) && !is_trace(arg2)
+    elseif can_contract(arg1.arg1, arg2)
         new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
         return BinaryOperation{Mult}(new_arg1, evaluate(arg1.arg2))
     elseif arg1.arg1 isa Real
