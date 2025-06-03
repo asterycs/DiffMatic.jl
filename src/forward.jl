@@ -308,6 +308,10 @@ function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::KrD)
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
+function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::BinaryOperation{Div})
+    return invoke(evaluate, Tuple{Mult,BinaryOperation{Div},Tensor}, Mult(), arg1, arg2)
+end
+
 function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Div})
     return evaluate(Mult(), arg2, arg1)
 end
