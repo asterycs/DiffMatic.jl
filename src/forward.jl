@@ -310,7 +310,7 @@ end
 
 function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::Tensor)
     if arg1.arg2 == arg2
-        return simplify(arg1.arg1)
+        return evaluate(arg1.arg1)
     end
 
     if arg1.arg1 isa Literal
