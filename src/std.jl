@@ -110,7 +110,7 @@ function derivative(expr, wrt::Variable)
 
     D = diff(expr, ∂)
 
-    return evaluate(evaluate(D))
+    return evaluate(D)
 end
 
 """
