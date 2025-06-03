@@ -939,13 +939,13 @@ function evaluate(op::Power)
 end
 
 function evaluate(op::BinaryOperation{Mult})
-    evaluate(Mult(), evaluate(op.arg1), evaluate(op.arg2))
+    return evaluate(Mult(), evaluate(op.arg1), evaluate(op.arg2))
 end
 
 function evaluate(op::BinaryOperation{Div})
-    BinaryOperation{Div}(evaluate(op.arg1), evaluate(op.arg2))
+    return evaluate(Div(), evaluate(op.arg1), evaluate(op.arg2))
 end
 
 function evaluate(op::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    evaluate(Op(), evaluate(op.arg1), evaluate(op.arg2))
+    return evaluate(Op(), evaluate(op.arg1), evaluate(op.arg2))
 end
