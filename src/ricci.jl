@@ -469,10 +469,7 @@ function replace_letters(arg::Power, letter_map::Dict)
     return Power(replace_letters(arg.base, letter_map), arg.exponent)
 end
 
-function replace_letters(
-    arg::BinaryOperation{Op},
-    letter_map::Dict,
-) where {Op<:AdditiveOperation}
+function replace_letters(arg::BinaryOperation{Op}, letter_map::Dict) where {Op}
     return BinaryOperation{Op}(
         replace_letters(arg.arg1, letter_map),
         replace_letters(arg.arg2, letter_map),

@@ -529,7 +529,6 @@ end
     l = Literal(1, Upper(2))
     a = Variable("a", Upper(2))
     b = Variable("b", Upper(2))
-    c = Variable("c", Upper(2))
 
     op1 = dc.BinaryOperation{dc.Mult}(dc.BinaryOperation{dc.Div}(l, b), a)
     op2 = dc.BinaryOperation{dc.Mult}(a, dc.BinaryOperation{dc.Div}(l, b))
@@ -542,7 +541,6 @@ end
     l = Literal(1, Upper(2))
     a = Variable("a", Upper(2))
     b = Variable("b", Upper(2))
-    c = Variable("c", Upper(2))
 
     op1 = dc.BinaryOperation{dc.Mult}(dc.BinaryOperation{dc.Div}(l, b), b)
     op2 = dc.BinaryOperation{dc.Mult}(b, dc.BinaryOperation{dc.Div}(l, b))
@@ -552,16 +550,39 @@ end
 end
 
 @testset "evaluate product of quotient and tensor 3" begin
-    l = Literal(1, Upper(2))
     a = Variable("a", Upper(2))
     b = Variable("b", Upper(2))
-    c = Variable("c", Upper(2))
 
     op1 = dc.BinaryOperation{dc.Mult}(dc.BinaryOperation{dc.Div}(a, b), b)
     op2 = dc.BinaryOperation{dc.Mult}(b, dc.BinaryOperation{dc.Div}(a, b))
 
     @test evaluate(op1) == a
     @test evaluate(op2) == a
+end
+
+@testset "evaluate product of quotient and tensor 4" begin
+    a = Variable("a", Upper(2))
+    b = Variable("b", Upper(2))
+    c = Variable("c", Upper(2))
+
+    op1 = dc.BinaryOperation{dc.Mult}(dc.BinaryOperation{dc.Div}(a, b), c)
+    op2 = dc.BinaryOperation{dc.Mult}(c, dc.BinaryOperation{dc.Div}(a, b))
+
+    @test evaluate(op1) == op1
+    @test evaluate(op2) == op1
+end
+
+@testset "evaluate product of quotient and quotient" begin
+    a = Variable("a", Upper(2))
+    b = Variable("b", Upper(2))
+
+    function div(n, d)
+        return dc.BinaryOperation{dc.Div}(n, d)
+    end
+
+    op1 = dc.BinaryOperation{dc.Mult}(div(a, b), div(a, b))
+
+    @test evaluate(op1) == 2*div(a, b)
 end
 
 @testset "evaluate product of quotient and zero" begin

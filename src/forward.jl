@@ -317,6 +317,10 @@ function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Div})
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::Tensor)
+    if arg1 == arg2
+        return BinaryOperation{Mult}(2, arg1)
+    end
+
     if arg1.arg2 == arg2
         return evaluate(arg1.arg1)
     end
