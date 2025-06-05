@@ -131,6 +131,10 @@ function _get_variables(arg::Cos)
     return _get_variables(arg.arg)
 end
 
+function _get_variables(arg::Log)
+    return _get_variables(arg.arg)
+end
+
 function _get_variables(arg::Add)
     return [_get_variables(arg.l); _get_variables(arg.r)]
 end

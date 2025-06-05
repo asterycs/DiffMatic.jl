@@ -1,10 +1,10 @@
 using ForwardDiff
 
-using LinearAlgebra: diagm, I
+using LinearAlgebra: tr, diagm, I
 
 @testset "test Julia function" begin
     @matrix A B C
-    @vector x y
+    @vector x y z
 
     x̂ = [
         0.055
@@ -16,6 +16,12 @@ using LinearAlgebra: diagm, I
         0.442
         0.630
         0.176
+    ]
+
+    ẑ = [
+        0.578
+        0.845
+        0.711
     ]
 
     Â = [
@@ -36,6 +42,24 @@ using LinearAlgebra: diagm, I
         0.415 0.483 0.969
     ]
 
+    @testset "function tr(x*x')" begin
+        jfun = eval(to_std(tr(x*x'); format = dc.JuliaFunc()))
+
+        @test jfun(x̂) ≈ tr(x̂*x̂')
+    end
+
+    @testset "function tr(A*B'*C)" begin
+        jfun = eval(to_std(tr(A*B'*C); format = dc.JuliaFunc()))
+
+        @test jfun(B̂, Ĉ, Â) ≈ tr(Â * B̂' * Ĉ)
+    end
+
+    @testset "function log(A' * x)" begin
+        jfun = eval(to_std(log.(A' * x); format = dc.JuliaFunc()))
+
+        @test jfun(Â, x̂) ≈ log.(Â' * x̂)
+    end
+
     @testset "gradient of x'*x" begin
         jgrad = eval(to_std(gradient(x' * x, x); format = dc.JuliaFunc()))
 
@@ -54,10 +78,10 @@ using LinearAlgebra: diagm, I
         @test jgrad(x̂) ≈ ForwardDiff.gradient(x -> cos(tr(x * x')), x̂)
     end
 
-    @testset "jacobian of sin(A * x + y)" begin
-        jjac = eval(to_std(jacobian(sin.(A * x + y), x); format = dc.JuliaFunc()))
+    @testset "jacobian of sin(A * x + y - z)" begin
+        jjac = eval(to_std(jacobian(sin.(A * x + y - z), x); format = dc.JuliaFunc()))
 
-        @test jjac(Â, x̂, ŷ) ≈ ForwardDiff.jacobian(x -> sin.(Â * x + ŷ), x̂)
+        @test jjac(Â, x̂, ŷ, ẑ) ≈ ForwardDiff.jacobian(x -> sin.(Â * x + ŷ - ẑ), x̂)
     end
 
     @testset "jacobian of (A .* B) * C * x)' * x * x" begin
