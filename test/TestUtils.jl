@@ -8,9 +8,11 @@ using DiffMatic: Variable, KrD, Zero
 using DiffMatic: BinaryOperation, UnaryOperation
 using DiffMatic: IndexList
 
+dc = DiffMatic
+
 # Shortcut for simpler comparison from
 # https://stackoverflow.com/questions/62336686/struct-equality-with-arrays
-function Base.:(==)(a::T, b::T) where {T<:DiffMatic.Tensor}
+function Base.:(==)(a::T, b::T) where {T<:dc.Tensor}
     f = fieldnames(T)
 
     return (getfield.(Ref(a), f) == getfield.(Ref(b), f)) ||
@@ -46,13 +48,13 @@ function equivalent(arg1::Real, arg2::Real)
 end
 
 function equivalent(left, right)
-    left_ids, right_ids = DiffMatic.get_free_indices.((left, right))
+    left_ids, right_ids = dc.get_free_indices.((left, right))
 
     return can_remap(left_ids, right_ids)
 end
 
 function equivalent(left::Variable, right::Variable)
-    left_ids, right_ids = DiffMatic.get_free_indices.((left, right))
+    left_ids, right_ids = dc.get_free_indices.((left, right))
 
     return left.id == right.id && can_remap(left_ids, right_ids)
 end
@@ -62,7 +64,7 @@ function equivalent(left::KrD, right::KrD)
 end
 
 function equivalent(left::Zero, right::Zero)
-    return can_remap(DiffMatic.get_free_indices(left), DiffMatic.get_free_indices(right))
+    return can_remap(dc.get_free_indices(left), dc.get_free_indices(right))
 end
 
 function equivalent(left::BinaryOperation, right::BinaryOperation)
