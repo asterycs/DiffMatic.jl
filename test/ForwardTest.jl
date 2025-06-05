@@ -266,7 +266,7 @@ end
     p = mult(a, b)
     d = dc.BinaryOperation{dc.Sub}(p, c)
     sum = dc.BinaryOperation{dc.Add}(p, d)
-    sum2 = dc.BinaryOperation{dc.Add}(p, d)
+    sum2 = dc.BinaryOperation{dc.Add}(d, p)
 
     expected = dc.BinaryOperation{dc.Sub}(mult(2, mult(a, b)), c)
 
