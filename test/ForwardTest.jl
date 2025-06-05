@@ -55,11 +55,35 @@ end
     d = KrD(Upper(2), Lower(1))
 
     function lgp(l, r)
-        return dc.UnaryOperation{dc.Log}(dc.BinaryOperation{dc.Mult}(l, r))
+        return dc.UnaryOperation{dc.Sin}(dc.BinaryOperation{dc.Mult}(l, r))
     end
 
-    @test dc.evaluate(lgp(x, d)) == dc.UnaryOperation{dc.Log}(Variable("x", Upper(2)))
-    @test dc.evaluate(lgp(d, x)) == dc.UnaryOperation{dc.Log}(Variable("x", Upper(2)))
+    @test dc.evaluate(lgp(x, d)) == dc.UnaryOperation{dc.Sin}(Variable("x", Upper(2)))
+    @test dc.evaluate(lgp(d, x)) == dc.UnaryOperation{dc.Sin}(Variable("x", Upper(2)))
+end
+
+@testset "evaluate product of log and KrD" begin
+    x = Variable("x", Upper(1))
+    d = KrD(Upper(2), Lower(1))
+    d_unrelated = KrD(Upper(5), Lower(6))
+
+    function prodlogl(l, r)
+        return dc.BinaryOperation{dc.Mult}(dc.UnaryOperation{dc.Sin}(l), r)
+    end
+
+    function prodlogr(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, dc.UnaryOperation{dc.Sin}(r))
+    end
+
+    expected = dc.UnaryOperation{dc.Sin}(Variable("x", Upper(2)))
+
+    @test dc.evaluate(prodlogl(x, d)) == expected
+    @test dc.evaluate(prodlogr(d, x)) == expected
+
+    expected2 = prodlogl(x, d_unrelated)
+
+    @test dc.evaluate(prodlogl(x, d_unrelated)) == expected2
+    @test dc.evaluate(prodlogr(d_unrelated, x)) == expected2
 end
 
 @testset "evaluate div" begin
@@ -215,6 +239,39 @@ end
 
     @test dc.evaluate(s) == a
     @test dc.evaluate(n) == n
+end
+
+@testset "evaluate sum of difference and Zero" begin
+    a = Variable("a", Upper(1))
+    b = dc.UnaryOperation{dc.Sin}(Variable("b", Upper(1)))
+    z = Zero(Upper(1))
+
+    l = dc.BinaryOperation{dc.Sub}(a, b)
+    s = dc.BinaryOperation{dc.Add}(l, z)
+    s2 = dc.BinaryOperation{dc.Add}(z, l)
+
+    @test dc.evaluate(s) == l
+    @test dc.evaluate(s2) == l
+end
+
+@testset "evaluate sum of difference and product" begin
+    a = Variable("a", Upper(1))
+    b = dc.UnaryOperation{dc.Sin}(Variable("b", Lower(1)))
+    c = Variable("c", Upper(1))
+
+    function mult(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    p = mult(a, b)
+    d = dc.BinaryOperation{dc.Sub}(p, c)
+    sum = dc.BinaryOperation{dc.Add}(p, d)
+    sum2 = dc.BinaryOperation{dc.Add}(p, d)
+
+    expected = dc.BinaryOperation{dc.Sub}(mult(2, mult(a, b)), c)
+
+    @test dc.evaluate(sum) == expected
+    @test dc.evaluate(sum2) == expected
 end
 
 @testset "evaluate sum of addition and addition" begin
@@ -668,6 +725,75 @@ end
 
     @test evaluate(op1) == mult(mult(a, x), mult(b, y))
     @test evaluate(op2) == mult(mult(mult(y, b), a), z)
+end
+
+@testset "evaluate product of product and KrD 1" begin
+    X = Variable("X", Upper(1), Lower(2))
+    A = Variable("A", Upper(2), Lower(3))
+    d = KrD(Lower(1), Upper(4))
+
+    function mult(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    @test evaluate(mult(mult(X, A), d)) == mult(Variable("X", Upper(4), Lower(2)), A)
+    @test evaluate(mult(d, mult(X, A))) == mult(Variable("X", Upper(4), Lower(2)), A)
+
+
+    @test evaluate(mult(mult(A, X), d)) == mult(A, Variable("X", Upper(4), Lower(2)))
+    @test evaluate(mult(d, mult(A, X))) == mult(A, Variable("X", Upper(4), Lower(2)))
+end
+
+@testset "evaluate product of product and KrD 2" begin
+    X = Variable("X", Upper(1), Lower(2))
+    Y = Variable("Y", Upper(1), Lower(2))
+    d = KrD(Lower(1), Upper(4))
+
+    function mult(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    @test evaluate(mult(mult(X, Y), d)) ==
+          mult(Variable("X", Upper(4), Lower(2)), Variable("Y", Upper(4), Lower(2)))
+    @test evaluate(mult(d, mult(X, Y))) ==
+          mult(Variable("X", Upper(4), Lower(2)), Variable("Y", Upper(4), Lower(2)))
+
+    @test evaluate(mult(mult(Y, X), d)) ==
+          mult(Variable("Y", Upper(4), Lower(2)), Variable("X", Upper(4), Lower(2)))
+    @test evaluate(mult(d, mult(Y, X))) ==
+          mult(Variable("Y", Upper(4), Lower(2)), Variable("X", Upper(4), Lower(2)))
+end
+
+@testset "evaluate product of product and KrD 3" begin
+    X = Variable("X", Upper(1), Lower(2))
+    Y = Variable("Y", Upper(1), Lower(3))
+    d = KrD(Upper(2), Lower(4))
+
+    function mult(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    @test evaluate(mult(mult(X, Y), d)) ==
+          mult(Variable("X", Upper(1), Lower(4)), Variable("Y", Upper(1), Lower(3)))
+    @test evaluate(mult(d, mult(X, Y))) ==
+          mult(Variable("X", Upper(1), Lower(4)), Variable("Y", Upper(1), Lower(3)))
+
+    @test evaluate(mult(mult(Y, X), d)) ==
+          mult(Variable("Y", Upper(1), Lower(3)), Variable("X", Upper(1), Lower(4)))
+    @test evaluate(mult(d, mult(Y, X))) ==
+          mult(Variable("Y", Upper(1), Lower(3)), Variable("X", Upper(1), Lower(4)))
+end
+
+@testset "evaluate product of product and KrD 4" begin
+    X = Variable("X", Upper(1), Lower(2))
+    d = KrD(Upper(2), Lower(4))
+
+    function mult(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    @test evaluate(mult(mult(2, X), d)) == mult(2, Variable("X", Upper(1), Lower(4)))
+    @test evaluate(mult(d, mult(2, X))) == mult(2, Variable("X", Upper(1), Lower(4)))
 end
 
 @testset "evaluate BinaryOperation vector * KrD" begin
