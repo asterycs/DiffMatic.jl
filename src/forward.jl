@@ -49,7 +49,7 @@ function diff(arg::UnaryOperation{Cos}, wrt::Variable)
     return BinaryOperation{Mult}(-UnaryOperation{Sin}(arg.arg), diff(arg.arg, wrt))
 end
 
-function diff(arg::Log, wrt::Variable)
+function diff(arg::UnaryOperation{Log}, wrt::Variable)
     return BinaryOperation{Mult}(
         BinaryOperation{Div}(Literal(1, get_free_indices(arg)...), arg.arg),
         diff(arg.arg, wrt),
@@ -413,20 +413,12 @@ function evaluate(::Mult, arg1::Zero, arg2::KrD)
     return Zero(free_indices...)
 end
 
-function evaluate(::Mult, arg1::UnaryOperation, arg2::KrD)
+function evaluate(::Mult, arg1::KrD, arg2::UnaryOperation)
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::KrD, arg2::UnaryOp) where {UnaryOp<:UnaryOperation}
-    if can_contract(evaluate(arg1), evaluate(arg2.arg))
-        return UnaryOp(evaluate(Mult(), evaluate(arg1), evaluate(arg2.arg)))
-    end
-
-    return BinaryOperation{Mult}(evaluate(arg2), evaluate(arg1))
-end
-
-function evaluate(::Mult, arg1::Log, arg2::KrD)
-    attempt = Log(evaluate(Mult(), evaluate(arg1.arg), evaluate(arg2)))
+function evaluate(::Mult, arg1::UnaryOperation{Op}, arg2::KrD) where {Op}
+    attempt = UnaryOperation{Op}(evaluate(Mult(), evaluate(arg1.arg), evaluate(arg2)))
 
     # This ensures that arg1.base and arg2 can contract and that the contraction is simple
     if length(get_free_indices(attempt)) == length(get_free_indices(arg1))
@@ -939,10 +931,6 @@ function _sub_from_product(arg1::BinaryOperation{Mult}, arg2::Value)
     end
 
     return BinaryOperation{Sub}(evaluate(arg1), evaluate(arg2))
-end
-
-function evaluate(op::Log)
-    return Log(evaluate(op.arg))
 end
 
 function evaluate(op::Power)

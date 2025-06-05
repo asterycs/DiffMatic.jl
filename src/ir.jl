@@ -513,7 +513,7 @@ function to_ir(arg::BinaryOperation{Div})
     return ir.Quotient(to_ir(arg.arg1), to_ir(arg.arg2))
 end
 
-function to_ir(arg::Log)
+function to_ir(arg::UnaryOperation{Log})
     return ir.Log(to_ir(arg.arg))
 end
 

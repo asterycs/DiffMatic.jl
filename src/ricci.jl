@@ -109,12 +109,6 @@ end
 
 Base.hash(op::Power, h::UInt) = hash(op.exponent, hash(op.base, hash(Power, h)))
 
-struct Log <: Tensor
-    arg::Value
-end
-
-Base.hash(op::Log, h::UInt) = hash(op.arg, hash(Log, h))
-
 struct UnaryOperation{Op} <: Tensor where {Op}
     arg::Value
 end
@@ -125,6 +119,7 @@ struct Abs end
 struct Sgn end
 struct Sin end
 struct Cos end
+struct Log end
 
 function Base.sin(arg::Tensor)
     if !isempty(get_free_indices(arg))
@@ -241,10 +236,6 @@ end
 
 function get_indices(arg::Power)
     return get_indices(arg.base)
-end
-
-function get_indices(arg::Log)
-    return get_indices(arg.arg)
 end
 
 function get_indices(arg::BinaryOperation{Op}) where {Op<:AdditiveOperation}
@@ -438,11 +429,11 @@ function Base.log(arg::Tensor)
         throw(DomainError(arg, "Argument is not a scalar, use log. for element-wise log."))
     end
 
-    return Log(arg)
+    return UnaryOperation{Log}(arg)
 end
 
 function Base.broadcasted(::typeof(log), arg::Tensor)
-    return Log(arg)
+    return UnaryOperation{Log}(arg)
 end
 
 function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
@@ -836,6 +827,10 @@ end
 
 function to_string(arg::UnaryOperation{Cos})
     return "cos($(arg.arg))"
+end
+
+function to_string(arg::UnaryOperation{Log})
+    return "log($(arg.arg))"
 end
 
 function parenthesize(arg)
