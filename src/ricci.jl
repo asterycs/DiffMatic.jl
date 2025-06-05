@@ -6,15 +6,6 @@ import LinearAlgebra
 
 abstract type Tensor end
 
-# Shortcut for simpler comparison from
-# https://stackoverflow.com/questions/62336686/struct-equality-with-arrays
-function Base.:(==)(a::T, b::T) where {T<:Tensor}
-    f = fieldnames(T)
-
-    return (getfield.(Ref(a), f) == getfield.(Ref(b), f)) ||
-           (reverse(getfield.(Ref(a), f)) == getfield.(Ref(b), f))
-end
-
 Value = Union{Tensor,Real}
 
 function get_indices(arg::Real)

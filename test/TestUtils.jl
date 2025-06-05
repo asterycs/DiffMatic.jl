@@ -8,6 +8,15 @@ using DiffMatic: Variable, KrD, Zero
 using DiffMatic: BinaryOperation, UnaryOperation
 using DiffMatic: IndexList
 
+# Shortcut for simpler comparison from
+# https://stackoverflow.com/questions/62336686/struct-equality-with-arrays
+function Base.:(==)(a::T, b::T) where {T<:DiffMatic.Tensor}
+    f = fieldnames(T)
+
+    return (getfield.(Ref(a), f) == getfield.(Ref(b), f)) ||
+           (reverse(getfield.(Ref(a), f)) == getfield.(Ref(b), f))
+end
+
 function can_remap(left::IndexList, right::IndexList)
     lu = unique(left)
     ru = unique(right)
