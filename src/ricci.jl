@@ -517,85 +517,57 @@ function Base.:(*)(arg1::Value, arg2::Tensor)
         throw(DomainError(arg2, "Multiplication involving tensor \"$arg2\" is ambiguous"))
     end
 
-    # TODO: WETWET, simplify, add e.g. get_lower(arg::IndexList) and get_upper(arg::IndexLists)
-    if typeof(arg1_free_indices[end]) == Lower && typeof(arg2_free_indices[1]) == Upper
+    arg1_first = first(arg1_free_indices)
+    arg1_last = last(arg1_free_indices)
+    arg2_first = first(arg2_free_indices)
+    arg2_last = last(arg2_free_indices)
+
+    if arg1_last isa Lower && arg2_first isa Upper
         new_letter = get_next_letter(arg1, arg2)
 
         return BinaryOperation{Mult}(
-            update_index(
-                arg1,
-                arg1_free_indices[end],
-                same_to(arg1_free_indices[end], new_letter),
-            ),
-            update_index(
-                arg2,
-                arg2_free_indices[1],
-                same_to(arg2_free_indices[1], new_letter),
-            ),
+            update_index(arg1, arg1_last, same_to(arg1_last, new_letter)),
+            update_index(arg2, arg2_first, same_to(arg2_first, new_letter)),
         )
     end
 
-    if typeof(arg1_free_indices[1]) == Lower && typeof(arg2_free_indices[1]) == Upper
+    if arg1_first isa Lower && arg2_first isa Upper
         new_letter = get_next_letter(arg1, arg2)
 
         return BinaryOperation{Mult}(
-            update_index(
-                arg1,
-                arg1_free_indices[1],
-                same_to(arg1_free_indices[1], new_letter),
-            ),
-            update_index(
-                arg2,
-                arg2_free_indices[1],
-                same_to(arg2_free_indices[1], new_letter),
-            ),
+            update_index(arg1, arg1_first, same_to(arg1_first, new_letter)),
+            update_index(arg2, arg2_first, same_to(arg2_first, new_letter)),
         )
     end
 
-    if typeof(arg1_free_indices[1]) == Lower && typeof(arg2_free_indices[end]) == Upper
+    if arg1_first isa Lower && arg2_last isa Upper
         new_letter = get_next_letter(arg1, arg2)
 
         return BinaryOperation{Mult}(
-            update_index(
-                arg1,
-                arg1_free_indices[1],
-                same_to(arg1_free_indices[1], new_letter),
-            ),
-            update_index(
-                arg2,
-                arg2_free_indices[end],
-                same_to(arg2_free_indices[end], new_letter),
-            ),
+            update_index(arg1, arg1_first, same_to(arg1_first, new_letter)),
+            update_index(arg2, arg2_last, same_to(arg2_last, new_letter)),
         )
     end
 
-    if typeof(arg1_free_indices[end]) == Lower && typeof(arg2_free_indices[end]) == Upper
+    if arg1_last isa Lower && arg2_last isa Upper
         new_letter = get_next_letter(arg1, arg2)
 
         return BinaryOperation{Mult}(
-            update_index(
-                arg1,
-                arg1_free_indices[end],
-                same_to(arg1_free_indices[end], new_letter),
-            ),
-            update_index(
-                arg2,
-                arg2_free_indices[end],
-                same_to(arg2_free_indices[end], new_letter),
-            ),
+            update_index(arg1, arg1_last, same_to(arg1_last, new_letter)),
+            update_index(arg2, arg2_last, same_to(arg2_last, new_letter)),
         )
     end
 
     if length(arg1_free_indices) == 1 &&
        length(arg2_free_indices) == 1 &&
-       typeof(arg1_free_indices[end]) == Upper &&
-       typeof(arg2_free_indices[1]) == Lower
+       arg1_first isa Upper &&
+       arg2_first isa Lower
         return BinaryOperation{Mult}(
             arg1,
             update_index(
                 arg2,
-                arg2_free_indices[end],
-                same_to(arg2_free_indices[end], get_next_letter(arg1, arg2)),
+                arg2_first,
+                same_to(arg2_first, get_next_letter(arg1, arg2)),
             ),
         )
     end
