@@ -210,6 +210,13 @@ to_std(gradient(abs(x' * x), x))
 "sgn(xᵀx)2x"
 ```
 ```jldoctest usage
+to_std(gradient(log.(x)'*x, x))
+
+# output
+
+"vec(1) + log(x)"
+```
+```jldoctest usage
 to_std(gradient(2 * sum(cos.(A * x + y)), x))
 
 # output
