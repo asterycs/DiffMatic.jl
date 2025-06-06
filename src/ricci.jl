@@ -443,10 +443,6 @@ function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
     )
 end
 
-function replace_letters(arg::Log, letter_map::Dict)
-    return Log(replace_letters(arg.arg, letter_map))
-end
-
 function replace_letters(arg::Power, letter_map::Dict)
     return Power(replace_letters(arg.base, letter_map), arg.exponent)
 end
@@ -702,10 +698,6 @@ function Base.adjoint(arg::T) where {T<:UnaryOperation}
     return T(arg.arg')
 end
 
-function Base.adjoint(arg::Log)
-    return Log(adjoint(arg.arg))
-end
-
 function Base.adjoint(arg::Power)
     return Power(adjoint(arg.base), arg.exponent)
 end
@@ -857,10 +849,6 @@ function to_string(arg::Power)
     end
 
     return b * ".^" * parenthesize(arg.exponent)
-end
-
-function to_string(arg::Log)
-    return "log(" * to_string(arg.arg) * ")"
 end
 
 function to_string(arg::BinaryOperation{Mult})
