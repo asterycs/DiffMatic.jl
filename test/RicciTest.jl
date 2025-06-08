@@ -698,8 +698,8 @@ end
 
     @test typeof(op1) == dc.BinaryOperation{dc.Mult}
     @test !dc.can_contract(op1.arg1, op1.arg2)
-    @test op1.arg1 == A
-    @test op1.arg2 == z
+    @test op1.arg1 == z
+    @test op1.arg2 == A
 
     @test typeof(op2) == dc.BinaryOperation{dc.Mult}
     @test !dc.can_contract(op2.arg1, op2.arg2)
@@ -721,8 +721,8 @@ end
 
     @test typeof(op2) == dc.BinaryOperation{dc.Mult}
     @test !dc.can_contract(op2.arg1, op2.arg2)
-    @test op2.arg1 == x
-    @test op2.arg2 == z
+    @test op2.arg1 == z
+    @test op2.arg2 == x
 end
 
 @testset "multiplication with adjoint and adjoint of multiplication is equal" begin

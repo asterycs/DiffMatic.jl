@@ -505,8 +505,12 @@ function Base.:(*)(arg1::Value, arg2::Tensor)
     arg1_free_indices = get_free_indices(arg1)
     arg2_free_indices = get_free_indices(arg2)
 
-    if isempty(arg1_free_indices) || isempty(arg2_free_indices)
+    if isempty(arg1_free_indices)
         return BinaryOperation{Mult}(arg1, arg2)
+    end
+
+    if isempty(arg2_free_indices) # This is to keep scalars first
+        return BinaryOperation{Mult}(arg2, arg1)
     end
 
     if length(arg1_free_indices) > 2
