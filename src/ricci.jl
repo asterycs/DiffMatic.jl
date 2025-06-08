@@ -30,6 +30,10 @@ end
 
 Base.hash(m::Variable, h::UInt) = hash(Variable, hash(m.id, hash(m.indices, h)))
 
+function Base.:(==)(left::Variable, right::Variable)
+    return left.id == right.id && left.indices == right.indices
+end
+
 struct Literal <: Tensor
     value::Real
     indices::IndexList
@@ -53,6 +57,10 @@ end
 
 Base.hash(l::Literal, h::UInt) = hash(Literal, hash(l.value, hash(l.indices, h)))
 
+function Base.:(==)(left::Literal, right::Literal)
+    return left.value == right.value && left.indices == right.indices
+end
+
 function are_unique(arg::AbstractArray)
     return length(unique(arg)) == length(arg)
 end
@@ -73,6 +81,10 @@ end
 
 Base.hash(m::KrD, h::UInt) = hash(KrD, hash(m.indices, h))
 
+function Base.:(==)(left::KrD, right::KrD)
+    return left.indices == right.indices
+end
+
 struct Zero <: Tensor
     indices::IndexList
 
@@ -89,6 +101,10 @@ end
 
 Base.hash(m::Zero, h::UInt) = hash(Zero, hash(m.indices, h))
 
+function Base.:(==)(left::Zero, right::Zero)
+    return left.indices == right.indices
+end
+
 struct BinaryOperation{Op} <: Tensor where {Op}
     arg1::Value
     arg2::Value
@@ -102,12 +118,44 @@ struct Sub <: AdditiveOperation end
 struct Mult end
 struct Div end
 
+function collect_factors(arg::BinaryOperation{Mult})
+    return Value[collect_factors(arg.arg1); collect_factors(arg.arg2)]
+end
+
+function collect_factors(arg)
+    return Value[arg]
+end
+
+function Base.:(==)(left::BinaryOperation{Add}, right::BinaryOperation{Add})
+    return (left.arg1 == right.arg1 && left.arg2 == right.arg2) ||
+           (left.arg1 == right.arg2 && left.arg2 == right.arg1)
+end
+
+function Base.:(==)(left::BinaryOperation{Sub}, right::BinaryOperation{Sub})
+    return left.arg1 == right.arg1 && left.arg2 == right.arg2
+end
+
+function Base.:(==)(left::BinaryOperation{Mult}, right::BinaryOperation{Mult})
+    left_factors = collect_factors(left)
+    right_factors = collect_factors(right)
+
+    return issetequal(left_factors, right_factors)
+end
+
+function Base.:(==)(left::BinaryOperation{Div}, right::BinaryOperation{Div})
+    return left.arg1 == right.arg1 && left.arg2 == right.arg2
+end
+
 struct Power <: Tensor
     base::Value
     exponent::Union{Int,Rational{Int}}
 end
 
 Base.hash(op::Power, h::UInt) = hash(op.exponent, hash(op.base, hash(Power, h)))
+
+function Base.:(==)(left::Power, right::Power)
+    return left.base == right.base && left.exponent == right.exponent
+end
 
 struct UnaryOperation{Op} <: Tensor where {Op}
     arg::Value
@@ -120,6 +168,10 @@ struct Sgn end
 struct Sin end
 struct Cos end
 struct Log end
+
+function Base.:(==)(left::UnaryOperation{Op}, right::UnaryOperation{Op}) where {Op}
+    return left.arg == right.arg
+end
 
 function Base.sin(arg::Tensor)
     if !isempty(get_free_indices(arg))

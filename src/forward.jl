@@ -88,14 +88,6 @@ function replace_bound_letters(arg::Tensor, letters_to_skip::Tensor...)
     return replace_letters(arg, letter_map)
 end
 
-function collect_factors(arg::BinaryOperation{Mult})
-    return Value[collect_factors(arg.arg1); collect_factors(arg.arg2)]
-end
-
-function collect_factors(arg)
-    return Value[arg]
-end
-
 function evaluate(arg::Union{Variable,Literal,KrD,Zero,Real})
     return arg
 end

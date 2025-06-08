@@ -1119,17 +1119,30 @@ end
     A = Variable("A", Upper(1), Lower(2))
     x = Variable("x", Upper(3))
 
-    @test equivalent(dc.diff(A * x, Variable("x", Upper(5))), A)
+    first_term =
+        BinaryOperation{dc.Mult}(Variable("A", Upper(1), Lower(4)), KrD(Upper(4), Lower(5)))
+    second_term = BinaryOperation{dc.Mult}(
+        Zero(Upper(1), Lower(4), Lower(5)),
+        Variable("x", Upper(4)),
+    )
+    expected = BinaryOperation{dc.Add}(first_term, second_term)
+
+    @test dc.diff(A * x, Variable("x", Upper(5))) == expected
 end
 
 @testset "Differentiate xᵀA " begin
     A = Variable("A", Upper(1), Lower(2))
     x = Variable("x", Upper(3))
 
-    @test equivalent(
-        dc.diff(x' * A, Variable("x", Upper(6))),
-        Variable("A", Lower(1), Lower(2)),
+    first_term = BinaryOperation{dc.Mult}(
+        Variable("x", Lower(4)),
+        Zero(Upper(4), Lower(2), Lower(6)),
     )
+    second_term =
+        BinaryOperation{dc.Mult}(KrD(Lower(4), Lower(6)), Variable("A", Upper(4), Lower(2)))
+    expected = BinaryOperation{dc.Add}(first_term, second_term)
+
+    @test dc.diff(x' * A, Variable("x", Upper(6))) == expected
 end
 
 @testset "Differentiate xᵀAx" begin
@@ -1138,11 +1151,23 @@ end
 
     D = dc.diff(x' * A * x, Variable("x", Upper(7)))
 
-    @test equivalent(dc.evaluate(D.arg1), dc.evaluate(x' * A))
-    @test equivalent(
-        dc.evaluate(dc.evaluate(D.arg2)),
-        evaluate(dc.BinaryOperation{dc.Mult}(Variable("A", Lower(1), Lower(3)), x)),
+    function mult(l, r)
+        return BinaryOperation{dc.Mult}(l, r)
+    end
+
+    first_term = mult(
+        mult(Variable("x", Lower(4)), Variable("A", Upper(4), Lower(5))),
+        KrD(Upper(5), Lower(7)),
     )
+    second_term_ll = mult(Variable("x", Lower(4)), Zero(Upper(4), Lower(5), Lower(7)))
+    second_term_lr = mult(KrD(Lower(4), Lower(7)), Variable("A", Upper(4), Lower(5)))
+    second_term = mult(
+        BinaryOperation{dc.Add}(second_term_ll, second_term_lr),
+        Variable("x", Upper(5)),
+    )
+
+    @test D.arg1 == first_term
+    @test D.arg2 == second_term
 end
 
 @testset "Differentiate xx'x" begin

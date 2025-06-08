@@ -83,6 +83,34 @@ end
     @test left != Zero()
 end
 
+@testset "Variable equality operator" begin
+    left = Variable("x", Upper(1), Lower(2))
+    @test Variable("x", Upper(1), Lower(2)) == Variable("x", Upper(1), Lower(2))
+    @test !(Variable("x", Upper(1), Lower(2)) === Variable("x", Upper(1), Lower(2)))
+    @test left == Variable("x", Upper(1), Lower(2))
+    @test left != Variable("x", Upper(1), Upper(2))
+    @test left != Variable("x", Lower(1), Lower(2))
+    @test left != Variable("x", Upper(3), Lower(2))
+    @test left != Variable("x", Upper(1), Lower(3))
+    @test left != Variable("x", Upper(1))
+    @test left != Variable("x", Upper(1), Lower(2), Lower(3))
+    @test left != Variable("x2", Upper(1), Lower(2))
+end
+
+@testset "Literal equality operator" begin
+    left = Literal(2, Upper(1), Lower(2))
+    @test Literal(2, Upper(1), Lower(2)) == Literal(2, Upper(1), Lower(2))
+    @test !(Literal(2, Upper(1), Lower(2)) === Literal(2, Upper(1), Lower(2)))
+    @test left == Literal(2, Upper(1), Lower(2))
+    @test left != Literal(2, Upper(1), Upper(2))
+    @test left != Literal(2, Lower(1), Lower(2))
+    @test left != Literal(2, Upper(3), Lower(2))
+    @test left != Literal(2, Upper(1), Lower(3))
+    @test left != Literal(2, Upper(1))
+    @test left != Literal(2, Upper(1), Lower(2), Lower(3))
+    @test left != Literal(3, Upper(1), Lower(2))
+end
+
 @testset "Construct unary operations" begin
     a = KrD(Upper(1), Lower(2))
     b = Variable("b", Upper(2))
@@ -172,16 +200,40 @@ end
     @test !dc.is_permutation(l, r4)
 end
 
-@testset "BinaryOperation equality operator" begin
+@testset "BinaryOperation{Mul,Add} equality operator" begin
     a = Variable("a", Upper(1))
     b = Variable("b", Lower(1))
 
-    left = dc.BinaryOperation{dc.Mult}(a, b)
+    function create(Op, l, r)
+        return BinaryOperation{Op}(l, r)
+    end
 
-    @test dc.BinaryOperation{dc.Mult}(a, b) == dc.BinaryOperation{dc.Mult}(a, b)
-    @test left == dc.BinaryOperation{dc.Mult}(a, b)
-    @test left == dc.BinaryOperation{dc.Mult}(b, a)
-    @test left != dc.BinaryOperation{dc.Add}(a, b)
+    for op ∈ (dc.Add, dc.Mult)
+        left = create(op, a, b)
+
+        @test create(op, a, b) == create(op, a, b)
+        @test left == create(op, a, b)
+        @test left == create(op, b, a)
+        @test left != BinaryOperation{dc.Sub}(a, b)
+    end
+end
+
+@testset "BinaryOperation{Sub, Div} equality operator" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Lower(1))
+
+    function create(Op, l, r)
+        return BinaryOperation{Op}(l, r)
+    end
+
+    for op ∈ (dc.Sub, dc.Div)
+        left = create(op, a, b)
+
+        @test create(op, a, b) == create(op, a, b)
+        @test left == create(op, a, b)
+        @test left != create(op, b, a)
+        @test left != BinaryOperation{dc.Add}(a, b)
+    end
 end
 
 @testset "BinaryOperation equivalent" begin
