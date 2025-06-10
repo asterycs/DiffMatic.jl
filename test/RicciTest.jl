@@ -170,11 +170,15 @@ end
 
     inner = a * b
 
-    left = sin.(inner)
+    ops = (dc.Sin, dc.Cos, dc.Abs, dc.Log, dc.Sgn)
 
-    @test left == dc.UnaryOperation{dc.Sin}(inner)
-    @test left != dc.UnaryOperation{dc.Cos}(inner)
-    @test left != -dc.UnaryOperation{dc.Sin}(inner)
+    for (op, other_op) ∈ zip(ops, (ops[2], ops[1:(end-1)]...))
+        left = dc.UnaryOperation{op}(inner)
+
+        @test left == dc.UnaryOperation{op}(inner)
+        @test left != dc.UnaryOperation{other_op}(inner)
+        @test left != -dc.UnaryOperation{op}(inner)
+    end
 end
 
 @testset "is_permutation true positive" begin
@@ -234,6 +238,24 @@ end
         @test left != create(op, b, a)
         @test left != BinaryOperation{dc.Add}(a, b)
     end
+end
+
+@testset "Power equality operator" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Upper(1))
+    e = 1//3
+
+    function create(l, r, e)
+        return dc.Power(BinaryOperation{dc.Mult}(l, r), e)
+    end
+
+    left = create(a, b, e)
+
+    @test create(a, b, e) == create(a, b, e)
+    @test left == create(a, b, e)
+    @test left == create(b, a, e)
+    @test dc.Power(1//2, 3) != dc.Power(3, 1//2)
+    @test left != BinaryOperation{dc.Add}(a, b)
 end
 
 @testset "BinaryOperation equivalent" begin
