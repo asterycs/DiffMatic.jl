@@ -796,6 +796,26 @@ end
 
 @testset "evaluate product of product and KrD 4" begin
     X = Variable("X", Upper(1), Lower(2))
+    Y = Variable("Y", Upper(1), Lower(3))
+    d = KrD(Upper(4), Lower(1))
+
+    function mult(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    @test evaluate(mult(mult(X, Y), d)) ==
+          mult(Variable("X", Upper(4), Lower(2)), Variable("Y", Upper(4), Lower(3)))
+    @test evaluate(mult(d, mult(X, Y))) ==
+          mult(Variable("X", Upper(4), Lower(2)), Variable("Y", Upper(4), Lower(3)))
+
+    @test evaluate(mult(mult(Y, X), d)) ==
+          mult(Variable("Y", Upper(4), Lower(3)), Variable("X", Upper(4), Lower(2)))
+    @test evaluate(mult(d, mult(Y, X))) ==
+          mult(Variable("Y", Upper(4), Lower(3)), Variable("X", Upper(4), Lower(2)))
+end
+
+@testset "evaluate product of product and KrD 5" begin
+    X = Variable("X", Upper(1), Lower(2))
     d = KrD(Upper(2), Lower(4))
 
     function mult(l, r)
