@@ -364,6 +364,16 @@ end
     @test evaluate(add) == add
 end
 
+@testset "evaluate sum of subtraction and sum of subtraction and variable" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Upper(1))
+    c = Variable("c", Upper(1))
+
+    e = ((a - b) - c) + ((b - a) + c)
+
+    @test evaluate(e) == Zero(Upper(1))
+end
+
 @testset "evaluate sum of subtraction and zero" begin
     a = Variable("a", Upper(1))
     b = Variable("b", Upper(1))
