@@ -12,19 +12,20 @@ using DiffMatic: Upper, Lower
 
 dc = DiffMatic
 
-@testset "simplify fully collapsible Mult * Mult" begin
-    d1 = KrD(Upper(1), Lower(2))
-    d2 = KrD(Upper(2), Lower(3))
-    d3 = KrD(Upper(3), Lower(4))
-    A = Variable("A", Upper(4), Lower(5))
+# Such expression trees cannot be created from standard notation and are not treated
+# @testset "simplify fully collapsible Mult * Mult" begin
+#     d1 = KrD(Upper(1), Lower(2))
+#     d2 = KrD(Upper(2), Lower(3))
+#     d3 = KrD(Upper(3), Lower(4))
+#     A = Variable("A", Upper(4), Lower(5))
 
-    op = dc.BinaryOperation{dc.Mult}(
-        dc.BinaryOperation{dc.Mult}(d1, d3),
-        dc.BinaryOperation{dc.Mult}(A, d2),
-    )
+#     op = dc.BinaryOperation{dc.Mult}(
+#         dc.BinaryOperation{dc.Mult}(d1, d3),
+#         dc.BinaryOperation{dc.Mult}(A, d2),
+#     )
 
-    @test dc.simplify(op) == Variable("A", Upper(1), Lower(5))
-end
+#     @test dc.simplify(op) == Variable("A", Upper(1), Lower(5))
+# end
 
 @testset "KrD collapsed correctly on element wise multiplications" begin
     x = Variable("x", Upper(1))

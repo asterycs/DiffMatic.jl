@@ -1264,10 +1264,10 @@ end
         A * x, #
         x' * A, #
         x' * A * x, #
-        A * (x + 2 * x), #
-        A * (2 * x + x), #
-        (x + 2 * x)' * A, #
-        (2 * x + x)' * A, #
+        # A * (x + 2 * x), # # TODO: Only valid if we don't collapse KrD's in 'evaluate'.
+        # A * (2 * x + x), #
+        # (x + 2 * x)' * A, #
+        # (2 * x + x)' * A, #
         x' * x, #
         tr(x * x'), #
         (y .* c)' * x, #

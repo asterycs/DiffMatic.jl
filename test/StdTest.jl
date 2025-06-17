@@ -257,7 +257,7 @@ end
     @test to_std(mul(mul(mul(x, y), z), v)) == "x ⊙ y ⊙ z ⊙ v"
     @test to_std(mul(v, mul(mul(x, y), z))) == "x ⊙ y ⊙ z ⊙ v"
     @test to_std(mul(v, mul(z, mul(x, y)))) == "x ⊙ y ⊙ z ⊙ v"
-    @test to_std(mul(mul(z, v), mul(x, y))) == "z ⊙ x ⊙ v ⊙ y" # The order changes in 'evaluate'
+    @test to_std(mul(mul(z, v), mul(x, y))) == "z ⊙ v ⊙ x ⊙ y"
 end
 
 @testset "to_std output is correct with vector and trace of identity" begin

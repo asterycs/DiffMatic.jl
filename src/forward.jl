@@ -211,76 +211,7 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
         )
     end
 
-    grouped_factors = []
-
-    available1 = Any[arg1.arg1; arg1.arg2]
-    available2 = Any[arg2.arg1; arg2.arg2]
-
-    for i ∈ eachindex(available1)
-        for j ∈ eachindex(available2)
-            if isnothing(available2[j]) || isnothing(available1[i])
-                continue
-            end
-
-            if is_elementwise_multiplication(available1[i], available2[j])
-                push!(grouped_factors, BinaryOperation{Mult}(available1[i], available2[j]))
-                available1[i] = nothing
-                available2[j] = nothing
-            end
-        end
-    end
-
-    for i ∈ eachindex(available1)
-        for j ∈ eachindex(available2)
-            if isnothing(available2[j]) || isnothing(available1[i])
-                continue
-            end
-
-            if can_contract(available1[i], available2[j])
-                push!(grouped_factors, BinaryOperation{Mult}(available1[i], available2[j]))
-                available1[i] = nothing
-                available2[j] = nothing
-            end
-        end
-    end
-
-    for i ∈ available1
-        if !isnothing(i)
-            push!(grouped_factors, i)
-        end
-    end
-
-    for i ∈ available2
-        if !isnothing(i)
-            push!(grouped_factors, i)
-        end
-    end
-
-    new_arg = nothing
-
-    for args ∈ Iterators.partition(grouped_factors, 2)
-        if length(args) == 1
-            if isnothing(new_arg)
-                return only(args)
-            else
-                return BinaryOperation{Mult}(new_arg, only(args))
-            end
-        end
-
-        if isnothing(new_arg)
-            new_arg = BinaryOperation{Mult}(args[1], args[2])
-            if can_contract(args[1], args[2])
-                new_arg = evaluate(new_arg)
-            end
-        else
-            new_arg = BinaryOperation{Mult}(
-                new_arg,
-                evaluate(BinaryOperation{Mult}(args[1], args[2])),
-            )
-        end
-    end
-
-    return new_arg
+    return BinaryOperation{Mult}(arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
