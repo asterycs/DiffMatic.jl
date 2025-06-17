@@ -58,6 +58,7 @@ end
 
     @test to_std(jacobian(A * x, x)) == "A"
     @test to_std(jacobian(A' * x, x)) == "Aᵀ"
+    @test to_std(jacobian((A .* B) * log.(A * x), x)) == "(A ⊙ B)diag(vec(1) ⊘ Ax)A"
     @test to_std(jacobian(abs.(x), x)) == "diag(sgn(x))I"
     @test to_std(jacobian(log.(x), x)) == "diag(vec(1) ⊘ x)I"
     @test to_std(jacobian(sin.(A * x + y), x)) == "diag(cos(Ax + y))A"
