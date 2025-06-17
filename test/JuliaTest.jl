@@ -7,6 +7,65 @@ using ForwardDiff
 
 using LinearAlgebra: tr, diagm, I
 
+@testset "test interface: valid user supplied function arguments" begin
+    @matrix A B
+    @vector x
+
+    fmt = JuliaFunc([x, B, A])
+
+    expr = A * B * x
+
+    fun = to_std(expr; format = fmt)
+    fun = eval(fun)
+
+    A = Matrix(I, 2, 2)
+    B = Matrix(I, 2, 2)
+    x = [1; 1]
+
+    @test fun(x, B, A) == x
+end
+
+@testset "test interface: too many user supplied function arguments yields warning" begin
+    @matrix A B C
+    @vector x
+
+    fmt = JuliaFunc([x, B, C, A])
+
+    expr = A * B * x
+
+    @test_logs (:warn, "Ignoring unused variables: [\"C\"]") fun =
+        to_std(expr; format = fmt)
+    fun = eval(fun)
+
+    A = Matrix(I, 2, 2)
+    B = Matrix(I, 2, 2)
+    x = [1; 1]
+
+    @test fun(x, B, A) == x
+end
+
+@testset "test interface: more than one occurrence per argument throws" begin
+    @matrix A B C
+    @vector x
+
+    fmt = JuliaFunc([A, x, B, A])
+
+    expr = A * B * x
+
+    @test_throws DomainError to_std(expr; format = fmt)
+end
+
+@testset "test interface: throws on missing arguments" begin
+    @matrix A B C
+    @vector x
+
+    fmt = JuliaFunc([A, x])
+
+    expr = A * B * x
+
+    @test_throws DomainError to_std(expr; format = fmt)
+end
+
 @testset "test Julia function" begin
     @matrix A B C
     @vector x y z
@@ -56,7 +115,7 @@ using LinearAlgebra: tr, diagm, I
     @testset "function tr(A*B'*C)" begin
         jfun = eval(to_std(tr(A*B'*C); format = dc.JuliaFunc()))
 
-        @test jfun(B̂, Ĉ, Â) ≈ tr(Â * B̂' * Ĉ)
+        @test jfun(Â, B̂, Ĉ) ≈ tr(Â * B̂' * Ĉ)
     end
 
     @testset "function log(A' * x)" begin
@@ -93,7 +152,7 @@ using LinearAlgebra: tr, diagm, I
         jjac =
             eval(to_std(jacobian(((A .* B) * C * x)' * x * x, x); format = dc.JuliaFunc()))
 
-        @test jjac(x̂, Ĉ, Â, B̂) ≈
+        @test jjac(Â, B̂, Ĉ, x̂) ≈
               ForwardDiff.jacobian(x -> ((Â .* B̂) * Ĉ * x)' * x * x, x̂)
     end
 end

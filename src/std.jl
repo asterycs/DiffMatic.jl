@@ -369,7 +369,25 @@ struct StdStr end
 
 Julia function that evaluates an expression in standard form.
 """
-struct JuliaFunc end
+struct JuliaFunc
+    args::Union{Vector{String},Nothing}
+
+    function JuliaFunc(args::AbstractVector{Variable})
+        for arg ∈ args
+            if !(arg isa Variable)
+                throw(DomainError(arg, "Invalid function argument"))
+            end
+        end
+
+        args = String[arg.id for arg ∈ args]
+
+        return new(args)
+    end
+
+    function JuliaFunc()
+        return new(nothing)
+    end
+end
 
 """
     IR()
@@ -429,6 +447,48 @@ function _to_std(format::StdStr, arg)
     return to_std_str(to_ir(standardized))
 end
 
+function create_function_arguments(
+    variables::AbstractArray,
+    requested_arguments::Union{AbstractArray,Nothing},
+)
+    if isnothing(requested_arguments)
+        return sort(variables)
+    end
+
+    unlisted_variables = setdiff(variables, requested_arguments)
+
+    if !isempty(unlisted_variables)
+        throw(
+            DomainError(
+                requested_arguments,
+                "Following function argument(s) $unlisted_variables were unspecified.",
+            ),
+        )
+    end
+
+    if length(unique(requested_arguments)) > length(variables)
+        unused_variables = setdiff(requested_arguments, variables)
+
+        @warn "Ignoring unused variables: $(unused_variables)"
+    end
+
+    used_variables = filter(x -> x ∈ variables, requested_arguments)
+
+    variable_counts = count_values(used_variables)
+
+    if any(values(variable_counts) .!= 1)
+        invalid = collect(filter(v -> variable_counts[v] != 1, keys(variable_counts)))
+        throw(
+            DomainError(
+                requested_arguments,
+                "Function argument(s) $invalid specified in multiple positions.",
+            ),
+        )
+    end
+
+    return used_variables
+end
+
 function _to_std(format::JuliaFunc, arg)
     standardized = standardize(arg)
 
@@ -436,9 +496,10 @@ function _to_std(format::JuliaFunc, arg)
     op = to_julia(ir)
 
     variables = DiffMatic.ir.get_variables(ir)
+    args = create_function_arguments(variables, format.args)
 
     return quote
-        function ($(Symbol.(variables)...),)
+        function ($(Symbol.(args)...),)
             return $(op)
         end
     end

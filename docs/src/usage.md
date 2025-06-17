@@ -162,7 +162,7 @@ An = Float64[1 1 1; 2 2 2; 3 3 3]
 Bn = Float64[4 4 4; 5 5 5; 6 6 6]
 xn = Float64[1; 1; 1]
 
-g_fun(Bn, An, xn)
+g_fun(An, Bn, xn)
 
 # output
 
