@@ -68,9 +68,9 @@ cA¹₂
 Supported operators and functions when creating expressions:
   - Basic operators `+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos` and `log`
   - Element-wise operators `sin.`, `cos.`, `abs.`, `.*`, `.^` and `log.`
-  - Vector 1-norm and 2-norm can be computed with `norm1` and `norm2`
+  - Vector 1-norm and 2-norm can be computed with `LinearAlgebra.norm(..., 1)` and `LinearAlgebra.norm(..., 2)`
   - Sums of vectors can be computed with `sum`.
-  - Matrix traces can be computed with `tr`.
+  - Matrix traces can be computed with `LinearAlgebra.tr`.
 
 See [Creating Expressions](@ref) for more examples.
 

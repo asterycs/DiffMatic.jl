@@ -12,7 +12,7 @@ using Pkg; Pkg.add("DiffMatic")
 ## Usage
 Expressions are constructed from Julia syntax.
 
-Creating a matrix and a vector:
+Creating a matrix and a column vector:
 
 ```jldoctest intro; output = false
 using DiffMatic
@@ -34,7 +34,7 @@ x₄A⁴₅x⁵
 ```
 The variable `expr` now contains an internal representation of the expression `x' * A * x`.
 
-Compute the gradient and the Hessian with respect to the vector `x`.
+Compute the gradient and the Hessian with respect to the column vector `x`.
 ```jldoctest intro; output = false
 g = gradient(expr, x)
 H = hessian(expr, x)
