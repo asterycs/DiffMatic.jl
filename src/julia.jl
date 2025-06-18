@@ -16,7 +16,9 @@ function to_julia(arg::ir.Mat)
         return to_julia(arg.id)
     end
 
-    throw(RuntimeError("Unable to generate julia code for constant matrix of unknown size"))
+    throw(
+        ArgumentError("Unable to generate julia code for constant matrix of unknown size"),
+    )
 end
 
 function to_julia(arg::ir.Vec)
@@ -24,7 +26,9 @@ function to_julia(arg::ir.Vec)
         return to_julia(arg.id)
     end
 
-    throw(RuntimeError("Unable to generate julia code for constant vector of unknown size"))
+    throw(
+        ArgumentError("Unable to generate julia code for constant vector of unknown size"),
+    )
 end
 
 function to_julia(arg::ir.Scal)
