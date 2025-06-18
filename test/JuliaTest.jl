@@ -155,4 +155,10 @@ end
         @test jjac(Â, B̂, Ĉ, x̂) ≈
               ForwardDiff.jacobian(x -> ((Â .* B̂) * Ĉ * x)' * x * x, x̂)
     end
+
+    @testset "jacobian of (A .* B) * log.(A * x)" begin
+        jjac = eval(to_std(jacobian((A .* B) * log.(A * x), x); format = dc.JuliaFunc()))
+
+        @test jjac(Â, B̂, x̂) ≈ ForwardDiff.jacobian(x -> (Â .* B̂) * log.(Â * x), x̂)
+    end
 end

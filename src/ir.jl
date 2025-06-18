@@ -148,6 +148,10 @@ function _get_variables(arg::Sub)
     return [_get_variables(arg.l); _get_variables(arg.r)]
 end
 
+function _get_variables(arg::Quotient)
+    return [_get_variables(arg.num); _get_variables(arg.den)]
+end
+
 function _get_variables(arg::Product)
     return [_get_variables(arg.l); _get_variables(arg.r)]
 end
