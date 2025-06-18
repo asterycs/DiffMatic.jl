@@ -64,6 +64,8 @@ function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
 end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
+    arg2_free_ids = get_free_indices(arg2)
+
     if is_diag(arg1)
         d = get_diag_delta(arg1)
 
@@ -78,7 +80,7 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
                 push!(reshaped, f)
             elseif length(free_ids) == 1
                 target_indices =
-                    eliminate_indices(vcat(get_free_indices(arg1), get_indices(arg2)))
+                    eliminate_indices(vcat(get_free_indices(arg1), arg2_free_ids))
                 @assert length(target_indices) == 1
 
                 current_idx = intersect(free_ids, get_free_indices(d))
@@ -92,20 +94,36 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
             end
         end
 
-        return to_binary_operation(Mult(), reshaped)
+        reshaped = to_binary_operation(Mult(), reshaped)
+
+        if arg2.value != 1
+            reshaped = BinaryOperation{Mult}(arg2.value, reshaped)
+        end
+
+        return reshaped
     end
 
-    if can_contract(arg1, arg2) && length(get_free_indices(arg2)) == 1
+    if can_contract(arg1, arg2) && length(arg2_free_ids) == 1
         elwise_ids = elementwise_indices(arg1.arg1, arg1.arg2)
-        remaining_index =
-            eliminate_indices(union(get_free_indices(arg1), get_free_indices(arg2)))
 
-        if length(elwise_ids) == 1 && length(remaining_index) == 1
-            if only(remaining_index) ∈ get_free_indices(arg1.arg1)
-                return evaluate(BinaryOperation{Mult}(arg1.arg1, adjoint(arg1.arg2)))
-            elseif only(remaining_index) ∈ get_free_indices(arg1.arg2)
-                return evaluate(BinaryOperation{Mult}(adjoint(arg1.arg1), arg1.arg2))
+        target_idx = only(arg2_free_ids)
+
+        if flip(target_idx) ∈ elwise_ids
+            tmp_letter = get_next_letter(arg1)
+            new_r = BinaryOperation{Mult}(
+                BinaryOperation{Mult}(
+                    arg1.arg2,
+                    KrD(target_idx, same_to(target_idx, tmp_letter)),
+                ),
+                KrD(flip_to(target_idx, tmp_letter), target_idx),
+            )
+            reshaped = BinaryOperation{Mult}(arg1.arg1, evaluate(new_r))
+
+            if arg2.value != 1
+                reshaped = BinaryOperation{Mult}(arg2.value, reshaped)
             end
+
+            return reshaped
         end
     end
 
@@ -182,7 +200,7 @@ end
 
 function simplify(::Mult, arg1::Value, arg2::Value)
     return evaluate(
-        BinaryOperation{Mult}(simplify(evaluate(arg1)), simplify(evaluate(arg2))),
+        BinaryOperation{Mult}(evaluate(simplify(arg1)), evaluate(simplify(arg2))),
     )
 end
 

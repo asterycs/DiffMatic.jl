@@ -50,6 +50,7 @@
           "(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x"
     @test to_std(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
     @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(x ⊙ y ⊙ c)"
+    @test to_std(gradient(norm(A * x, 2), x)) == "1/2sum((xᵀAᵀ)^2)^(-1/2)2AᵀAx"
 end
 
 @testset "test Jacobian in standard notation" begin
