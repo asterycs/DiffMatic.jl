@@ -300,8 +300,8 @@ end
 @testset "to_std output is correct with rational exponent" begin
     x = Variable("x", Upper(1))
 
-    @test to_std(dc.Power(2, 1//3)) == "2^(1/3)"
-    @test to_std(dc.Power(x, 1//3)) == "x^(1/3)"
+    @test to_std(dc.Power(2, 1//3)) == "2¹⸍³"
+    @test to_std(dc.Power(x, 1//3)) == "x¹⸍³"
 end
 
 @testset "to_std output is correct with sgn" begin

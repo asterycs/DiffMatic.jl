@@ -35,22 +35,22 @@
     @test to_std(gradient(2 * sum(cos.(A * x + y)), x)) == "(-2)Aᵀsin(Ax + y)"
     @test to_std(gradient(sum(2 * cos.(A * x + y)), x)) == "(-2)Aᵀsin(Ax + y)"
     @test to_std(gradient(sum(x .^ 2), x)) == "2x"
-    @test to_std(gradient(sum(x .^ 3), x)) == "3x^2"
+    @test to_std(gradient(sum(x .^ 3), x)) == "3x²"
     @test to_std(gradient(sum(x)^2, x)) == "2sum(xᵀ)vec(1)"
-    @test to_std(gradient(sum(x .^ 2)^2, x)) == "2sum(xᵀ^2)2x"
+    @test to_std(gradient(sum(x .^ 2)^2, x)) == "2sum(xᵀ²)2x"
     @test to_std(gradient(sum((x + y) .^ 2), x)) == "2(x + y)"
     @test to_std(gradient(sum((x .* y) .^ 2), x)) == "2(x ⊙ y ⊙ y)"
     @test to_std(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
     @test to_std(gradient(log.(x)'*x, x)) == "vec(1) + log(x)"
     @test to_std(gradient(log.(x)'*log.(x), x)) == "2(log(x) ⊘ x)"
-    @test to_std(gradient((x' * A * x) ^ (-2), x)) == "(-2)(xᵀAᵀx)^(-3)(Aᵀx + Ax)"
+    @test to_std(gradient((x' * A * x) ^ (-2), x)) == "(-2)(xᵀAᵀx)⁻³(Aᵀx + Ax)"
     @test to_std(gradient((x' * A * x) ^ 2, x)) == "2xᵀAᵀx(Aᵀx + Ax)"
     @test to_std(gradient(((A .* B) * C * x)' * x, x)) == "(A ⊙ B)Cx + Cᵀ(Aᵀ ⊙ Bᵀ)x"
     @test to_std(gradient(((A .* (B .* C)) * C * x)' * x, x)) ==
           "(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x"
     @test to_std(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
     @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(x ⊙ y ⊙ c)"
-    @test to_std(gradient(norm(A * x, 2), x)) == "1/2sum((xᵀAᵀ)^2)^(-1/2)2AᵀAx"
+    @test to_std(gradient(norm(A * x, 2), x)) == "1/2sum((xᵀAᵀ)²)⁻¹⸍²2AᵀAx"
 end
 
 @testset "test Jacobian in standard notation" begin

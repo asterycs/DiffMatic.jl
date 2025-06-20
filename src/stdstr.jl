@@ -117,17 +117,38 @@ function to_std_str(arg::ir.Log)
     return "log(" * out * ")"
 end
 
+function superscript(value::Rational)
+    absvalue = abs(value)
+
+    num_c = script(Upper(absvalue.num))
+    den_c = script(Upper(absvalue.den))
+
+    if value < 0
+        num_c = "⁻" * num_c
+    end
+
+    return join(num_c) * "⸍" * join(den_c)
+end
+
 function to_std_str(arg::ir.Power)
-    out = to_std_str(arg.base)
+    base = to_std_str(arg.base)
 
     if arg.base isa ir.Product ||
        arg.base isa ir.HadamardProduct ||
        arg.base isa ir.Add ||
        arg.base isa ir.Sub
-        out = "(" * out * ")"
+        base = "(" * base * ")"
     end
 
-    return out * "^" * parenthesize(to_std_str, arg.exponent)
+    exponent = nothing
+
+    if arg.exponent isa Rational
+        exponent = superscript(arg.exponent)
+    else
+        exponent = script(Upper(arg.exponent))
+    end
+
+    return base * exponent
 end
 
 function to_std_str(arg::ir.Trace)
