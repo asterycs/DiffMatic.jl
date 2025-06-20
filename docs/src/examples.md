@@ -228,7 +228,7 @@ to_std(gradient((x' * A * x) ^ (-2), x))
 
 # output
 
-"(-2)(xᵀAᵀx)^(-3)(Aᵀx + Ax)"
+"(-2)(xᵀAᵀx)⁻³(Aᵀx + Ax)"
 ```
 ```jldoctest usage
 to_std(gradient(((A .* (B .* C)) * C * x)' * x, x))
