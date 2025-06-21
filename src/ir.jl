@@ -364,12 +364,11 @@ function to_ir(arg::BinaryOperation{Mult})
                     matrix, vector = vector, matrix
                 end
 
-                m_ids = get_indices(matrix)
-                v_ids = get_indices(vector)
+                v_ids = get_free_indices(vector)
 
-                if m_ids[1] == v_ids[1]
+                if only(v_ids) isa Upper
                     return ir.Product(ir.Diag(to_ir(vector)), to_ir(matrix))
-                elseif m_ids[2] == v_ids[1]
+                elseif only(v_ids) isa Lower
                     return ir.Product(to_ir(matrix), ir.Diag(to_ir(vector)))
                 end
             end
