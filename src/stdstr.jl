@@ -40,7 +40,7 @@ function parenthesize(::ir.Sub, f, arg)
 end
 
 function parenthesize(::ir.Sub, f, arg::ir.Add)
-    return f(arg)
+    return "(" * f(arg) * ")"
 end
 
 function parenthesize(
@@ -126,9 +126,7 @@ function to_std_str(arg::ir.Add)
 end
 
 function to_std_str(arg::ir.Sub)
-    return parenthesize(arg, to_std_str, arg.l) *
-           " - " *
-           parenthesize(arg, to_std_str, arg.r)
+    return to_std_str(arg.l) * " - " * parenthesize(arg, to_std_str, arg.r)
 end
 
 function to_std_str(arg::ir.Product)

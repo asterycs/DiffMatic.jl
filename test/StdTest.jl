@@ -284,6 +284,15 @@ end
     @test to_std(sum(y)) == "sum(yᵀ)"
 end
 
+@testset "to_std output is correct with difference involving additive operations" begin
+    x = Variable("x", Upper(1))
+    y = Variable("y", Upper(1))
+    z = Variable("z", Upper(1))
+
+    @test to_std(x - (y + z)) == "x - (y + z)"
+    @test to_std((x + y) - z) == "x + y - z"
+end
+
 @testset "to_std output is correct with abs" begin
     x = Variable("x", Upper(2))
     A = Variable("A", Upper(1), Lower(2))
