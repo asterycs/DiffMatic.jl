@@ -366,6 +366,10 @@ function to_ir(arg::BinaryOperation{Mult})
 
                 v_ids = get_free_indices(vector)
 
+                if only(v_ids) isa Lower
+                    vector = adjoint(vector)
+                end
+
                 if only(v_ids) isa Upper
                     return ir.Product(ir.Diag(to_ir(vector)), to_ir(matrix))
                 elseif only(v_ids) isa Lower

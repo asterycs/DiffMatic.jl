@@ -142,6 +142,20 @@ end
         @test jgrad(x̂) ≈ ForwardDiff.gradient(x -> cos(tr(x * x')), x̂)
     end
 
+    @testset "gradient of log.(A*x)' * x" begin
+        jgrad = eval(to_std(gradient(log.(A*x)' * x, x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, x̂) ≈ ForwardDiff.gradient(x -> log.(Â*x)' * x, x̂)
+    end
+
+    @testset "gradient of log.(A*x)' * (A .* B)' * x" begin
+        jgrad =
+            eval(to_std(gradient(log.(A*x)' * (A .* B)' * x, x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, B̂, x̂) ≈
+              ForwardDiff.gradient(x -> log.(Â*x)' * (Â .* B̂)' * x, x̂)
+    end
+
     @testset "jacobian of sin(A * x + y - z)" begin
         jjac = eval(to_std(jacobian(sin.(A * x + y - z), x); format = dc.JuliaFunc()))
 

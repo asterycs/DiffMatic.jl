@@ -236,8 +236,8 @@ end
 
     @test to_std(mul(A, x)) == "diag(x)A"
     @test to_std(mul(x, A)) == "diag(x)A"
-    @test to_std(mul(A, y)) == "Adiag(yᵀ)"
-    @test to_std(mul(y, A)) == "Adiag(yᵀ)"
+    @test to_std(mul(A, y)) == "Adiag(y)"
+    @test to_std(mul(y, A)) == "Adiag(y)"
 end
 
 @testset "to_std output is correct with vector-vector element wise multiplication" begin

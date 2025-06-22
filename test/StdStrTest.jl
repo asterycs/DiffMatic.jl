@@ -51,7 +51,7 @@
     @test to_std(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
     @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(x ⊙ y ⊙ c)"
     @test to_std(gradient(norm(A * x, 2), x)) == "1/2sum((xᵀAᵀ)²)⁻¹⸍²2AᵀAx"
-    @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀdiag(vec(1)ᵀ ⊘ (xᵀAᵀ))x + log(Ax)"
+    @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀdiag(vec(1) ⊘ (Ax))x + log(Ax)" # TODO: Simplify diag(quotient) * vec
 end
 
 @testset "test Jacobian in standard notation" begin
