@@ -26,7 +26,7 @@
     @test to_std(gradient(sin.(x)' * y * a, x)) == "a(cos(x) ⊙ y)"
     @test to_std(gradient(x' * sin.(y) * a, x)) == "asin(y)"
     @test to_std(gradient(y' * sin.(x) * a, x)) == "a(cos(x) ⊙ y)"
-    @test to_std(gradient(sin.(x .* y)' * x, x)) == "(y ⊙ cos(x ⊙ y) ⊙ x) + sin(x ⊙ y)"
+    @test to_std(gradient(sin.(x .* y)' * x, x)) == "y ⊙ cos(x ⊙ y) ⊙ x + sin(x ⊙ y)"
     @test to_std(gradient(sum(x), x)) == "vec(1)"
     @test to_std(gradient(2 * sum(x), x)) == "2vec(1)"
     @test to_std(gradient(sum(2 * x), x)) == "2vec(1)"
@@ -42,7 +42,7 @@
     @test to_std(gradient(sum((x .* y) .^ 2), x)) == "2(x ⊙ y ⊙ y)"
     @test to_std(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
     @test to_std(gradient(log.(x)'*x, x)) == "vec(1) + log(x)"
-    @test to_std(gradient(log.(x)'*log.(x), x)) == "2(log(x) ⊘ x)"
+    @test to_std(gradient(log.(x)'*log.(x), x)) == "2log(x) ⊘ x"
     @test to_std(gradient((x' * A * x) ^ (-2), x)) == "(-2)(xᵀAᵀx)⁻³(Aᵀx + Ax)"
     @test to_std(gradient((x' * A * x) ^ 2, x)) == "2xᵀAᵀx(Aᵀx + Ax)"
     @test to_std(gradient(((A .* B) * C * x)' * x, x)) == "(A ⊙ B)Cx + Cᵀ(Aᵀ ⊙ Bᵀ)x"
@@ -51,7 +51,7 @@
     @test to_std(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
     @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(x ⊙ y ⊙ c)"
     @test to_std(gradient(norm(A * x, 2), x)) == "1/2sum((xᵀAᵀ)²)⁻¹⸍²2AᵀAx"
-    @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀdiag(vec(1)ᵀ ⊘ xᵀAᵀ)x + log(Ax)"
+    @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀdiag(vec(1)ᵀ ⊘ (xᵀAᵀ))x + log(Ax)"
 end
 
 @testset "test Jacobian in standard notation" begin
@@ -60,7 +60,7 @@ end
 
     @test to_std(jacobian(A * x, x)) == "A"
     @test to_std(jacobian(A' * x, x)) == "Aᵀ"
-    @test to_std(jacobian((A .* B) * log.(A * x), x)) == "(A ⊙ B)diag(vec(1) ⊘ Ax)A"
+    @test to_std(jacobian((A .* B) * log.(A * x), x)) == "(A ⊙ B)diag(vec(1) ⊘ (Ax))A"
     @test to_std(jacobian(abs.(x), x)) == "diag(sgn(x))I"
     @test to_std(jacobian(log.(x), x)) == "diag(vec(1) ⊘ x)I"
     @test to_std(jacobian(sin.(A * x + y), x)) == "diag(cos(Ax + y))A"

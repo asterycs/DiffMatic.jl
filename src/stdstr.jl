@@ -3,6 +3,58 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+function parenthesize(::ir.Quotient, f, arg)
+    return f(arg)
+end
+
+function parenthesize(
+    ::ir.Quotient,
+    f,
+    arg::Union{ir.Product,ir.HadamardProduct,ir.Add,ir.Sub},
+)
+    return "(" * f(arg) * ")"
+end
+
+function parenthesize(::ir.HadamardProduct, f, arg::Union{ir.Add,ir.Sub})
+    return "(" * f(arg) * ")"
+end
+
+function parenthesize(::ir.HadamardProduct, f, arg)
+    return f(arg)
+end
+
+function parenthesize(::ir.Product, f, arg)
+    return f(arg)
+end
+
+function parenthesize(::ir.Product, f, arg::Union{ir.HadamardProduct,ir.Add,ir.Sub})
+    return "(" * f(arg) * ")"
+end
+
+function parenthesize(::ir.Add, f, arg)
+    return f(arg)
+end
+
+function parenthesize(::ir.Sub, f, arg)
+    return f(arg)
+end
+
+function parenthesize(::ir.Sub, f, arg::ir.Add)
+    return f(arg)
+end
+
+function parenthesize(
+    ::ir.Transpose,
+    f,
+    arg::Union{ir.Product,ir.HadamardProduct,ir.Power,ir.Add,ir.Sub},
+)
+    return "(" * f(arg) * ")"
+end
+
+function parenthesize(::ir.Transpose, f, arg)
+    return f(arg)
+end
+
 function to_std_str(arg::ir.Mat)
     if arg.id isa ir.Var
         return to_std_str(arg.id)
@@ -67,48 +119,32 @@ function to_std_str(arg::ir.Cos)
     return "cos(" * to_std_str(arg.arg) * ")"
 end
 
-function parenthesize(f, arg::Rational)
-    return "(" * f(arg) * ")"
-end
-
-function parenthesize(f, arg::ir.Add)
-    return "(" * f(arg) * ")"
-end
-
-function parenthesize(f, arg::ir.Sub)
-    return "(" * f(arg) * ")"
-end
-
-function parenthesize(f, arg::ir.HadamardProduct)
-    return "(" * f(arg.l) * " ⊙ " * f(arg.r) * ")"
-end
-
-function parenthesize(f, arg::ir.Quotient)
-    return "(" * f(arg) * ")"
-end
-
-function parenthesize(f, arg)
-    return f(arg)
-end
-
 function to_std_str(arg::ir.Add)
-    return parenthesize(to_std_str, arg.l) * " + " * parenthesize(to_std_str, arg.r)
+    return parenthesize(arg, to_std_str, arg.l) *
+           " + " *
+           parenthesize(arg, to_std_str, arg.r)
 end
 
 function to_std_str(arg::ir.Sub)
-    return parenthesize(to_std_str, arg.l) * " - " * parenthesize(to_std_str, arg.r)
+    return parenthesize(arg, to_std_str, arg.l) *
+           " - " *
+           parenthesize(arg, to_std_str, arg.r)
 end
 
 function to_std_str(arg::ir.Product)
-    return parenthesize(to_std_str, arg.l) * parenthesize(to_std_str, arg.r)
+    return parenthesize(arg, to_std_str, arg.l) * parenthesize(arg, to_std_str, arg.r)
 end
 
 function to_std_str(arg::ir.Quotient)
-    return parenthesize(to_std_str, arg.num) * " ⊘ " * parenthesize(to_std_str, arg.den)
+    return parenthesize(arg, to_std_str, arg.num) *
+           " ⊘ " *
+           parenthesize(arg, to_std_str, arg.den)
 end
 
 function to_std_str(arg::ir.HadamardProduct)
-    return to_std_str(arg.l) * " ⊙ " * to_std_str(arg.r)
+    return parenthesize(arg, to_std_str, arg.l) *
+           " ⊙ " *
+           parenthesize(arg, to_std_str, arg.r)
 end
 
 function to_std_str(arg::ir.Log)
@@ -160,7 +196,7 @@ function to_std_str(arg::ir.Diag)
 end
 
 function to_std_str(arg::ir.Transpose)
-    return parenthesize(to_std_str, arg.arg) * "ᵀ"
+    return parenthesize(arg, to_std_str, arg.arg) * "ᵀ"
 end
 
 function to_std_str(arg::ir.Sum)
@@ -169,9 +205,11 @@ end
 
 function to_std_str(arg::ir.PartialSum)
     if arg.dim == 1
-        return "vec(1)ᵀ" * parenthesize(to_std_str, arg.arg)
+        product = ir.Product(ir.Transpose(ir.Vec(ir.Literal(1))), arg.arg) # Only used for dispatch
+        return "vec(1)ᵀ" * parenthesize(product, to_std_str, arg.arg)
     elseif arg.dim == 2
-        return parenthesize(to_std_str, arg.arg) * "vec(1)"
+        product = ir.Product(arg.arg, ir.Vec(ir.Literal(1)))
+        return parenthesize(product, to_std_str, arg.arg) * "vec(1)"
     end
 
     throw(RuntimeError("Encountered a sum over an unsupported index"))
