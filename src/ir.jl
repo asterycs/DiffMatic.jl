@@ -95,11 +95,6 @@ struct Sum <: IR
     arg::IR
 end
 
-struct PartialSum <: IR
-    arg::IR
-    dim::Int
-end
-
 function _get_variables(arg::Mat)
     return _get_variables(arg.id)
 end
@@ -398,18 +393,6 @@ function to_ir(arg::BinaryOperation{Mult})
                 return ir.Vec(ir.Literal(1))
             else
                 return ir.Transpose(ir.Vec(ir.Literal(1)))
-            end
-        elseif arg.arg1 isa Literal || arg.arg2 isa Literal
-            tensor = if arg.arg1 isa Literal
-                arg.arg2
-            else
-                arg.arg1
-            end
-
-            if typeof(target_indices[1]) == Upper
-                return ir.PartialSum(to_ir(tensor), 2)
-            else
-                return ir.PartialSum(to_ir(tensor), 1)
             end
         end
     end

@@ -76,6 +76,12 @@ function to_julia(arg::ir.Quotient)
 end
 
 function to_julia(arg::ir.Product)
+    if arg.l isa ir.Transpose && arg.l.arg isa ir.Vec && arg.l.arg.id isa ir.Literal
+        return :($(to_julia(arg.l.arg.id)) .* (sum($(to_julia(arg.r)), dims = 1)))
+    elseif arg.r isa ir.Vec && arg.r.id isa ir.Literal
+        return :($(to_julia(arg.r.id)) .* (sum($(to_julia(arg.l)), dims = 2)))
+    end
+
     return :($(to_julia(arg.l)) * $(to_julia(arg.r)))
 end
 

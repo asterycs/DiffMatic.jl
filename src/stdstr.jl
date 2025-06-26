@@ -200,15 +200,3 @@ end
 function to_std_str(arg::ir.Sum)
     return "sum(" * to_std_str(arg.arg) * ")"
 end
-
-function to_std_str(arg::ir.PartialSum)
-    if arg.dim == 1
-        product = ir.Product(ir.Transpose(ir.Vec(ir.Literal(1))), arg.arg) # Only used for dispatch
-        return "vec(1)ᵀ" * parenthesize(product, to_std_str, arg.arg)
-    elseif arg.dim == 2
-        product = ir.Product(arg.arg, ir.Vec(ir.Literal(1)))
-        return parenthesize(product, to_std_str, arg.arg) * "vec(1)"
-    end
-
-    throw(RuntimeError("Encountered a sum over an unsupported index"))
-end
