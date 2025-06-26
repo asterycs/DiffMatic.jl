@@ -9,7 +9,7 @@ using Test
 using DiffMatic: Variable, Literal, KrD, Zero
 using DiffMatic: Upper, Lower
 
-using LinearAlgebra: norm, tr
+using LinearAlgebra: norm, tr, I
 
 dc = DiffMatic
 
@@ -486,6 +486,50 @@ end
     @test_throws DomainError B .* A
     @test_throws DomainError A .* T
     @test_throws DomainError T .* A
+end
+
+@testset "multiplication with UniformScaling 1" begin
+    a = Variable("a")
+    X = Variable("X", Upper(1), Lower(2))
+
+    e = a * I * X
+
+    @test e.arg1 == BinaryOperation{dc.Mult}(a, KrD(Upper(1), Lower(5)))
+    @test e.arg2 == Variable("X", Upper(5), Lower(4))
+end
+
+@testset "multiplication with UniformScaling 2" begin
+    a = Variable("a")
+    X = Variable("X", Upper(1), Lower(2))
+
+    e = a * (I * X)
+
+    @test e.arg1 == a
+    @test e.arg2 == BinaryOperation{dc.Mult}(
+        KrD(Upper(1), Lower(5)),
+        Variable("X", Upper(5), Lower(4)),
+    )
+end
+
+@testset "multiplication with UniformScaling 3" begin
+    a = Variable("a")
+    X = Variable("X", Upper(1), Lower(2))
+
+    e = a * I .* X
+
+    @test isempty(dc.get_indices(e.arg1.arg1))
+    @test e.arg1.arg2 == KrD(Upper(1), Lower(2))
+    @test e.arg2 == Variable("X", Upper(1), Lower(2))
+end
+
+@testset "multiplication with UniformScaling 4" begin
+    a = Variable("a")
+    X = Variable("X", Upper(1), Lower(2))
+
+    e = a * (I .* X)
+
+    @test e.arg1 == a
+    @test dc.get_free_indices(e.arg2) == [Upper(1); Lower(2)]
 end
 
 @testset "update_index column vector" begin

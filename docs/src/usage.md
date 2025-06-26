@@ -71,6 +71,7 @@ Supported operators and functions when creating expressions:
   - Vector 1-norm and 2-norm can be computed with `LinearAlgebra.norm(..., 1)` and `LinearAlgebra.norm(..., 2)`
   - Sums of vectors can be computed with `sum`.
   - Matrix traces can be computed with `LinearAlgebra.tr`.
+  - `LinearAlgebra.I` for the identity matrix.
 
 See [Creating Expressions](@ref) for more examples.
 

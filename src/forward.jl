@@ -101,9 +101,13 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Real)
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::Real, arg2::BinaryOperation{Mult})
-    if arg1 == 1
+function evaluate(::Mult, arg1::T, arg2::BinaryOperation{Mult}) where {T<:Real}
+    if arg1 == T(1)
         return arg2
+    end
+
+    if arg1 == T(0)
+        return Zero(get_free_indices(arg2)...)
     end
 
     if arg2.arg1 isa Real
@@ -446,12 +450,17 @@ function evaluate(::Mult, arg1::Tensor, arg2::Real)
     evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::Real, arg2::Tensor)
-    if arg1 == 1
+function evaluate(::Mult, arg1::T, arg2::Tensor) where {T<:Real}
+    if arg1 == T(1)
         return arg2
-    else
-        BinaryOperation{Mult}(arg1, arg2)
     end
+
+    if arg1 == T(0)
+        return Zero(get_free_indices(arg2)...)
+    end
+
+
+    return BinaryOperation{Mult}(arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::Zero, arg2::Zero)

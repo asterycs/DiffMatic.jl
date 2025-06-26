@@ -449,6 +449,22 @@ function Base.broadcasted(::typeof(*), arg1::Tensor, arg2::Tensor)
 end
 
 function Base.broadcasted(
+    ::typeof(*),
+    arg1::LinearAlgebra.UniformScaling{T},
+    arg2::Tensor,
+) where {T<:Real}
+    return (arg1.λ * KrD(Upper(1), Lower(2))) .* arg2
+end
+
+function Base.broadcasted(
+    ::typeof(*),
+    arg1::Tensor,
+    arg2::LinearAlgebra.UniformScaling{T},
+) where {T<:Real}
+    return arg1 .* (arg2.λ * KrD(Upper(1), Lower(2)))
+end
+
+function Base.broadcasted(
     ::typeof(Base.literal_pow),
     f::Function,
     base::Tensor,
@@ -534,6 +550,14 @@ end
 
 function replace_letters(arg::Real, letter_map::Dict)
     return arg
+end
+
+function Base.:(*)(arg1::LinearAlgebra.UniformScaling{T}, arg2::Tensor) where {T<:Real}
+    return arg1.λ * KrD(Upper(1), Lower(2)) * arg2
+end
+
+function Base.:(*)(arg1::Tensor, arg2::LinearAlgebra.UniformScaling{T}) where {T<:Real}
+    return arg1 * arg2.λ * KrD(Upper(1), Lower(2))
 end
 
 function Base.:(*)(arg1::Tensor, arg2::Real)

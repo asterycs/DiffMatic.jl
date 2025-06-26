@@ -1,7 +1,7 @@
 # Examples
 ## Creating Variables
 ```jldoctest usage; output = false
-using LinearAlgebra: tr, norm
+using LinearAlgebra: tr, norm, I
 using DiffMatic
 
 @matrix A B C
@@ -274,4 +274,11 @@ to_std(jacobian(((A .* B) * C * x)' * x * x, x))
 "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"
 ```
 
+### Derivative
+```jldoctest usage
+to_std(derivative(c * I, c))
 
+# output
+
+"I"
+```
