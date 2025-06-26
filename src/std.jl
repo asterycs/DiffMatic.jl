@@ -365,9 +365,11 @@ String format of an expression in standard form.
 struct StdStr end
 
 """
-    JuliaFunc()
+    JuliaFunc([args=AbstractVector{Variable},])
 
-Julia function that evaluates an expression in standard form.
+Julia function that evaluates an expression in standard form. The optional argument `args`
+can be used for specifying order of the arguments in the function signature. If `args`
+is given, then each variable must occur exactly once.
 """
 struct JuliaFunc
     args::Union{Vector{String},Nothing}
