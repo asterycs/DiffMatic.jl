@@ -87,8 +87,7 @@ end
     @test dc.evaluate(prodlogr(d_unrelated, x)) == expected2
 end
 
-@testset "evaluate div" begin
-    l = Literal(2, Upper(2))
+@testset "evaluate trivially simplifiable quotient" begin
     x = Variable("x", Upper(1))
     d = KrD(Upper(2), Lower(1))
 
@@ -96,31 +95,13 @@ end
         return dc.BinaryOperation{dc.Mult}(l, r)
     end
 
-    function div(n, d)
-        return dc.BinaryOperation{dc.Div}(n, d)
+    function reciprocal(t)
+        return dc.Power(t, -1)
     end
 
-    @test dc.evaluate(div(l, prod(x, d))) ==
-          dc.BinaryOperation{dc.Div}(l, Variable("x", Upper(2)))
-    @test dc.evaluate(div(prod(x, d), l)) ==
-          dc.BinaryOperation{dc.Div}(Variable("x", Upper(2)), l)
-end
-
-@testset "evaluate trivially simplifiable div" begin
-    x = Variable("x", Upper(1))
-    d = KrD(Upper(2), Lower(1))
-
-    function prod(l, r)
-        return dc.BinaryOperation{dc.Mult}(l, r)
-    end
-
-    function div(n, d)
-        return dc.BinaryOperation{dc.Div}(n, d)
-    end
-
-    @test dc.evaluate(div(prod(x, d), prod(x, d))) == Literal(1, Upper(2))
-    @test dc.evaluate(div(prod(x, d), prod(d, x))) == Literal(1, Upper(2))
-    @test dc.evaluate(div(prod(d, x), prod(x, d))) == Literal(1, Upper(2))
+    @test dc.evaluate(prod(x, reciprocal(x))) == Literal(1, Upper(1))
+    @test dc.evaluate(prod(prod(x, d), reciprocal(prod(d, x)))) == Literal(1, Upper(2))
+    @test dc.evaluate(prod(prod(d, x), reciprocal(prod(x, d)))) == Literal(1, Upper(2))
 end
 
 @testset "evaluate BinaryOperation{AdditiveOperation} Matrix and KrD" begin
@@ -591,78 +572,6 @@ end
     @test evaluate(op2) == Zero(Upper(1), Lower(2), Lower(3))
     @test evaluate(op3) == Zero(Upper(1), Lower(3))
     @test evaluate(op4) == Zero(Upper(1), Lower(3))
-end
-
-@testset "evaluate product of quotient and tensor 1" begin
-    l = Literal(1, Upper(2))
-    a = Variable("a", Upper(2))
-    b = Variable("b", Upper(2))
-
-    op1 = dc.BinaryOperation{dc.Mult}(dc.BinaryOperation{dc.Div}(l, b), a)
-    op2 = dc.BinaryOperation{dc.Mult}(a, dc.BinaryOperation{dc.Div}(l, b))
-
-    @test evaluate(op1) == dc.BinaryOperation{dc.Div}(a, b)
-    @test evaluate(op2) == dc.BinaryOperation{dc.Div}(a, b)
-end
-
-@testset "evaluate product of quotient and tensor 2" begin
-    l = Literal(1, Upper(2))
-    a = Variable("a", Upper(2))
-    b = Variable("b", Upper(2))
-
-    op1 = dc.BinaryOperation{dc.Mult}(dc.BinaryOperation{dc.Div}(l, b), b)
-    op2 = dc.BinaryOperation{dc.Mult}(b, dc.BinaryOperation{dc.Div}(l, b))
-
-    @test evaluate(op1) == l
-    @test evaluate(op2) == l
-end
-
-@testset "evaluate product of quotient and tensor 3" begin
-    a = Variable("a", Upper(2))
-    b = Variable("b", Upper(2))
-
-    op1 = dc.BinaryOperation{dc.Mult}(dc.BinaryOperation{dc.Div}(a, b), b)
-    op2 = dc.BinaryOperation{dc.Mult}(b, dc.BinaryOperation{dc.Div}(a, b))
-
-    @test evaluate(op1) == a
-    @test evaluate(op2) == a
-end
-
-@testset "evaluate product of quotient and tensor 4" begin
-    a = Variable("a", Upper(2))
-    b = Variable("b", Upper(2))
-    c = Variable("c", Upper(2))
-
-    op1 = dc.BinaryOperation{dc.Mult}(dc.BinaryOperation{dc.Div}(a, b), c)
-    op2 = dc.BinaryOperation{dc.Mult}(c, dc.BinaryOperation{dc.Div}(a, b))
-
-    @test evaluate(op1) == op1
-    @test evaluate(op2) == op1
-end
-
-@testset "evaluate product of quotient and quotient" begin
-    a = Variable("a", Upper(2))
-    b = Variable("b", Upper(2))
-
-    function div(n, d)
-        return dc.BinaryOperation{dc.Div}(n, d)
-    end
-
-    op1 = dc.BinaryOperation{dc.Mult}(div(a, b), div(a, b))
-
-    @test evaluate(op1) == 2*div(a, b)
-end
-
-@testset "evaluate product of quotient and zero" begin
-    z = Zero(Upper(2))
-    a = Variable("a", Upper(2))
-    b = Variable("b", Upper(2))
-
-    op1 = dc.BinaryOperation{dc.Mult}(dc.BinaryOperation{dc.Div}(a, b), z)
-    op2 = dc.BinaryOperation{dc.Mult}(z, dc.BinaryOperation{dc.Div}(a, b))
-
-    @test evaluate(op1) == z
-    @test evaluate(op2) == z
 end
 
 @testset "evaluate product of products" begin

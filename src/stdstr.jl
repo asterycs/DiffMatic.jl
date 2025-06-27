@@ -3,18 +3,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-function parenthesize(::ir.Quotient, f, arg)
-    return f(arg)
-end
-
-function parenthesize(
-    ::ir.Quotient,
-    f,
-    arg::Union{ir.Product,ir.HadamardProduct,ir.Add,ir.Sub},
-)
-    return "(" * f(arg) * ")"
-end
-
 function parenthesize(::ir.HadamardProduct, f, arg::Union{ir.Add,ir.Sub})
     return "(" * f(arg) * ")"
 end
@@ -133,13 +121,26 @@ function to_std_str(arg::ir.Product)
     return parenthesize(arg, to_std_str, arg.l) * parenthesize(arg, to_std_str, arg.r)
 end
 
-function to_std_str(arg::ir.Quotient)
-    return parenthesize(arg, to_std_str, arg.num) *
-           " ⊘ " *
-           parenthesize(arg, to_std_str, arg.den)
+function reciprocal(arg::ir.Power)
+    return ir.Power(arg.base, -arg.exponent)
 end
 
 function to_std_str(arg::ir.HadamardProduct)
+    t = arg
+    if t isa ir.Transpose
+        t = arg.arg
+    end
+
+    if t.l isa ir.Power && t.l.exponent < 0
+        return parenthesize(arg, to_std_str, t.r) *
+               " ⊘ " *
+               parenthesize(arg, to_std_str, reciprocal(t.l))
+    elseif arg.r isa ir.Power && arg.r.exponent < 0
+        return parenthesize(arg, to_std_str, t.l) *
+               " ⊘ " *
+               parenthesize(arg, to_std_str, reciprocal(t.r))
+    end
+
     return parenthesize(arg, to_std_str, arg.l) *
            " ⊙ " *
            parenthesize(arg, to_std_str, arg.r)
@@ -172,6 +173,18 @@ function to_std_str(arg::ir.Power)
        arg.base isa ir.Add ||
        arg.base isa ir.Sub
         base = "(" * base * ")"
+    end
+
+    if arg.exponent == -1
+        if arg.base isa ir.Transpose
+            return "vec(1)ᵀ ⊘ " * base
+        else
+            return "vec(1) ⊘ " * base
+        end
+    end
+
+    if arg.exponent == 1
+        return base
     end
 
     exponent = nothing

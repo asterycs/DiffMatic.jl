@@ -42,7 +42,7 @@
     @test to_std(gradient(sum((x .* y) .^ 2), x)) == "2(x ⊙ y ⊙ y)"
     @test to_std(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
     @test to_std(gradient(log.(x)'*x, x)) == "vec(1) + log(x)"
-    @test to_std(gradient(log.(x)'*log.(x), x)) == "2log(x) ⊘ x"
+    @test to_std(gradient(log.(x)'*log.(x), x)) == "2(log(x) ⊘ x)"
     @test to_std(gradient((x' * A * x) ^ (-2), x)) == "(-2)(xᵀAᵀx)⁻³(Aᵀx + Ax)"
     @test to_std(gradient((x' * A * x) ^ 2, x)) == "2xᵀAᵀx(Aᵀx + Ax)"
     @test to_std(gradient(((A .* B) * C * x)' * x, x)) == "(A ⊙ B)Cx + Cᵀ(Aᵀ ⊙ Bᵀ)x"

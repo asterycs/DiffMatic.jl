@@ -63,18 +63,6 @@ function to_julia(arg::ir.Sub)
     return :($(to_julia(arg.l)) - $(to_julia(arg.r)))
 end
 
-function to_julia(arg::ir.Quotient)
-    if arg.num isa ir.Vec || arg.num isa ir.Mat
-        t = arg.num.id
-
-        if t isa ir.Literal
-            return :($(to_julia(t.value)) ./ $(to_julia(arg.den)))
-        end
-    end
-
-    return :($(to_julia(arg.num)) ./ $(to_julia(arg.den)))
-end
-
 function to_julia(arg::ir.Product)
     if arg.l isa ir.Transpose && arg.l.arg isa ir.Vec && arg.l.arg.id isa ir.Literal
         return :($(to_julia(arg.l.arg.id)) .* (sum($(to_julia(arg.r)), dims = 1)))

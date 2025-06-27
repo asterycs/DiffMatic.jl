@@ -117,7 +117,6 @@ abstract type AdditiveOperation end
 struct Add <: AdditiveOperation end
 struct Sub <: AdditiveOperation end
 struct Mult end
-struct Div end
 
 function collect_factors(arg::BinaryOperation{Mult})
     return Value[collect_factors(arg.arg1); collect_factors(arg.arg2)]
@@ -141,10 +140,6 @@ function Base.:(==)(left::BinaryOperation{Mult}, right::BinaryOperation{Mult})
     right_factors = collect_factors(right)
 
     return issetequal(left_factors, right_factors)
-end
-
-function Base.:(==)(left::BinaryOperation{Div}, right::BinaryOperation{Div})
-    return left.arg1 == right.arg1 && left.arg2 == right.arg2
 end
 
 struct Power <: Tensor
@@ -280,10 +275,6 @@ function get_indices(arg::UnaryOperation)
 end
 
 function get_indices(arg::BinaryOperation{Mult})
-    return [get_indices(arg.arg1); get_indices(arg.arg2)]
-end
-
-function get_indices(arg::BinaryOperation{Div})
     return [get_indices(arg.arg1); get_indices(arg.arg2)]
 end
 
@@ -910,10 +901,6 @@ function to_string(arg::BinaryOperation{Mult})
     end
 
     return parenthesize(arg.arg1) * parenthesize(arg.arg2)
-end
-
-function to_string(arg::BinaryOperation{Div})
-    return parenthesize(arg.arg1) * "/" * parenthesize(arg.arg2)
 end
 
 function to_string(arg::BinaryOperation{Add})

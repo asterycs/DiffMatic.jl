@@ -60,11 +60,6 @@ struct Product <: IR
     r::IR
 end
 
-struct Quotient <: IR
-    num::IR
-    den::IR
-end
-
 struct HadamardProduct <: IR
     l::IR
     r::IR
@@ -141,10 +136,6 @@ end
 
 function _get_variables(arg::Sub)
     return [_get_variables(arg.l); _get_variables(arg.r)]
-end
-
-function _get_variables(arg::Quotient)
-    return [_get_variables(arg.num); _get_variables(arg.den)]
 end
 
 function _get_variables(arg::Product)
@@ -506,10 +497,6 @@ function to_ir(arg::BinaryOperation{Mult})
     end
 
     throw_not_std(arg)
-end
-
-function to_ir(arg::BinaryOperation{Div})
-    return ir.Quotient(to_ir(arg.arg1), to_ir(arg.arg2))
 end
 
 function to_ir(arg::UnaryOperation{Log})

@@ -223,7 +223,7 @@ end
     end
 end
 
-@testset "BinaryOperation{Sub, Div} equality operator" begin
+@testset "BinaryOperation{Sub} equality operator" begin
     a = Variable("a", Upper(1))
     b = Variable("b", Lower(1))
 
@@ -231,7 +231,7 @@ end
         return BinaryOperation{Op}(l, r)
     end
 
-    for op ∈ (dc.Sub, dc.Div)
+    for op ∈ (dc.Sub,)
         left = create(op, a, b)
 
         @test create(op, a, b) == create(op, a, b)

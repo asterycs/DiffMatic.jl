@@ -51,10 +51,7 @@ function diff(arg::UnaryOperation{Cos}, wrt::Variable)
 end
 
 function diff(arg::UnaryOperation{Log}, wrt::Variable)
-    return BinaryOperation{Mult}(
-        BinaryOperation{Div}(Literal(1, get_free_indices(arg)...), arg.arg),
-        diff(arg.arg, wrt),
-    )
+    return BinaryOperation{Mult}(Power(arg.arg, -1), diff(arg.arg, wrt))
 end
 
 function diff(arg::Power, wrt::Variable)
@@ -222,56 +219,6 @@ function evaluate(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::KrD)
-    attempt = BinaryOperation{Div}(
-        evaluate(Mult(), evaluate(arg1.arg1), evaluate(arg2)),
-        evaluate(Mult(), evaluate(arg1.arg2), evaluate(arg2)),
-    )
-
-    # This ensures that arg1.base and arg2 can contract and that the contraction is simple
-    if length(get_free_indices(attempt)) == length(get_free_indices(arg1))
-        return attempt
-    end
-
-    return BinaryOperation{Mult}(arg1, arg2)
-end
-
-function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::BinaryOperation{Div})
-    return invoke(evaluate, Tuple{Mult,BinaryOperation{Div},Tensor}, Mult(), arg1, arg2)
-end
-
-function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Div})
-    return evaluate(Mult(), arg2, arg1)
-end
-
-function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::Tensor)
-    if arg1 == arg2
-        return BinaryOperation{Mult}(2, arg1)
-    end
-
-    if arg1.arg2 == arg2
-        return evaluate(arg1.arg1)
-    end
-
-    if arg1.arg1 isa Literal
-        if arg1.arg1.value == 1 && get_free_indices(arg1.arg1) == get_free_indices(arg2)
-            return BinaryOperation{Div}(arg2, arg1.arg2)
-        end
-    end
-
-    return BinaryOperation{Mult}(arg1, arg2)
-end
-
-function evaluate(::Mult, arg1::Zero, arg2::BinaryOperation{Div})
-    return evaluate(Mult(), arg2, arg1)
-end
-
-function evaluate(::Mult, arg1::BinaryOperation{Div}, arg2::Zero)
-    free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
-
-    return Zero(free_indices...)
-end
-
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     ci = indices_in_common(arg1.arg1, arg1.arg2)
 
@@ -365,6 +312,35 @@ function evaluate(::Mult, arg1::Power, arg2::KrD)
     end
 
     return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+end
+
+function evaluate(::Mult, arg1::Tensor, arg2::Power)
+    return evaluate(Mult(), arg2, arg1)
+end
+
+function evaluate(::Mult, arg1::Power, arg2::Tensor)
+    if arg1.exponent == -1 && arg1.base == arg2
+        return Literal(1, get_free_indices(arg2)...)
+    end
+
+    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+end
+
+function evaluate(::Mult, arg1::Power, arg2::Power)
+    # TODO: Simplify based on exponents
+
+    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+end
+
+function evaluate(::Mult, arg1::Zero, arg2::Power)
+    return evaluate(Mult(), arg2, arg1)
+end
+
+function evaluate(::Mult, arg1::Power, arg2::Zero)
+    new_indices =
+        unique(eliminate_indices([get_free_indices(arg1); get_free_indices(arg2)]))
+
+    return Zero(new_indices...)
 end
 
 function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::KrD)
@@ -475,14 +451,6 @@ end
 
 function evaluate(::Mult, arg1::Real, arg2::Zero)
     return evaluate(arg2)
-end
-
-function evaluate(::Div, arg1::Value, arg2::Value)
-    if arg1 == arg2
-        return Literal(1, get_free_indices(arg1)...)
-    end
-
-    return BinaryOperation{Div}(arg1, arg2)
 end
 
 function evaluate(::Add, arg1::Zero, arg2::Zero)
@@ -876,10 +844,6 @@ end
 
 function evaluate(op::BinaryOperation{Mult})
     return evaluate(Mult(), evaluate(op.arg1), evaluate(op.arg2))
-end
-
-function evaluate(op::BinaryOperation{Div})
-    return evaluate(Div(), evaluate(op.arg1), evaluate(op.arg2))
 end
 
 function evaluate(op::BinaryOperation{Op}) where {Op<:AdditiveOperation}

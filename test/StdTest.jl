@@ -334,14 +334,12 @@ end
     lv = Literal(2, Upper(1))
 
     function div(l, r)
-        return dc.BinaryOperation{dc.Div}(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, dc.Power(r, -1))
     end
 
     @test to_std(div(x, y)) == "x ⊘ y"
     @test to_std(div(lv, x)) == "vec(2) ⊘ x"
     @test to_std(div(x, lv)) == "x ⊘ vec(2)"
-    # @test_throws to_std(div(a, x))
-    # @test_throws to_std(div(x, z))
 end
 
 @testset "to_std output is correct with KrD-KrD and one free index" begin
