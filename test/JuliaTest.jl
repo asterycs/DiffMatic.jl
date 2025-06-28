@@ -107,72 +107,90 @@ end
     ]
 
     @testset "function tr(x*x')" begin
-        jfun = eval(to_std(tr(x*x'); format = dc.JuliaFunc()))
+        f(x) = tr(x * x')
 
-        @test jfun(x̂) ≈ tr(x̂*x̂')
+        jfun = eval(to_std(f(x); format = dc.JuliaFunc()))
+
+        @test jfun(x̂) ≈ f(x̂)
     end
 
     @testset "function tr(A*B'*C)" begin
-        jfun = eval(to_std(tr(A*B'*C); format = dc.JuliaFunc()))
+        f(A, B, C) = tr(A * B' * C)
 
-        @test jfun(Â, B̂, Ĉ) ≈ tr(Â * B̂' * Ĉ)
+        jfun = eval(to_std(f(A, B, C); format = dc.JuliaFunc()))
+
+        @test jfun(Â, B̂, Ĉ) ≈ f(Â, B̂, Ĉ)
     end
 
     @testset "function log(A' * x)" begin
-        jfun = eval(to_std(log.(A' * x); format = dc.JuliaFunc()))
+        f(A, x) = log.(A' * x)
 
-        @test jfun(Â, x̂) ≈ log.(Â' * x̂)
+        jfun = eval(to_std(f(A, x); format = dc.JuliaFunc()))
+
+        @test jfun(Â, x̂) ≈ f(Â, x̂)
     end
 
     @testset "gradient of x'*x" begin
-        jgrad = eval(to_std(gradient(x' * x, x); format = dc.JuliaFunc()))
+        f(x) = x' * x
 
-        @test jgrad(x̂) ≈ ForwardDiff.gradient(x -> x' * x, x̂)
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
     end
 
     @testset "gradient of sum(x.^2)^2" begin
-        jgrad = eval(to_std(gradient(sum(x .^ 2)^2, x); format = dc.JuliaFunc()))
+        f(x) = sum(x .^ 2)^2
 
-        @test jgrad(x̂) ≈ ForwardDiff.gradient(x -> sum(x .^ 2)^2, x̂)
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
     end
 
     @testset "gradient of cos(tr(x * x'))" begin
-        jgrad = eval(to_std(gradient(cos(tr(x * x')), x); format = dc.JuliaFunc()))
+        f(x) = cos(tr(x * x'))
 
-        @test jgrad(x̂) ≈ ForwardDiff.gradient(x -> cos(tr(x * x')), x̂)
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
     end
 
     @testset "gradient of log.(A*x)' * x" begin
-        jgrad = eval(to_std(gradient(log.(A*x)' * x, x); format = dc.JuliaFunc()))
+        f(A, x) = log.(A * x)' * x
 
-        @test jgrad(Â, x̂) ≈ ForwardDiff.gradient(x -> log.(Â*x)' * x, x̂)
+        jgrad = eval(to_std(gradient(f(A, x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, x̂) ≈ ForwardDiff.gradient(x -> f(Â, x), x̂)
     end
 
     @testset "gradient of log.(A*x)' * (A .* B)' * x" begin
-        jgrad =
-            eval(to_std(gradient(log.(A*x)' * (A .* B)' * x, x); format = dc.JuliaFunc()))
+        f(A, B, x) = log.(A * x)' * (A .* B)' * x
 
-        @test jgrad(Â, B̂, x̂) ≈
-              ForwardDiff.gradient(x -> log.(Â*x)' * (Â .* B̂)' * x, x̂)
+        jgrad = eval(to_std(gradient(f(A, B, x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, B̂, x̂) ≈ ForwardDiff.gradient(x -> f(Â, B̂, x), x̂)
     end
 
     @testset "jacobian of sin(A * x + y - z)" begin
-        jjac = eval(to_std(jacobian(sin.(A * x + y - z), x); format = dc.JuliaFunc()))
+        f(A, x, y, z) = sin.(A * x + y - z)
 
-        @test jjac(Â, x̂, ŷ, ẑ) ≈ ForwardDiff.jacobian(x -> sin.(Â * x + ŷ - ẑ), x̂)
+        jjac = eval(to_std(jacobian(f(A, x, y, z), x); format = dc.JuliaFunc()))
+
+        @test jjac(Â, x̂, ŷ, ẑ) ≈ ForwardDiff.jacobian(x -> f(Â, x, ŷ, ẑ), x̂)
     end
 
     @testset "jacobian of (A .* B) * C * x)' * x * x" begin
-        jjac =
-            eval(to_std(jacobian(((A .* B) * C * x)' * x * x, x); format = dc.JuliaFunc()))
+        f(A, B, C, x) = ((A .* B) * C * x)' * x * x
 
-        @test jjac(Â, B̂, Ĉ, x̂) ≈
-              ForwardDiff.jacobian(x -> ((Â .* B̂) * Ĉ * x)' * x * x, x̂)
+        jjac = eval(to_std(jacobian(f(A, B, C, x), x); format = dc.JuliaFunc()))
+
+        @test jjac(Â, B̂, Ĉ, x̂) ≈ ForwardDiff.jacobian(x -> f(Â, B̂, Ĉ, x), x̂)
     end
 
     @testset "jacobian of (A .* B) * log.(A * x)" begin
-        jjac = eval(to_std(jacobian((A .* B) * log.(A * x), x); format = dc.JuliaFunc()))
+        f(A, B, x) = (A .* B) * log.(A * x)
 
-        @test jjac(Â, B̂, x̂) ≈ ForwardDiff.jacobian(x -> (Â .* B̂) * log.(Â * x), x̂)
+        jjac = eval(to_std(jacobian(f(A, B, x), x); format = dc.JuliaFunc()))
+
+        @test jjac(Â, B̂, x̂) ≈ ForwardDiff.jacobian(x -> f(Â, B̂, x), x̂)
     end
 end
