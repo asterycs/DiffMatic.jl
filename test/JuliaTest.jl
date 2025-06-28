@@ -193,4 +193,12 @@ end
 
         @test jjac(Â, B̂, x̂) ≈ ForwardDiff.jacobian(x -> f(Â, B̂, x), x̂)
     end
+
+    @testset "hessian of sum(log.(x)) * x' * x" begin
+        f(x) = sum(log.(x)) * x' * x
+
+        jhess = eval(to_std(hessian(f(x), x); format = dc.JuliaFunc()))
+
+        @test jhess(x̂) ≈ ForwardDiff.hessian(x -> f(x), x̂)
+    end
 end

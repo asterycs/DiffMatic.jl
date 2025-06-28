@@ -397,24 +397,145 @@ end
 function evaluate(
     ::Mult,
     arg1::BinaryOperation{Op},
-    arg2::Union{Literal,KrD},
+    arg2::Tensor,
 ) where {Op<:AdditiveOperation}
-    return evaluate(
-        Op(),
-        evaluate(Mult(), evaluate(arg1.arg1), evaluate(arg2)),
-        evaluate(Mult(), evaluate(arg1.arg2), evaluate(arg2)),
-    )
+    return evaluate(Mult(), arg2, arg1)
 end
 
 function evaluate(
     ::Mult,
-    arg1::Union{Literal,KrD},
+    arg1::Tensor,
+    arg2::BinaryOperation{Op},
+) where {Op<:AdditiveOperation}
+    if length(get_free_indices(arg1)) > 2 || length(get_free_indices(arg2)) > 2
+        return evaluate(
+            Op(),
+            evaluate(Mult(), arg1, evaluate(arg2.arg1)),
+            evaluate(Mult(), arg1, evaluate(arg2.arg2)),
+        )
+    end
+
+    return BinaryOperation{Mult}(arg1, arg2)
+end
+
+function evaluate(
+    ::Mult,
+    arg1::Union{KrD,Literal},
     arg2::BinaryOperation{Op},
 ) where {Op<:AdditiveOperation}
     return evaluate(
         Op(),
         evaluate(Mult(), arg1, evaluate(arg2.arg1)),
         evaluate(Mult(), arg1, evaluate(arg2.arg2)),
+    )
+end
+
+function evaluate(
+    ::Mult,
+    arg1::Zero,
+    arg2::BinaryOperation{Op},
+) where {Op<:AdditiveOperation}
+    return evaluate(Mult(), arg2, arg1)
+end
+
+function evaluate(
+    ::Mult,
+    arg1::BinaryOperation{Op},
+    arg2::Zero,
+) where {Op<:AdditiveOperation}
+    free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
+
+    return Zero(free_indices...)
+end
+
+# TODO: Why are these needed?
+function evaluate(
+    ::Mult,
+    arg1::BinaryOperation{Op1},
+    arg2::BinaryOperation{Op2},
+) where {Op1<:AdditiveOperation,Op2<:AdditiveOperation}
+    return invoke(
+        evaluate,
+        Tuple{Mult,BinaryOperation{Op1},BinaryOperation{Op2}},
+        Mult(),
+        arg1,
+        arg2,
+    )
+end
+
+function evaluate(
+    ::Mult,
+    arg1::BinaryOperation{Op},
+    arg2::BinaryOperation{Op},
+) where {Op<:AdditiveOperation}
+    return invoke(
+        evaluate,
+        Tuple{Mult,BinaryOperation{Op},BinaryOperation{Op}},
+        Mult(),
+        arg1,
+        arg2,
+    )
+end
+
+function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Add})
+    return BinaryOperation{Add}(
+        BinaryOperation{Add}(
+            BinaryOperation{Mult}(arg1.arg1, arg2.arg1),
+            BinaryOperation{Mult}(arg1.arg1, arg2.arg2),
+        ),
+        BinaryOperation{Add}(
+            BinaryOperation{Mult}(arg1.arg2, arg2.arg1),
+            BinaryOperation{Mult}(arg1.arg2, arg2.arg2),
+        ),
+    )
+end
+
+function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Add})
+    return evaluate(Mult(), arg2, arg1)
+end
+
+function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Sub})
+    return BinaryOperation{Add}(
+        BinaryOperation{Sub}(
+            BinaryOperation{Mult}(arg1.arg1, arg2.arg1),
+            BinaryOperation{Mult}(arg1.arg1, arg2.arg2),
+        ),
+        BinaryOperation{Sub}(
+            BinaryOperation{Mult}(arg1.arg2, arg2.arg1),
+            BinaryOperation{Mult}(arg1.arg2, arg2.arg2),
+        ),
+    )
+end
+
+function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Sub})
+    return BinaryOperation{Add}(
+        BinaryOperation{Sub}(
+            BinaryOperation{Mult}(arg1.arg1, arg2.arg1),
+            BinaryOperation{Mult}(arg1.arg1, arg2.arg2),
+        ),
+        BinaryOperation{Sub}(
+            BinaryOperation{Mult}(arg1.arg2, arg2.arg2),
+            BinaryOperation{Mult}(arg1.arg2, arg2.arg1),
+        ),
+    )
+end
+
+function evaluate(
+    ::Mult,
+    arg1::BinaryOperation{Op},
+    arg2::Power,
+) where {Op<:AdditiveOperation}
+    return evaluate(Mult(), arg2, arg1)
+end
+
+function evaluate(
+    ::Mult,
+    arg1::Power,
+    arg2::BinaryOperation{Op},
+) where {Op<:AdditiveOperation}
+    return BinaryOperation{Op}(
+        evaluate(Mult(), arg1, arg2.arg1),
+        evaluate(Mult(), arg1, arg2.arg2),
     )
 end
 

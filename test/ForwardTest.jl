@@ -1114,11 +1114,9 @@ end
     x = Variable("x", Upper(1))
 
     l = dc.BinaryOperation{dc.Mult}(Variable("x", Upper(100)), Variable("x", Lower(101)))
-    rl = dc.BinaryOperation{dc.Add}(
-        dc.BinaryOperation{dc.Mult}(Variable("x", Upper(100)), KrD(Lower(1), Lower(101))),
-        dc.BinaryOperation{dc.Mult}(Variable("x", Lower(1)), KrD(Upper(100), Lower(101))),
-    )
-    r = dc.BinaryOperation{dc.Mult}(rl, Variable("x", Upper(1)))
+    l = dc.BinaryOperation{dc.Mult}(2, l)
+    r = dc.BinaryOperation{dc.Mult}(Variable("x", Upper(99)), Variable("x", Lower(99)))
+    r = dc.BinaryOperation{dc.Mult}(r, KrD(Upper(100), Lower(101)))
     expected = dc.BinaryOperation{dc.Add}(l, r)
 
     D = dc.diff(x * x' * x, Variable("x", Upper(6)))
