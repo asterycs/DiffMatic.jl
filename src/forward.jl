@@ -262,10 +262,15 @@ function evaluate(::Mult, arg1::Zero, arg2::UnaryOperation)
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::UnaryOperation, arg2::Zero)
+# Assumes one argument is of type 'Zero'
+function _multiply_by_zero(arg1, arg2)
     free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
 
     return Zero(free_indices...)
+end
+
+function evaluate(::Mult, arg1::UnaryOperation, arg2::Zero)
+    return _multiply_by_zero(arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::Zero, arg2::Tensor)
@@ -273,9 +278,7 @@ function evaluate(::Mult, arg1::Zero, arg2::Tensor)
 end
 
 function evaluate(::Mult, arg1::Tensor, arg2::Zero)
-    free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
-
-    return Zero(free_indices...)
+    return _multiply_by_zero(arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::KrD, arg2::Zero)
@@ -283,9 +286,7 @@ function evaluate(::Mult, arg1::KrD, arg2::Zero)
 end
 
 function evaluate(::Mult, arg1::Zero, arg2::KrD)
-    free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
-
-    return Zero(free_indices...)
+    return _multiply_by_zero(arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::KrD, arg2::UnaryOperation)
@@ -337,10 +338,7 @@ function evaluate(::Mult, arg1::Zero, arg2::Power)
 end
 
 function evaluate(::Mult, arg1::Power, arg2::Zero)
-    new_indices =
-        unique(eliminate_indices([get_free_indices(arg1); get_free_indices(arg2)]))
-
-    return Zero(new_indices...)
+    return _multiply_by_zero(arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::KrD)
@@ -394,22 +392,18 @@ function _multiply_with_krd(arg1::Union{Variable,Literal,KrD}, arg2::KrD)
     return newarg
 end
 
-function evaluate(
-    ::Mult,
-    arg1::BinaryOperation{Op},
-    arg2::Tensor,
-) where {Op<:AdditiveOperation}
+function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::Tensor)
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(
-    ::Mult,
-    arg1::Tensor,
-    arg2::BinaryOperation{Op},
-) where {Op<:AdditiveOperation}
+function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Tensor)
+    return evaluate(Mult(), arg2, arg1)
+end
+
+function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Add})
     if length(get_free_indices(arg1)) > 2 || length(get_free_indices(arg2)) > 2
         return evaluate(
-            Op(),
+            Add(),
             evaluate(Mult(), arg1, evaluate(arg2.arg1)),
             evaluate(Mult(), arg1, evaluate(arg2.arg2)),
         )
@@ -418,63 +412,48 @@ function evaluate(
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function evaluate(
-    ::Mult,
-    arg1::Union{KrD,Literal},
-    arg2::BinaryOperation{Op},
-) where {Op<:AdditiveOperation}
+function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Sub})
+    if length(get_free_indices(arg1)) > 2 || length(get_free_indices(arg2)) > 2
+        return evaluate(
+            Sub(),
+            evaluate(Mult(), arg1, evaluate(arg2.arg1)),
+            evaluate(Mult(), arg1, evaluate(arg2.arg2)),
+        )
+    end
+
+    return BinaryOperation{Mult}(arg1, arg2)
+end
+
+function evaluate(::Mult, arg1::Union{KrD,Literal}, arg2::BinaryOperation{Add})
     return evaluate(
-        Op(),
+        Add(),
         evaluate(Mult(), arg1, evaluate(arg2.arg1)),
         evaluate(Mult(), arg1, evaluate(arg2.arg2)),
     )
 end
 
-function evaluate(
-    ::Mult,
-    arg1::Zero,
-    arg2::BinaryOperation{Op},
-) where {Op<:AdditiveOperation}
+function evaluate(::Mult, arg1::Union{KrD,Literal}, arg2::BinaryOperation{Sub})
+    return evaluate(
+        Sub(),
+        evaluate(Mult(), arg1, evaluate(arg2.arg1)),
+        evaluate(Mult(), arg1, evaluate(arg2.arg2)),
+    )
+end
+
+function evaluate(::Mult, arg1::Zero, arg2::BinaryOperation{Add})
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(
-    ::Mult,
-    arg1::BinaryOperation{Op},
-    arg2::Zero,
-) where {Op<:AdditiveOperation}
-    free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
-
-    return Zero(free_indices...)
+function evaluate(::Mult, arg1::Zero, arg2::BinaryOperation{Sub})
+    return evaluate(Mult(), arg2, arg1)
 end
 
-# TODO: Why are these needed?
-function evaluate(
-    ::Mult,
-    arg1::BinaryOperation{Op1},
-    arg2::BinaryOperation{Op2},
-) where {Op1<:AdditiveOperation,Op2<:AdditiveOperation}
-    return invoke(
-        evaluate,
-        Tuple{Mult,BinaryOperation{Op1},BinaryOperation{Op2}},
-        Mult(),
-        arg1,
-        arg2,
-    )
+function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::Zero)
+    return _multiply_by_zero(arg1, arg2)
 end
 
-function evaluate(
-    ::Mult,
-    arg1::BinaryOperation{Op},
-    arg2::BinaryOperation{Op},
-) where {Op<:AdditiveOperation}
-    return invoke(
-        evaluate,
-        Tuple{Mult,BinaryOperation{Op},BinaryOperation{Op}},
-        Mult(),
-        arg1,
-        arg2,
-    )
+function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Zero)
+    return _multiply_by_zero(arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Add})
@@ -520,20 +499,24 @@ function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Sub}
     )
 end
 
-function evaluate(
-    ::Mult,
-    arg1::BinaryOperation{Op},
-    arg2::Power,
-) where {Op<:AdditiveOperation}
+function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::Power)
     return evaluate(Mult(), arg2, arg1)
 end
 
-function evaluate(
-    ::Mult,
-    arg1::Power,
-    arg2::BinaryOperation{Op},
-) where {Op<:AdditiveOperation}
-    return BinaryOperation{Op}(
+function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Power)
+    return evaluate(Mult(), arg2, arg1)
+end
+
+
+function evaluate(::Mult, arg1::Power, arg2::BinaryOperation{Add})
+    return BinaryOperation{Add}(
+        evaluate(Mult(), arg1, arg2.arg1),
+        evaluate(Mult(), arg1, arg2.arg2),
+    )
+end
+
+function evaluate(::Mult, arg1::Power, arg2::BinaryOperation{Sub})
+    return BinaryOperation{Sub}(
         evaluate(Mult(), arg1, arg2.arg1),
         evaluate(Mult(), arg1, arg2.arg2),
     )
@@ -561,9 +544,7 @@ function evaluate(::Mult, arg1::T, arg2::Tensor) where {T<:Real}
 end
 
 function evaluate(::Mult, arg1::Zero, arg2::Zero)
-    new_indices = eliminate_indices([get_free_indices(arg1); get_free_indices(arg2)])
-
-    return Zero(new_indices...)
+    return _multiply_by_zero(arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::Zero, arg2::Real)
