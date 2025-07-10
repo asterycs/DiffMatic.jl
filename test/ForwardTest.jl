@@ -574,6 +574,47 @@ end
     @test evaluate(op4) == Zero(Upper(1), Lower(3))
 end
 
+@testset "evaluate product of zero (Real) and product" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Lower(2))
+
+    p = dc.BinaryOperation{dc.Mult}(a, b)
+
+    op1 = dc.BinaryOperation{dc.Mult}(p, 0)
+    op2 = dc.BinaryOperation{dc.Mult}(0, p)
+
+    @test evaluate(op1) == Zero(Upper(1), Lower(2))
+    @test evaluate(op2) == Zero(Upper(1), Lower(2))
+end
+
+@testset "evaluate product of Zero and power" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Lower(2))
+
+    p = dc.BinaryOperation{dc.Mult}(a, b)
+
+    op1 = dc.BinaryOperation{dc.Mult}(p, 0)
+    op2 = dc.BinaryOperation{dc.Mult}(0, p)
+
+    @test evaluate(op1) == Zero(Upper(1), Lower(2))
+    @test evaluate(op2) == Zero(Upper(1), Lower(2))
+end
+
+@testset "evaluate product of product and real" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Upper(1))
+
+    function mult(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    op1 = mult(mult(a, b), 3)
+    op2 = mult(3, mult(a, b))
+
+    @test evaluate(op1) == op2
+    @test evaluate(op2) == op2
+end
+
 @testset "evaluate product of products" begin
     a = Variable("a", Upper(1))
     b = Variable("b", Upper(1))
