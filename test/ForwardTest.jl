@@ -590,6 +590,20 @@ end
 @testset "evaluate product of Zero and power" begin
     a = Variable("a", Upper(1))
     b = Variable("b", Lower(2))
+    z = Zero(Upper(1))
+
+    p = dc.BinaryOperation{dc.Mult}(a, b)
+
+    op1 = dc.BinaryOperation{dc.Mult}(p, z)
+    op2 = dc.BinaryOperation{dc.Mult}(z, p)
+
+    @test evaluate(op1) == Zero(Upper(1), Lower(2))
+    @test evaluate(op2) == Zero(Upper(1), Lower(2))
+end
+
+@testset "evaluate product of zero and power" begin
+    a = Variable("a", Upper(1))
+    b = Variable("b", Lower(2))
 
     p = dc.BinaryOperation{dc.Mult}(a, b)
 
