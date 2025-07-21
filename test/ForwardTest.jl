@@ -588,11 +588,8 @@ end
 end
 
 @testset "evaluate product of Zero and power" begin
-    a = Variable("a", Upper(1))
-    b = Variable("b", Lower(2))
+    p = dc.Power(Variable("a", Upper(1)), 2)
     z = Zero(Upper(1))
-
-    p = dc.BinaryOperation{dc.Mult}(a, b)
 
     op1 = dc.BinaryOperation{dc.Mult}(p, z)
     op2 = dc.BinaryOperation{dc.Mult}(z, p)
