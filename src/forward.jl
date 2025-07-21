@@ -328,7 +328,9 @@ function evaluate(::Mult, arg1::Power, arg2::Tensor)
 end
 
 function evaluate(::Mult, arg1::Power, arg2::Power)
-    # TODO: Simplify based on exponents
+    if isequal(arg1.base, arg2.base)
+        return Power(arg1.base, arg1.exponent + arg2.exponent)
+    end
 
     return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
 end

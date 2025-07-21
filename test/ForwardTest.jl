@@ -587,6 +587,36 @@ end
     @test evaluate(op2) == Zero(Upper(1), Lower(2))
 end
 
+@testset "evaluate product of powers with same base" begin
+    l = dc.Power(Variable("a", Upper(1)), 2)
+    r1 = dc.Power(Variable("a", Upper(1)), 3)
+    r2 = dc.Power(Variable("a", Upper(1)), -2)
+    r3 = dc.Power(Variable("a", Upper(1)), -2)
+
+    for r ∈ (r1, r2, r3)
+        op1 = dc.BinaryOperation{dc.Mult}(l, r)
+        op2 = dc.BinaryOperation{dc.Mult}(r, l)
+
+        @test evaluate(op1) == dc.Power(Variable("a", Upper(1)), l.exponent + r.exponent)
+        @test evaluate(op2) == dc.Power(Variable("a", Upper(1)), l.exponent + r.exponent)
+    end
+end
+
+@testset "evaluate product of powers with differing base" begin
+    l = dc.Power(Variable("a", Upper(1)), 2)
+    r1 = dc.Power(Variable("b", Upper(1)), 3)
+    r2 = dc.Power(Variable("a", Upper(2)), -2)
+    r3 = dc.Power(Variable("a", Lower(1)), -2)
+
+    for r ∈ (r1, r2, r3)
+        op1 = dc.BinaryOperation{dc.Mult}(l, r)
+        op2 = dc.BinaryOperation{dc.Mult}(r, l)
+
+        @test evaluate(op1) == op1
+        @test evaluate(op2) == op2
+    end
+end
+
 @testset "evaluate product of Zero and power" begin
     p = dc.Power(Variable("a", Upper(1)), 2)
     z = Zero(Upper(1))
