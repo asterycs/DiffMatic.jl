@@ -624,8 +624,8 @@ end
     op1 = dc.BinaryOperation{dc.Mult}(p, z)
     op2 = dc.BinaryOperation{dc.Mult}(z, p)
 
-    @test evaluate(op1) == Zero(Upper(1), Lower(2))
-    @test evaluate(op2) == Zero(Upper(1), Lower(2))
+    @test evaluate(op1) == Zero(Upper(1))
+    @test evaluate(op2) == Zero(Upper(1))
 end
 
 @testset "evaluate product of zero and power" begin
