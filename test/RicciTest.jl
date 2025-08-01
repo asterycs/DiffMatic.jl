@@ -9,7 +9,7 @@ using Test
 using DiffMatic: Variable, Literal, KrD, Zero
 using DiffMatic: Upper, Lower
 
-using LinearAlgebra: norm, tr, I
+using LinearAlgebra: norm, tr, I, diagm
 
 dc = DiffMatic
 
@@ -46,6 +46,14 @@ end
 @testset "Literal matrix constructor" begin
     @test matrix(2) == Literal(2, Upper(1), Lower(2))
     @test matrix(4.2) == Literal(4.2, Upper(1), Lower(2))
+end
+
+@testset "Diagonal matrix constructor" begin
+    x = Variable("x", Upper(1))
+    xt = Variable("x", Lower(1))
+
+    @test diagm(x) == dc.BinaryOperation{dc.Mult}(KrD(Upper(1), Lower(2)), x)
+    @test diagm(xt) == dc.BinaryOperation{dc.Mult}(KrD(Lower(1), Upper(2)), xt)
 end
 
 @testset "index equality operator" begin

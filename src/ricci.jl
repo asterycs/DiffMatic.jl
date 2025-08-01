@@ -781,6 +781,22 @@ function Base.adjoint(arg::Union{Variable,Literal,KrD,Zero})
     return evaluate(e)
 end
 
+function LinearAlgebra.diagm(v::Tensor)
+    indices = get_free_indices(v)
+
+    if length(indices) != 1
+        throw(
+            DomainError(indices, "Input is not a vector, cannot create a diagonal matrix"),
+        )
+    end
+
+    vector_index = only(indices)
+    next_letter = get_next_letter(v)
+    id = KrD(vector_index, flip_to(vector_index, next_letter))
+
+    return BinaryOperation{Mult}(id, v)
+end
+
 function script(index::Lower)
     @assert index.letter >= 0
     text = []

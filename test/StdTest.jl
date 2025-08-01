@@ -240,6 +240,24 @@ end
     @test to_std(mul(y, A)) == "Adiag(y)"
 end
 
+@testset "to_std output is correct with diagonal matrix-matrix multiplication" begin
+    A = Variable("A", Upper(1), Lower(2))
+    x = Variable("x", Upper(3))
+    y = Variable("y", Upper(2))
+
+    d = KrD(Upper(1), Lower(3))
+
+    function mul(l, r)
+        return dc.BinaryOperation{dc.Mult}(l, r)
+    end
+
+    @test to_std(mul(mul(A, y), KrD(Upper(1), Lower(3)))) == "diag(Ay)I"
+    @test to_std(mul(KrD(Upper(1), Lower(3)), mul(A, y))) == "diag(Ay)I"
+    @test to_std(mul(mul(mul(A, y), KrD(Upper(1), Lower(3))), x)) == "diag(x)Ay"
+    @test to_std(mul(x, mul(KrD(Upper(1), Lower(3)), mul(A, y)))) == "diag(x)Ay"
+    @test to_std(mul(x, mul(mul(A, y), KrD(Upper(1), Lower(3))))) == "diag(x)Ay"
+end
+
 @testset "to_std output is correct with vector-vector element wise multiplication" begin
     x = Variable("x", Upper(1))
     y = Variable("y", Upper(1))

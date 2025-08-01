@@ -135,33 +135,46 @@ function simplify(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
 end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
-    if is_diag(arg1) && !is_elementwise_multiplication(arg1, arg2)
+    op = BinaryOperation{Mult}(arg1, arg2)
+
+    if is_diag(arg1) &&
+       !is_elementwise_multiplication(arg1, arg2) &&
+       length(get_free_indices(op)) == 1
         d = get_diag_delta(arg1)
 
         @assert !isnothing(d)
 
         target_indices = eliminate_indices(vcat(get_free_indices(arg1), get_indices(arg2)))
         factors = collect_factors(arg1)
+        vector_factors = filter(f -> f != d, factors)
         reshaped = []
 
         for f ∈ factors
-            if f isa KrD
+            if isequal(f, d)
                 continue
             end
 
             free_ids = get_free_indices(f)
+
             if isempty(free_ids)
                 push!(reshaped, f)
-            elseif length(free_ids) == 1
+            elseif length(free_ids) == 1 || length(free_ids) == 2
                 @assert length(target_indices) == 1
 
-                current_idx = intersect(free_ids, get_free_indices(d))
-                f = update_index(
-                    f,
-                    only(current_idx),
-                    only(target_indices);
-                    allow_shape_change = true,
-                )
+                vector_index =
+                    only(get_free_indices(to_binary_operation(Mult(), vector_factors)))
+
+                current_idx = intersect(free_ids, [vector_index])
+
+                if !isempty(current_idx)
+                    f = update_index(
+                        f,
+                        vector_index,
+                        only(target_indices);
+                        allow_shape_change = true,
+                    )
+                end
+
                 push!(reshaped, f)
             else
                 @assert false "Not implemented, please open an issue with your input"
@@ -185,7 +198,7 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
         return to_binary_operation(Mult(), reshaped)
     end
 
-    return BinaryOperation{Mult}(arg1, arg2)
+    return op
 end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
