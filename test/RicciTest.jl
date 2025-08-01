@@ -38,6 +38,16 @@ end
     @test Literal(2) isa Literal
 end
 
+@testset "Literal vector constructor" begin
+    @test vector(2) == Literal(2, Upper(1))
+    @test vector(4.2) == Literal(4.2, Upper(1))
+end
+
+@testset "Literal matrix constructor" begin
+    @test matrix(2) == Literal(2, Upper(1), Lower(2))
+    @test matrix(4.2) == Literal(4.2, Upper(1), Lower(2))
+end
+
 @testset "index equality operator" begin
     left = Lower(3)
     right = Lower(3)

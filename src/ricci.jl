@@ -5,6 +5,9 @@
 
 import LinearAlgebra
 
+export vector
+export matrix
+
 abstract type Tensor end
 
 Value = Union{Tensor,Real}
@@ -60,6 +63,14 @@ Base.hash(l::Literal, h::UInt) = hash(Literal, hash(l.value, hash(l.indices, h))
 
 function Base.:(==)(left::Literal, right::Literal)
     return left.value == right.value && left.indices == right.indices
+end
+
+function vector(arg::Real)
+    return Literal(arg, Upper(1))
+end
+
+function matrix(arg::Real)
+    return Literal(arg, Upper(1), Lower(2))
 end
 
 function are_unique(arg::AbstractArray)
