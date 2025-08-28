@@ -264,7 +264,7 @@ end
 
 # Assumes one argument is of type 'Zero'
 function _multiply_by_zero(arg1, arg2)
-    free_indices = unique(eliminate_indices([get_indices(arg1); get_indices(arg2)]))
+    free_indices = unique([get_indices(arg1); get_indices(arg2)])
 
     return Zero(free_indices...)
 end

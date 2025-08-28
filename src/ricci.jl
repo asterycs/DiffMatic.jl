@@ -114,7 +114,10 @@ end
 Base.hash(m::Zero, h::UInt) = hash(Zero, hash(m.indices, h))
 
 function Base.:(==)(left::Zero, right::Zero)
-    return left.indices == right.indices
+    left_ids = get_free_indices(left)
+    right_ids = get_free_indices(right)
+
+    return issetequal(left_ids, right_ids)
 end
 
 struct BinaryOperation{Op} <: Tensor where {Op}
