@@ -100,15 +100,13 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
         target_idx = only(arg2_free_ids)
 
         if flip(target_idx) ∈ elwise_ids
-            tmp_letter = get_next_letter(arg1)
-            new_r = BinaryOperation{Mult}(
-                BinaryOperation{Mult}(
-                    arg1.arg2,
-                    KrD(target_idx, same_to(target_idx, tmp_letter)),
-                ),
-                KrD(flip_to(target_idx, tmp_letter), target_idx),
+            new_r = update_index(
+                arg1.arg2,
+                flip(target_idx),
+                target_idx;
+                allow_shape_change = true,
             )
-            reshaped = BinaryOperation{Mult}(arg1.arg1, evaluate(new_r))
+            reshaped = evaluate(BinaryOperation{Mult}(arg1.arg1, evaluate(new_r)))
 
             if arg2.value != 1
                 reshaped = BinaryOperation{Mult}(arg2.value, reshaped)
