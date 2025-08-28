@@ -820,23 +820,10 @@ function Base.adjoint(arg::BinaryOperation{Op}) where {Op}
 end
 
 function Base.adjoint(arg::Union{Variable,Literal,KrD,Zero})
-    free_indices = unique(get_free_indices(arg))
+    e = deepcopy(arg)
+    e.indices[:] = flip.(arg.indices)
 
-    if length(free_indices) > 2
-        throw(DomainError(arg.id, "Adjoint is only defined for vectors and matrices"))
-    end
-
-    e = arg
-
-    for i ∈ free_indices
-        tmp_letter = get_next_letter(e)
-        e = BinaryOperation{Mult}(
-            BinaryOperation{Mult}(e, KrD(flip(i), flip_to(i, tmp_letter))),
-            KrD(same_to(i, tmp_letter), flip(i)),
-        )
-    end
-
-    return evaluate(e)
+    return e
 end
 
 function LinearAlgebra.diagm(v::Tensor)
