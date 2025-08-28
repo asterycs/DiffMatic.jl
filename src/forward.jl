@@ -171,13 +171,23 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Lite
         return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
     end
 
+    if arg1.arg1 isa KrD && can_contract(arg1.arg1, arg2) && !can_contract(arg1.arg2, arg2)
+        new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
+        return BinaryOperation{Mult}(new_arg1, arg1.arg2)
+    end
+
+    if arg1.arg2 isa KrD && can_contract(arg1.arg2, arg2) && !can_contract(arg1.arg1, arg2)
+        new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
+        return evaluate(Mult(), arg1.arg1, new_arg2)
+    end
+
     is_arg1_elementwise = is_elementwise_multiplication(arg1.arg1, arg1.arg2)
     is_all_elementwise =
         is_elementwise_multiplication(arg1.arg1, arg2) &&
         is_elementwise_multiplication(arg1.arg2, arg2)
 
     if is_arg1_elementwise || is_all_elementwise
-        return BinaryOperation{Mult}(arg1, arg2)
+        return BinaryOperation{Mult}(evaluate(arg1), arg2)
     end
 
     if is_elementwise_multiplication(arg1.arg2, arg2)
