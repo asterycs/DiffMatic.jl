@@ -512,7 +512,10 @@ end
 
     e = a * I * X
 
-    @test e.arg1 == BinaryOperation{dc.Mult}(a, KrD(Upper(1), Lower(5)))
+    @test e.arg1 == BinaryOperation{dc.Mult}(
+        BinaryOperation{dc.Mult}(true, a),
+        KrD(Upper(1), Lower(5)),
+    )
     @test e.arg2 == Variable("X", Upper(5), Lower(4))
 end
 
@@ -524,7 +527,7 @@ end
 
     @test e.arg1 == a
     @test e.arg2 == BinaryOperation{dc.Mult}(
-        KrD(Upper(1), Lower(5)),
+        BinaryOperation{dc.Mult}(true, KrD(Upper(1), Lower(5))),
         Variable("X", Upper(5), Lower(4)),
     )
 end

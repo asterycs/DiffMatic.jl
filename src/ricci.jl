@@ -723,7 +723,57 @@ function create_additive_op(
 end
 
 function update_index(
-    arg::Tensor,
+    arg::BinaryOperation{Op},
+    from::LowerOrUpperIndex,
+    to::LowerOrUpperIndex;
+    allow_shape_change = false,
+) where {Op}
+    arg1 = arg.arg1
+    arg2 = arg.arg2
+
+    arg1_free_ids = get_free_indices(arg1)
+    arg2_free_ids = get_free_indices(arg2)
+
+    if from ∈ arg1_free_ids
+        arg1 = update_index(arg1, from, to; allow_shape_change)
+    end
+
+    if from ∈ arg2_free_ids
+        arg2 = update_index(arg2, from, to; allow_shape_change)
+    end
+
+    return BinaryOperation{Op}(arg1, arg2)
+end
+
+function update_index(
+    arg::UnaryOperation{Op},
+    from::LowerOrUpperIndex,
+    to::LowerOrUpperIndex;
+    allow_shape_change = false,
+) where {Op}
+    return UnaryOperation{Op}(update_index(arg.arg, from, to; allow_shape_change))
+end
+
+function update_index(
+    arg::Power,
+    from::LowerOrUpperIndex,
+    to::LowerOrUpperIndex;
+    allow_shape_change = false,
+)
+    return Power(update_index(arg.base, from, to; allow_shape_change), arg.exponent)
+end
+
+function update_index(
+    arg::Log,
+    from::LowerOrUpperIndex,
+    to::LowerOrUpperIndex;
+    allow_shape_change = false,
+)
+    return Log(update_index(arg.arg, from, to; allow_shape_change))
+end
+
+function update_index(
+    arg::Union{Variable,KrD,Zero},
     from::LowerOrUpperIndex,
     to::LowerOrUpperIndex;
     allow_shape_change = false,
@@ -742,7 +792,15 @@ function update_index(
         end
     end
 
-    return evaluate(BinaryOperation{Mult}(arg, KrD(flip(from), to)))
+    e = deepcopy(arg)
+
+    for i ∈ eachindex(e.indices)
+        if e.indices[i] == from
+            e.indices[i] = to
+        end
+    end
+
+    return e
 end
 
 function Base.:(-)(arg::Tensor)
