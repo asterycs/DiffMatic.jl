@@ -65,34 +65,25 @@ end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
     arg2_free_ids = get_free_indices(arg2)
+    eliminated = eliminated_indices([get_free_indices(arg1); get_free_indices(arg2)])
 
-    if is_diag(arg1)
+    if is_diag(arg1) && !isempty(eliminated)
         d = get_diag_delta(arg1)
 
         @assert !isnothing(d)
 
-        factors = collect_factors(arg1)
         reshaped = []
 
-        for f ∈ factors
-            free_ids = get_free_indices(f)
-            if isempty(free_ids)
-                push!(reshaped, f)
-            elseif length(free_ids) == 1
-                target_indices =
-                    eliminate_indices(vcat(get_free_indices(arg1), arg2_free_ids))
-                @assert length(target_indices) == 1
-
-                current_idx = intersect(free_ids, get_free_indices(d))
-                f = update_index(
-                    f,
-                    only(current_idx),
-                    only(target_indices);
-                    allow_shape_change = true,
-                )
-                push!(reshaped, f)
-            end
-        end
+        push!(
+            reshaped,
+            update_index(
+                arg1.arg1,
+                first(eliminated),
+                last(eliminated);
+                allow_shape_change = true,
+            ),
+        )
+        push!(reshaped, arg1.arg2)
 
         reshaped = to_binary_operation(Mult(), reshaped)
 
@@ -100,7 +91,7 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
             reshaped = BinaryOperation{Mult}(arg2.value, reshaped)
         end
 
-        return reshaped
+        return simplify(reshaped)
     end
 
     if can_contract(arg1, arg2) && length(arg2_free_ids) == 1
@@ -202,6 +193,24 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
 end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
+    if is_diag(arg1)
+        return invoke(
+            simplify,
+            Tuple{Mult,BinaryOperation{Mult},Tensor},
+            Mult(),
+            arg1,
+            arg2,
+        )
+    elseif is_diag(arg2)
+        return invoke(
+            simplify,
+            Tuple{Mult,BinaryOperation{Mult},Tensor},
+            Mult(),
+            arg2,
+            arg1,
+        )
+    end
+
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
