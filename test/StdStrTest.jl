@@ -51,7 +51,7 @@
     @test to_std(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
     @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(x ⊙ y ⊙ c)"
     @test to_std(gradient(norm(A * x, 2), x)) == "1/2sum((xᵀAᵀ)²)⁻¹⸍²2AᵀAx"
-    @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀdiag(vec(1) ⊘ (Ax))x + log(Ax)" # TODO: Simplify diag(quotient) * vec
+    @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀdiagm(vec(1) ⊘ (Ax))x + log(Ax)" # TODO: Simplify diagm(quotient) * vec
 end
 
 @testset "test Jacobian in standard notation" begin
@@ -60,11 +60,11 @@ end
 
     @test to_std(jacobian(A * x, x)) == "A"
     @test to_std(jacobian(A' * x, x)) == "Aᵀ"
-    @test to_std(jacobian((A .* B) * log.(A * x), x)) == "(A ⊙ B)diag(vec(1) ⊘ (Ax))A"
-    @test to_std(jacobian(abs.(x), x)) == "diag(sgn(x))I"
-    @test to_std(jacobian(log.(x), x)) == "diag(vec(1) ⊘ x)I"
-    @test to_std(jacobian(diagm(A*x)*x, x)) == "diag(Ax)I + diag(x)A"
-    @test to_std(jacobian(sin.(A * x + y), x)) == "diag(cos(Ax + y))A"
+    @test to_std(jacobian((A .* B) * log.(A * x), x)) == "(A ⊙ B)diagm(vec(1) ⊘ (Ax))A"
+    @test to_std(jacobian(abs.(x), x)) == "diagm(sgn(x))I"
+    @test to_std(jacobian(log.(x), x)) == "diagm(vec(1) ⊘ x)I"
+    @test to_std(jacobian(diagm(A*x)*x, x)) == "diagm(Ax)I + diagm(x)A"
+    @test to_std(jacobian(sin.(A * x + y), x)) == "diagm(cos(Ax + y))A"
     @test to_std(jacobian(((A .* B) * C * x)' * x * x, x)) ==
           "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"
 end

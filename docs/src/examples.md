@@ -264,7 +264,7 @@ to_std(jacobian(sin.(A * x + y), x))
 
 # output
 
-"diag(cos(Ax + y))A"
+"diagm(cos(Ax + y))A"
 ```
 ```jldoctest usage
 to_std(jacobian(((A .* B) * C * x)' * x * x, x))

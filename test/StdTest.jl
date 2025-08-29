@@ -234,10 +234,10 @@ end
         return dc.BinaryOperation{dc.Mult}(l, r)
     end
 
-    @test to_std(mul(A, x)) == "diag(x)A"
-    @test to_std(mul(x, A)) == "diag(x)A"
-    @test to_std(mul(A, y)) == "Adiag(y)"
-    @test to_std(mul(y, A)) == "Adiag(y)"
+    @test to_std(mul(A, x)) == "diagm(x)A"
+    @test to_std(mul(x, A)) == "diagm(x)A"
+    @test to_std(mul(A, y)) == "Adiagm(y)"
+    @test to_std(mul(y, A)) == "Adiagm(y)"
 end
 
 @testset "to_std output is correct with diagonal matrix-matrix multiplication" begin
@@ -251,11 +251,11 @@ end
         return dc.BinaryOperation{dc.Mult}(l, r)
     end
 
-    @test to_std(mul(mul(A, y), KrD(Upper(1), Lower(3)))) == "diag(Ay)I"
-    @test to_std(mul(KrD(Upper(1), Lower(3)), mul(A, y))) == "diag(Ay)I"
-    @test to_std(mul(mul(mul(A, y), KrD(Upper(1), Lower(3))), x)) == "diag(x)Ay"
-    @test to_std(mul(x, mul(KrD(Upper(1), Lower(3)), mul(A, y)))) == "diag(x)Ay"
-    @test to_std(mul(x, mul(mul(A, y), KrD(Upper(1), Lower(3))))) == "diag(x)Ay"
+    @test to_std(mul(mul(A, y), KrD(Upper(1), Lower(3)))) == "diagm(Ay)I"
+    @test to_std(mul(KrD(Upper(1), Lower(3)), mul(A, y))) == "diagm(Ay)I"
+    @test to_std(mul(mul(mul(A, y), KrD(Upper(1), Lower(3))), x)) == "diagm(x)Ay"
+    @test to_std(mul(x, mul(KrD(Upper(1), Lower(3)), mul(A, y)))) == "diagm(x)Ay"
+    @test to_std(mul(x, mul(mul(A, y), KrD(Upper(1), Lower(3))))) == "diagm(x)Ay"
 end
 
 @testset "to_std output is correct with vector-vector element wise multiplication" begin

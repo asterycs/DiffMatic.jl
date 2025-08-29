@@ -85,7 +85,7 @@ function to_julia(arg::ir.Trace)
     return :(tr($(to_julia(arg.arg))))
 end
 
-function to_julia(arg::ir.Diag)
+function to_julia(arg::ir.Diagm)
     return :(diagm($(to_julia(arg.arg))))
 end
 

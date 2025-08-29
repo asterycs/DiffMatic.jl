@@ -202,6 +202,10 @@ function to_std_str(arg::ir.Trace)
     return "tr(" * to_std_str(arg.arg) * ")"
 end
 
+function to_std_str(arg::ir.Diagm)
+    return "diagm(" * to_std_str(arg.arg) * ")"
+end
+
 function to_std_str(arg::ir.Diag)
     return "diag(" * to_std_str(arg.arg) * ")"
 end

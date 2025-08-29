@@ -82,6 +82,10 @@ struct Diag <: IR
     arg::IR
 end
 
+struct Diagm <: IR
+    arg::IR
+end
+
 struct Transpose <: IR
     arg::IR
 end
@@ -154,7 +158,7 @@ function _get_variables(arg::Trace)
     return _get_variables(arg.arg)
 end
 
-function _get_variables(arg::Diag)
+function _get_variables(arg::Diagm)
     return _get_variables(arg.arg)
 end
 
@@ -357,9 +361,9 @@ function to_ir(arg::BinaryOperation{Mult})
                 end
 
                 if only(v_ids) isa Upper
-                    return ir.Product(ir.Diag(to_ir(vector)), to_ir(matrix))
+                    return ir.Product(ir.Diagm(to_ir(vector)), to_ir(matrix))
                 elseif only(v_ids) isa Lower
-                    return ir.Product(to_ir(matrix), ir.Diag(to_ir(vector)))
+                    return ir.Product(to_ir(matrix), ir.Diagm(to_ir(vector)))
                 end
             end
 
