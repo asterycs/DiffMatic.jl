@@ -781,7 +781,7 @@ function update_index(
     to::LowerOrUpperIndex;
     allow_shape_change = false,
 )
-    indices = get_free_indices(arg)
+    indices = get_indices(arg)
 
     if from == to
         return arg
