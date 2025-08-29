@@ -67,7 +67,7 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
     arg2_free_ids = get_free_indices(arg2)
     eliminated = eliminated_indices([get_free_indices(arg1); get_free_indices(arg2)])
 
-    if is_diag(arg1) && !isempty(eliminated)
+    if is_diagm(arg1) && !isempty(eliminated)
         d = get_diag_delta(arg1)
 
         @assert !isnothing(d)
@@ -126,7 +126,7 @@ end
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     op = BinaryOperation{Mult}(arg1, arg2)
 
-    if is_diag(arg1) &&
+    if is_diagm(arg1) &&
        !is_elementwise_multiplication(arg1, arg2) &&
        length(get_free_indices(op)) == 1
         d = get_diag_delta(arg1)
@@ -191,7 +191,7 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
 end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
-    if is_diag(arg1)
+    if is_diagm(arg1)
         return invoke(
             simplify,
             Tuple{Mult,BinaryOperation{Mult},Tensor},
@@ -199,7 +199,7 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
             arg1,
             arg2,
         )
-    elseif is_diag(arg2)
+    elseif is_diagm(arg2)
         return invoke(
             simplify,
             Tuple{Mult,BinaryOperation{Mult},Tensor},

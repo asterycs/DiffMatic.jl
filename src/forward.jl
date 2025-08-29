@@ -126,40 +126,40 @@ function is_elementwise_multiplication(arg1, arg2)
 end
 
 
-function is_diag(arg::BinaryOperation{Mult})
-    return is_diag(arg.arg1, arg.arg2)
+function is_diagm(arg::BinaryOperation{Mult})
+    return is_diagm(arg.arg1, arg.arg2)
 end
 
-function is_diag(arg)
+function is_diagm(arg)
     return false
 end
 
-function is_diag(arg1::KrD, arg2::Tensor)
-    return is_diag(arg2, arg1)
+function is_diagm(arg1::KrD, arg2::Tensor)
+    return is_diagm(arg2, arg1)
 end
 
-function is_diag(arg1::KrD, arg2::KrD)
+function is_diagm(arg1::KrD, arg2::KrD)
     return false
 end
 
-function is_diag(arg::Union{Variable,Literal,KrD,Zero})
+function is_diagm(arg::Union{Variable,Literal,KrD,Zero})
     return false
 end
 
-function is_diag(arg1::Tensor, arg2::KrD)
+function is_diagm(arg1::Tensor, arg2::KrD)
     arg1_indices, arg2_indices = get_free_indices.((arg1, arg2))
 
     return length(arg1_indices) == 1 && !isempty(intersect(arg1_indices, arg2_indices))
 end
 
-function is_diag(arg1::Value, arg2::Value)
+function is_diagm(arg1::Value, arg2::Value)
     if isempty(get_free_indices(arg1))
-        return is_diag(arg2)
+        return is_diagm(arg2)
     elseif isempty(get_free_indices(arg2))
-        return is_diag(arg1)
+        return is_diagm(arg1)
     end
 
-    return is_diag(arg1) || is_diag(arg2)
+    return is_diagm(arg1) || is_diagm(arg2)
 end
 
 function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::BinaryOperation{Mult})
