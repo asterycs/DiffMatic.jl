@@ -262,11 +262,29 @@ function to_standard(term::Literal)
     throw_not_std(term)
 end
 
-function to_standard(term::Union{KrD,Zero})
-    ids = term.indices
+function to_standard(term::KrD)
+    ids = get_indices(term)
 
     if length(ids) == 2
-        if typeof(last(term.indices)) == Lower
+        if typeof(last(ids)) == Lower
+            return typeof(term)(Upper(ids[1].letter), Lower(ids[2].letter))
+        else
+            return typeof(term)(Lower(ids[1].letter), Upper(ids[2].letter))
+        end
+    elseif length(ids) == 1
+        return term
+    elseif isempty(ids)
+        return typeof(term)()
+    end
+
+    throw_not_std(term)
+end
+
+function to_standard(term::Zero)
+    ids = get_free_indices(term)
+
+    if length(ids) == 2
+        if typeof(last(ids)) == Lower
             return typeof(term)(Upper(ids[1].letter), Lower(ids[2].letter))
         else
             return typeof(term)(Lower(ids[1].letter), Upper(ids[2].letter))

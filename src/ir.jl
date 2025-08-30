@@ -267,7 +267,7 @@ end
 function to_ir(arg::Zero)
     @assert is_standard_form(arg)
 
-    ids = get_indices(arg)
+    ids = get_free_indices(arg)
 
     if length(ids) == 2
         if typeof(ids[1]) == Upper && typeof(ids[2]) == Lower
