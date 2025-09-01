@@ -190,13 +190,7 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Lite
         return BinaryOperation{Mult}(evaluate(arg1), arg2)
     end
 
-    if is_elementwise_multiplication(arg1.arg2, arg2)
-        new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
-        return BinaryOperation{Mult}(arg1.arg1, new_arg2)
-    elseif is_elementwise_multiplication(arg1.arg1, arg2)
-        new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
-        return BinaryOperation{Mult}(new_arg1, arg1.arg2)
-    elseif can_contract(arg1.arg2, arg2)
+    if can_contract(arg1.arg2, arg2)
         new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
         return BinaryOperation{Mult}(arg1.arg1, new_arg2)
     elseif can_contract(arg1.arg1, arg2)

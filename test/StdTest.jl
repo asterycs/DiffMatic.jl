@@ -253,9 +253,10 @@ end
 
     @test to_std(mul(mul(A, y), KrD(Upper(1), Lower(3)))) == "diagm(Ay)I"
     @test to_std(mul(KrD(Upper(1), Lower(3)), mul(A, y))) == "diagm(Ay)I"
-    @test to_std(mul(mul(mul(A, y), KrD(Upper(1), Lower(3))), x)) == "diagm(x)Ay"
-    @test to_std(mul(x, mul(KrD(Upper(1), Lower(3)), mul(A, y)))) == "diagm(x)Ay"
-    @test to_std(mul(x, mul(mul(A, y), KrD(Upper(1), Lower(3))))) == "diagm(x)Ay"
+    @test to_std(mul(mul(mul(A, y), KrD(Upper(1), Lower(3))), x)) == "Ay ⊙ x"
+    @test to_std(mul(x, mul(KrD(Upper(1), Lower(3)), mul(A, y)))) == "Ay ⊙ x"
+    @test to_std(mul(mul(x, KrD(Upper(1), Lower(3))), mul(A, y))) == "Ay ⊙ x"
+    @test to_std(mul(x, mul(mul(A, y), KrD(Upper(1), Lower(3))))) == "Ay ⊙ x"
 end
 
 @testset "to_std output is correct with vector-vector element wise multiplication" begin
