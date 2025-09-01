@@ -94,7 +94,9 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
         return simplify(reshaped)
     end
 
-    if can_contract(arg1, arg2) && length(arg2_free_ids) == 1
+    if can_contract(arg1, arg2) &&
+       length(arg2_free_ids) == 1 &&
+       !is_all_elementwise(arg1.arg1, arg1.arg2)
         elwise_ids = elementwise_indices(arg1.arg1, arg1.arg2)
 
         target_idx = only(arg2_free_ids)

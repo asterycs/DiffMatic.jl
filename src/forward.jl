@@ -125,6 +125,11 @@ function is_elementwise_multiplication(arg1, arg2)
     return !isempty(indices_in_common(arg1, arg2))
 end
 
+function is_all_elementwise(arg1, arg2)
+    num_common_ids = length(indices_in_common(arg1, arg2))
+    return num_common_ids == length(get_free_indices(arg1)) &&
+           num_common_ids == length(get_free_indices(arg2))
+end
 
 function is_diagm(arg::BinaryOperation{Mult})
     return is_diagm(arg.arg1, arg.arg2)
@@ -182,11 +187,11 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Lite
     end
 
     is_arg1_elementwise = is_elementwise_multiplication(arg1.arg1, arg1.arg2)
-    is_all_elementwise =
+    are_both_elwise =
         is_elementwise_multiplication(arg1.arg1, arg2) &&
         is_elementwise_multiplication(arg1.arg2, arg2)
 
-    if is_arg1_elementwise || is_all_elementwise
+    if is_arg1_elementwise || are_both_elwise
         return BinaryOperation{Mult}(evaluate(arg1), arg2)
     end
 
