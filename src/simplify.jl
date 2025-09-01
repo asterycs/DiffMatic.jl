@@ -125,8 +125,45 @@ function simplify(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
     return simplify(Mult(), arg2, arg1)
 end
 
+function can_apply(l::BinaryOperation{Mult}, r::KrD)
+    return can_contract(l.arg1, r) || can_contract(l.arg2, r)
+end
+
+function can_apply(l::KrD, r::BinaryOperation{Mult})
+    return can_contract(l, r.arg1) || can_contract(l, r.arg2)
+end
+
+function can_apply(l::BinaryOperation{Mult}, r::BinaryOperation{Mult})
+    return can_apply(l, r.arg1) || can_apply(l, r.arg2)
+end
+
+function can_apply(l::BinaryOperation{Mult}, r::Tensor)
+    return can_contract(l.arg1, r) || can_contract(l.arg2, r)
+end
+
+function can_apply(l::Tensor, r::BinaryOperation{Mult})
+    return can_contract(l, r.arg1) || can_contract(l, r.arg2)
+end
+
+function can_apply(l::Tensor, r::KrD)
+    return can_contract(l, r)
+end
+
+function can_apply(l::KrD, r::Tensor)
+    return can_contract(l, r)
+end
+
+function can_apply(l::KrD, r::KrD)
+    return can_contract(l, r)
+end
+
+function can_apply(l, r)
+    return false
+end
+
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     op = BinaryOperation{Mult}(arg1, arg2)
+    target_indices = unique(get_free_indices(op))
 
     if is_diagm(arg1) &&
        !is_elementwise_multiplication(arg1, arg2) &&
@@ -135,7 +172,6 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
 
         @assert !isnothing(d)
 
-        target_indices = eliminate_indices(vcat(get_free_indices(arg1), get_indices(arg2)))
         factors = collect_factors(arg1)
         vector_factors = filter(f -> f != d, factors)
         reshaped = []
@@ -187,6 +223,32 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
         end
 
         return to_binary_operation(Mult(), reshaped)
+    end
+
+    if length(get_free_indices(arg1)) > 2 && length(get_free_indices(arg2)) == 1
+        if can_apply(arg1.arg1, arg2) &&
+           can_apply(arg1.arg2, arg2) &&
+           arg1.arg1 isa KrD &&
+           arg1.arg2 isa KrD
+            r_free_indices = get_free_indices(arg2)
+
+            new_r = update_index(
+                arg2,
+                only(r_free_indices),
+                first(target_indices);
+                allow_shape_change = true,
+            )
+
+            eliminated = eliminated_indices([get_free_indices(arg1); r_free_indices])
+            new_l = update_index(
+                arg1.arg2,
+                first(eliminated),
+                first(target_indices);
+                allow_shape_change = true,
+            )
+
+            return BinaryOperation{Mult}(new_l, new_r)
+        end
     end
 
     return op

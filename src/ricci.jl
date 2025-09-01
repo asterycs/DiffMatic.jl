@@ -845,6 +845,20 @@ function LinearAlgebra.diagm(v::Tensor)
     return BinaryOperation{Mult}(id, v)
 end
 
+function LinearAlgebra.diag(m::Tensor, k::Integer = 0)
+    indices = get_free_indices(m)
+
+    if length(indices) != 2
+        throw(DomainError(indices, "Input is not a matrix, cannot extract the diagonal"))
+    end
+
+    if k != 0
+        throw(DomainError(k, "Cannot extract the k-th diagonal when k!=0"))
+    end
+
+    return (m .* LinearAlgebra.I) * vector(1)
+end
+
 function script(index::Lower)
     @assert index.letter >= 0
     text = []

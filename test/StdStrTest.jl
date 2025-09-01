@@ -32,6 +32,7 @@
     @test to_std(gradient(sum(2 * x), x)) == "2vec(1)"
     @test to_std(gradient(2 * sum(sin.(x)), x)) == "2cos(x)"
     @test to_std(gradient(sum(2 * sin.(x)), x)) == "2cos(x)"
+    @test to_std(gradient(diag(A)'*x, x)) == "(A ⊙ I)vec(1)" # TODO: Output 'diag(A)'
     @test to_std(gradient(2 * sum(cos.(A * x + y)), x)) == "(-2)Aᵀsin(Ax + y)"
     @test to_std(gradient(sum(2 * cos.(A * x + y)), x)) == "(-2)Aᵀsin(Ax + y)"
     @test to_std(gradient(sum(x .^ 2), x)) == "2x"
@@ -73,6 +74,7 @@ end
     @matrix A B C X
     @vector x y z
 
+    @test to_std(derivative(diag(A)'*x, A)) == "Iᵀdiagm(x)"
     @test to_std(derivative(sum(-y .* (X*z)), X)) == "(-1)zyᵀ"
     @test to_std(derivative(sum((A .* B) * C * x), x)) == "vec(1)ᵀ(A ⊙ B)C"
 end

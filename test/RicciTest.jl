@@ -9,7 +9,7 @@ using Test
 using DiffMatic: Variable, Literal, KrD, Zero
 using DiffMatic: Upper, Lower
 
-using LinearAlgebra: norm, tr, I, diagm
+using LinearAlgebra: norm, tr, I, diagm, diag
 
 dc = DiffMatic
 
