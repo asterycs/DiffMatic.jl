@@ -130,7 +130,7 @@ to_std(J; format = StdStr())
 Special notation used in the output:
   - "⊙": Element-wise multiplication.
   - "⊘": Element-wise division.
-  - "diag(x)": Diagonal matrix with "x" on the diagonal.
+  - "diagm(x)": Diagonal matrix with "x" on the diagonal.
   - "vec(1)": Vector consisting of 1:s.
   - "sgn(x)": The signum function applied element-wise.
   - "tr(X)": Trace of the matrix "X".
