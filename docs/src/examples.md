@@ -273,6 +273,13 @@ to_std(jacobian(((A .* B) * C * x)' * x * x, x))
 
 "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"
 ```
+```jldoctest usage
+to_std(jacobian(diag(diagm(x' * B' * A * A)), x))
+
+# output
+
+"diagm(vec(1))AᵀAᵀB"
+```
 
 ### Derivative
 ```jldoctest usage
