@@ -51,12 +51,14 @@ standard notation.
 
 ### Supported functions and operators
 
-`+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos`, `log`
-
-Element-wise operations `sin.`, `cos.`, `abs.`, `.*`, `.^` and `log.` are supported.  
-Vector 1-norm and 2-norm can be computed with `LinearAlgebra.norm(..., 1)` and `LinearAlgebra.norm(..., 2)`.  
-Sums of vectors can be computed with `sum`.  
-Matrix traces can be computed with `LinearAlgebra.tr`.
+- Basic operators `+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos` and `log`
+- Element-wise operators `sin.`, `cos.`, `abs.`, `.*`, `.^` and `log.`
+- Diagonal matrix using `LinearAlgebra.diagm`
+- Vector of a matrix diagonal using `LinearAlgebra.diag`
+- Vector 1-norm and 2-norm using `LinearAlgebra.norm(..., 1)` and `LinearAlgebra.norm(..., 2)`
+- Sums of vectors using `sum`
+- Matrix traces using `LinearAlgebra.tr`
+- `LinearAlgebra.I` for the identity matrix
 
 ### Installation
 
