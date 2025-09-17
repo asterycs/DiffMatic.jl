@@ -114,7 +114,7 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
                 reshaped = BinaryOperation{Mult}(arg2.value, reshaped)
             end
 
-            return reshaped
+            return simplify(reshaped)
         end
     end
 
@@ -274,6 +274,29 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
     end
 
     return BinaryOperation{Mult}(arg1, arg2)
+end
+
+function simplify(::Mult, arg1::KrD, arg2::KrD)
+    if !can_contract(arg1, arg2)
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
+
+    eliminated = eliminated_indices([get_free_indices(arg1); get_free_indices(arg2)])
+
+    if length(eliminated) != 2
+        @assert false "Not implemented, please open an issue with your input."
+    end
+
+    eliminated = only(unique(get_letters(eliminated)))
+    common = indices_in_common(arg1, arg2)
+
+    if isempty(common)
+        return _multiply_with_krd(arg1, arg2)
+    end
+
+    common = only(common)
+
+    return Literal(1, common)
 end
 
 function simplify(::Mult, arg1::Value, arg2::Value)

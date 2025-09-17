@@ -66,6 +66,7 @@ end
     @test to_std(jacobian(log.(x), x)) == "diagm(vec(1) ⊘ x)I"
     @test to_std(jacobian(diagm(A*x)*x, x)) == "diagm(Ax)I + diagm(x)A"
     @test to_std(jacobian(sin.(A * x + y), x)) == "diagm(cos(Ax + y))A"
+    @test to_std(jacobian(diag(diagm(x' * B' * A * A)))) == "diagm(vec(1))AᵀAᵀB" # TODO: Eliminate 'diagm(vec(1))
     @test to_std(jacobian(((A .* B) * C * x)' * x * x, x)) ==
           "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"
 end

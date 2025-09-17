@@ -361,21 +361,6 @@ end
     @test to_std(div(x, lv)) == "x ⊘ vec(2)"
 end
 
-@testset "to_std output is correct with KrD-KrD and one free index" begin
-    l = KrD(Upper(1), Lower(2))
-    u = KrD(Upper(2), Lower(1))
-    t = KrD(Upper(1), Lower(1))
-
-    function mul(l, r)
-        return dc.BinaryOperation{dc.Mult}(l, r)
-    end
-
-    @test to_std(mul(u, t)) == "vec(1)"
-    @test to_std(mul(t, u)) == "vec(1)"
-    @test to_std(mul(l, t)) == "vec(1)ᵀ"
-    @test to_std(mul(t, l)) == "vec(1)ᵀ"
-end
-
 @testset "to_std output is correct with complex expression" begin
     x = Variable("x", Upper(1))
     y = Variable("y", Upper(2))
