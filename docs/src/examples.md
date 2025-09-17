@@ -1,7 +1,7 @@
 # Examples
 ## Creating Variables
 ```jldoctest usage; output = false
-using LinearAlgebra: tr, norm, I
+using LinearAlgebra: diag, diagm, I, norm, tr
 using DiffMatic
 
 @matrix A B C
