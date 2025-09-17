@@ -435,7 +435,8 @@ function Base.broadcasted(::typeof(*), arg1::Tensor, arg2::Tensor)
         )
     end
 
-    if typeof.(arg1_free_indices) != typeof.(arg2_free_indices)
+    if typeof.(arg1_free_indices) != typeof.(arg2_free_indices) &&
+       typeof.(arg1_free_indices) != typeof.(reverse(arg2_free_indices))
         return throw(
             DomainError(
                 (arg1, arg2),
@@ -447,7 +448,7 @@ function Base.broadcasted(::typeof(*), arg1::Tensor, arg2::Tensor)
     new_arg1 = arg1
 
     for (li, ri) ∈ zip(arg1_free_indices, arg2_free_indices)
-        new_arg1 = update_index(new_arg1, li, ri)
+        new_arg1 = update_index(new_arg1, li, ri; allow_shape_change = true)
     end
 
     return BinaryOperation{Mult}(new_arg1, arg2)
