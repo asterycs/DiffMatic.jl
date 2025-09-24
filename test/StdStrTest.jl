@@ -81,10 +81,12 @@ end
 end
 
 @testset "test Hessian in standard notation" begin
-    @matrix A
+    @matrix A B
     @vector x
 
     @test to_std(hessian(x' * A * x, x)) == "Aᵀ + A"
     @test to_std(hessian(2 * x' * A * x, x)) == "2Aᵀ + 2A"
     @test to_std(hessian(2 * x' * x, x)) == "4I"
+    @test to_std(hessian(sin(cos(x' * A * B' * x)), x)) ==
+          "cos(cos(xᵀBAᵀx))((-1)sin(xᵀBAᵀx)(BAᵀ + ABᵀ) + (BAᵀx + ABᵀx)(-1)cos(xᵀBAᵀx)(xᵀABᵀ + xᵀBAᵀ)) + (-1)(-1)sin(xᵀBAᵀx)(BAᵀx + ABᵀx)sin(cos(xᵀBAᵀx))(-1)sin(xᵀBAᵀx)(xᵀABᵀ + xᵀBAᵀ)"
 end
