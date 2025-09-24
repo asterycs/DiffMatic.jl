@@ -670,8 +670,24 @@ function Base.:(+)(arg1::Tensor, arg2::Tensor)
     return create_additive_op(Add(), arg1, arg2)
 end
 
+function Base.:(+)(arg1::Tensor, arg2::LinearAlgebra.UniformScaling{T}) where {T<:Real}
+    return create_additive_op(Add(), arg1, (arg2.λ * KrD(Upper(1), Lower(2))))
+end
+
+function Base.:(+)(arg1::LinearAlgebra.UniformScaling{T}, arg2::Tensor) where {T<:Real}
+    return create_additive_op(Add(), (arg1.λ * KrD(Upper(1), Lower(2))), arg2)
+end
+
 function Base.:(-)(arg1::Tensor, arg2::Tensor)
     return create_additive_op(Sub(), arg1, arg2)
+end
+
+function Base.:(-)(arg1::Tensor, arg2::LinearAlgebra.UniformScaling{T}) where {T<:Real}
+    return create_additive_op(Sub(), arg1, (arg2.λ * KrD(Upper(1), Lower(2))))
+end
+
+function Base.:(-)(arg1::LinearAlgebra.UniformScaling{T}, arg2::Tensor) where {T<:Real}
+    return create_additive_op(Sub(), (arg1.λ * KrD(Upper(1), Lower(2))), arg2)
 end
 
 function get_index_type_count(indices::IndexList)

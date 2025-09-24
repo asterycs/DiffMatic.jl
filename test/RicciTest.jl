@@ -401,6 +401,32 @@ end
     @test typeof(p4.arg2.indices[2]) == Upper
 end
 
+@testset "addition of matrix and matrix (identity)" begin
+    A = Variable("A", Upper(1), Lower(2))
+
+    @test A + I == BinaryOperation{dc.Add}(
+        A,
+        BinaryOperation{dc.Mult}(true, KrD(Upper(1), Lower(2))),
+    )
+    @test I + A == BinaryOperation{dc.Add}(
+        BinaryOperation{dc.Mult}(true, KrD(Upper(1), Lower(2))),
+        A,
+    )
+end
+
+@testset "subtraction of matrix and matrix (identity)" begin
+    A = Variable("A", Upper(1), Lower(2))
+
+    @test A - I == BinaryOperation{dc.Sub}(
+        A,
+        BinaryOperation{dc.Mult}(true, KrD(Upper(1), Lower(2))),
+    )
+    @test I - A == BinaryOperation{dc.Sub}(
+        BinaryOperation{dc.Mult}(true, KrD(Upper(1), Lower(2))),
+        A,
+    )
+end
+
 @testset "multiplication with matching indices" begin
     x = Variable("x", Upper(2))
     y = Variable("y", Lower(1))
