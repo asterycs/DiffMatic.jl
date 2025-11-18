@@ -38,12 +38,6 @@ function equivalent(arg1::Real, arg2::Real)
     return arg1 == arg2
 end
 
-function equivalent(left, right)
-    left_ids, right_ids = dc.get_free_indices.((left, right))
-
-    return can_remap(left_ids, right_ids)
-end
-
 function equivalent(left::Variable, right::Variable)
     left_ids, right_ids = dc.get_free_indices.((left, right))
 
@@ -58,23 +52,24 @@ function equivalent(left::Zero, right::Zero)
     return can_remap(dc.get_free_indices(left), dc.get_free_indices(right))
 end
 
-function equivalent(left::BinaryOperation, right::BinaryOperation)
-    if typeof(left) != typeof(right)
-        return false
-    end
+function equivalent(left::BinaryOperation{T}, right::BinaryOperation{T}) where {T}
+    return equivalent(left.arg1, right.arg1) && equivalent(left.arg2, right.arg2)
+end
 
-    same_types =
-        (
-            typeof(left.arg1) == typeof(right.arg1) &&
-            typeof(left.arg2) == typeof(right.arg2)
-        ) ||
-        (typeof(left.arg1) == typeof(right.arg2) && typeof(left.arg2) == typeof(right.arg1))
-
-    return same_types &&
-           (equivalent(left.arg1, right.arg1) && equivalent(left.arg2, right.arg2)) ||
+function equivalent(left::BinaryOperation{dc.Mult}, right::BinaryOperation{dc.Mult})
+    return (equivalent(left.arg1, right.arg1) && equivalent(left.arg2, right.arg2)) ||
            (equivalent(left.arg1, right.arg2) && equivalent(left.arg2, right.arg1))
 end
 
-function equivalent(arg1::T, arg2::T) where {T<:UnaryOperation}
+function equivalent(left::BinaryOperation{dc.Add}, right::BinaryOperation{dc.Add})
+    return (equivalent(left.arg1, right.arg1) && equivalent(left.arg2, right.arg2)) ||
+           (equivalent(left.arg1, right.arg2) && equivalent(left.arg2, right.arg1))
+end
+
+function equivalent(arg1::UnaryOperation{T}, arg2::UnaryOperation{T}) where {T}
     return equivalent(arg1.arg, arg2.arg)
+end
+
+function equivalent(arg1::T1, arg2::T2) where {T1,T2}
+    return false
 end
