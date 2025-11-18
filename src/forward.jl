@@ -468,16 +468,7 @@ function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Zero)
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Add})
-    return BinaryOperation{Add}(
-        BinaryOperation{Add}(
-            BinaryOperation{Mult}(arg1.arg1, arg2.arg1),
-            BinaryOperation{Mult}(arg1.arg1, arg2.arg2),
-        ),
-        BinaryOperation{Add}(
-            BinaryOperation{Mult}(arg1.arg2, arg2.arg1),
-            BinaryOperation{Mult}(arg1.arg2, arg2.arg2),
-        ),
-    )
+    return BinaryOperation{Mult}(arg1, arg2)
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Add})

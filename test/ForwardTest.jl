@@ -87,6 +87,20 @@ end
     @test dc.evaluate(prodlogr(d_unrelated, x)) == expected2
 end
 
+@testset "evaluate product of additions" begin
+    a = Variable("a", Lower(1))
+    b = Variable("b", Lower(1))
+    x = Variable("x", Upper(1))
+    y = Variable("y", Upper(1))
+
+    l = dc.BinaryOperation{dc.Add}(a, b)
+    r = dc.BinaryOperation{dc.Add}(x, y)
+
+    e = dc.BinaryOperation{dc.Mult}(l, r)
+
+    @test dc.evaluate(e) == e
+end
+
 @testset "evaluate trivially simplifiable quotient" begin
     x = Variable("x", Upper(1))
     d = KrD(Upper(2), Lower(1))
