@@ -5,34 +5,40 @@
 
 using Documenter
 using Test
+using TestItems
 
-include("TestUtils.jl")
-
-@testset "Aqua" begin
+@testitem "Aqua" begin
+    include("TestUtils.jl")
     include("Aqua.jl")
 end
 
-@testset "RicciTest" begin
+@testitem "RicciTest" begin
+    include("TestUtils.jl")
     include("RicciTest.jl")
 end
 
-@testset "ForwardTest" begin
+@testitem "ForwardTest" begin
+    include("TestUtils.jl")
     include("ForwardTest.jl")
 end
 
-@testset "SimplifyTest" begin
+@testitem "SimplifyTest" begin
+    include("TestUtils.jl")
     include("SimplifyTest.jl")
 end
 
-@testset "StdTest" begin
+@testitem "StdTest" begin
+    include("TestUtils.jl")
     include("StdTest.jl")
 end
 
-@testset "StdStrTest" begin
+@testitem "StdStrTest" begin
+    include("TestUtils.jl")
     include("StdStrTest.jl")
 end
 
-@testset "JuliaTest" begin
+@testitem "JuliaTest" begin
+    include("TestUtils.jl")
     include("JuliaTest.jl")
 end
 

@@ -3,6 +3,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+using LinearAlgebra: tr, diag, diagm, norm
+
 @testset "test gradient in standard notation" begin
     @scalar a b
     @vector x y c

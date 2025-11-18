@@ -6,7 +6,7 @@
 using DiffMatic
 using Test
 
-using DiffMatic: Variable, KrD, Zero
+using DiffMatic: Variable, KrD, Zero, Literal
 using DiffMatic: Upper, Lower
 
 dc = DiffMatic
