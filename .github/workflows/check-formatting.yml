@@ -1,0 +1,34 @@
+name: tests
+on:
+  push:
+    branches:
+      - trunk
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+jobs:
+  check-formatting:
+    name: JuliaFormatter
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      actions: write
+      contents: read
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: 'lts'
+          arch: x64
+      - uses: julia-actions/cache@v3
+      - name: Install JuliaFormatter and check format
+        run: |
+          julia  -e 'import Pkg; Pkg.add("JuliaFormatter")'
+          julia  -e 'using JuliaFormatter; isok = format("."); if isok exit(0) else exit(1) end'
+
