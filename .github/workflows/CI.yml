@@ -37,7 +37,7 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: julia-actions/cache@v2
+      - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
@@ -59,7 +59,7 @@ jobs:
         with:
           version: 'lts'
           arch: x64
-      - uses: julia-actions/cache@v2
+      - uses: julia-actions/cache@v3
       - name: Install JuliaFormatter and check format
         run: |
           julia  -e 'import Pkg; Pkg.add("JuliaFormatter")'
