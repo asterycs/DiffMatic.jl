@@ -161,6 +161,53 @@ function can_apply(l, r)
     return false
 end
 
+function sift_down(arg::Tensor, tree::BinaryOperation{Mult})
+    arg_ids = get_free_indices(arg)
+
+    l_ids = get_free_indices(tree.arg1)
+    r_ids = get_free_indices(tree.arg2)
+
+    # In this case, 'arg' and 'tree' have the same modes, then we can do element-wise multiplication
+    if isempty(setdiff(arg_ids, l_ids)) && isempty(setdiff(l_ids, arg_ids))
+        new_tree = BinaryOperation{Mult}(BinaryOperation{Mult}(arg, tree.arg1), tree.arg2)
+        @assert length(get_free_indices(new_tree)) ==
+                length(get_free_indices(BinaryOperation{Mult}(tree, arg)))
+
+        return new_tree
+    elseif isempty(setdiff(arg_ids, r_ids)) && isempty(setdiff(r_ids, arg_ids))
+        new_tree = BinaryOperation{Mult}(tree.arg1, BinaryOperation{Mult}(tree.arg2, arg))
+        @assert length(get_free_indices(new_tree)) ==
+                length(get_free_indices(BinaryOperation{Mult}(tree, arg)))
+
+        return new_tree
+    end
+
+    # Otherwise, recurse
+    if isempty(setdiff(arg_ids, l_ids))
+        new_tree = BinaryOperation{Mult}(sift_down(arg, tree.arg1), tree.arg2)
+        @assert length(get_free_indices(new_tree)) ==
+                length(get_free_indices(BinaryOperation{Mult}(tree, arg)))
+
+        return new_tree
+    elseif isempty(setdiff(arg_ids, r_ids))
+        new_tree = BinaryOperation{Mult}(tree.arg1, sift_down(arg, tree.arg2))
+        @assert length(get_free_indices(new_tree)) ==
+                length(get_free_indices(BinaryOperation{Mult}(tree, arg)))
+
+        return new_tree
+    end
+
+    return nothing
+end
+
+function flip_indices(ids, arg)
+    for i ∈ ids
+        arg = update_index(arg, i, flip(i); allow_shape_change = true)
+    end
+
+    return arg
+end
+
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     op = BinaryOperation{Mult}(arg1, arg2)
     target_indices = unique(get_free_indices(op))
@@ -248,6 +295,43 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
             )
 
             return BinaryOperation{Mult}(new_l, new_r)
+        end
+    end
+
+    arg1_free_indices = get_free_indices(arg1)
+    arg2_free_indices = get_free_indices(arg2)
+
+    if length(arg1_free_indices) > 2 && length(target_indices) <= 2
+        new_tree = sift_down(
+            arg2,
+            BinaryOperation{Mult}(
+                flip_indices(get_free_indices(arg2'), arg1.arg1),
+                arg1.arg2,
+            ),
+        )
+
+        if isnothing(new_tree)
+            new_tree = sift_down(
+                arg2,
+                BinaryOperation{Mult}(
+                    arg1.arg1,
+                    flip_indices(get_free_indices(arg2'), arg1.arg2),
+                ),
+            )
+        end
+
+        if !isnothing(new_tree)
+            @assert length(get_free_indices(new_tree)) <= 2
+            return new_tree
+        end
+    end
+
+    if length(arg2_free_indices) > 2 && length(target_indices) <= 2
+        new_tree = sift_down(arg1, arg2)
+
+        if !isnothing(new_tree)
+            @assert length(get_free_indices(new_tree)) <= 2
+            return new_tree
         end
     end
 
