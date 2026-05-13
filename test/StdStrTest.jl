@@ -55,6 +55,7 @@ using LinearAlgebra: tr, diag, diagm, norm
     @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(x ⊙ y ⊙ c)"
     @test to_std(gradient(norm(A * x, 2), x)) == "1/2sum((xᵀAᵀ)²)⁻¹⸍²2AᵀAx"
     @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀdiagm(vec(1) ⊘ (Ax))x + log(Ax)" # TODO: Simplify diagm(quotient) * vec
+    @test to_std(gradient(x' * sin.(A * x), x)) == "Aᵀdiagm(cos(Ax))x + sin(Ax)"
 end
 
 @testset "test Jacobian in standard notation" begin
@@ -91,4 +92,6 @@ end
     @test to_std(hessian(2 * x' * x, x)) == "4I"
     @test to_std(hessian(sin(cos(x' * A * B' * x)), x)) ==
           "cos(cos(xᵀBAᵀx))((-1)sin(xᵀBAᵀx)(BAᵀ + ABᵀ) + (BAᵀx + ABᵀx)(-1)cos(xᵀBAᵀx)(xᵀABᵀ + xᵀBAᵀ)) + (-1)(-1)sin(xᵀBAᵀx)(BAᵀx + ABᵀx)sin(cos(xᵀBAᵀx))(-1)sin(xᵀBAᵀx)(xᵀABᵀ + xᵀBAᵀ)"
+    @test to_std(hessian(x' * sin.(A * x), x)) ==
+          "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(x ⊙ sin(Ax))A"
 end

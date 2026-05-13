@@ -170,6 +170,14 @@ end
         @test jgrad(Â, B̂, x̂) ≈ ForwardDiff.gradient(x -> f(Â, B̂, x), x̂)
     end
 
+    @testset "gradient of x' * sin.(A * x)" begin
+        f(A, x) = x' * sin.(A * x)
+
+        jgrad = eval(to_std(gradient(f(A, x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, x̂) ≈ ForwardDiff.gradient(x -> f(Â, x), x̂)
+    end
+
     @testset "jacobian of sin(A * x + y - z)" begin
         f(A, x, y, z) = sin.(A * x + y - z)
 
@@ -200,5 +208,13 @@ end
         jhess = eval(to_std(hessian(f(x), x); format = dc.JuliaFunc()))
 
         @test jhess(x̂) ≈ ForwardDiff.hessian(x -> f(x), x̂)
+    end
+
+    @testset "hessian of x' * sin.(A * x)" begin
+        f(A, x) = x' * sin.(A * x)
+
+        jhess = eval(to_std(hessian(f(A, x), x); format = dc.JuliaFunc()))
+
+        @test jhess(Â, x̂) ≈ ForwardDiff.hessian(x -> f(Â, x), x̂)
     end
 end
