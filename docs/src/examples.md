@@ -63,7 +63,7 @@ expr = (x .* y).^2
 
 # output
 
-(x¹y¹).^2
+(x²y²).^2
 ```
 ```jldoctest usage
 expr = (A * x).^2
@@ -109,7 +109,7 @@ expr = sum(x .* y)
 
 # output
 
-x¹y¹1₁
+x²y²1₂
 ```
 ```jldoctest usage
 expr = sum(A * x)

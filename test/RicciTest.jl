@@ -565,8 +565,8 @@ end
     e = a * I .* X
 
     @test isempty(dc.get_indices(e.arg1.arg1))
-    @test e.arg1.arg2 == KrD(Upper(1), Lower(2))
-    @test e.arg2 == Variable("X", Upper(1), Lower(2))
+    @test e.arg1.arg2 == KrD(Upper(3), Lower(4))
+    @test e.arg2 == Variable("X", Upper(3), Lower(4))
 end
 
 @testset "multiplication with UniformScaling 4" begin
@@ -576,7 +576,17 @@ end
     e = a * (I .* X)
 
     @test e.arg1 == a
-    @test dc.get_free_indices(e.arg2) == [Upper(1); Lower(2)]
+    @test dc.get_free_indices(e.arg2) == [Upper(3); Lower(4)]
+end
+
+@testset "elementwise multiplication with intersecting indices" begin
+    # Upper(2) is a default index of KrD.
+    # This checks that intersecting indices are updated correctly.
+    X = Variable("X", Upper(2), Lower(3))
+
+    e = I .* X
+
+    @test dc.get_free_indices(e) == [Upper(4); Lower(3)]
 end
 
 @testset "update_index column vector" begin

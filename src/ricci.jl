@@ -423,6 +423,22 @@ function Base.sign(arg::Tensor)
 end
 
 function Base.broadcasted(::typeof(*), arg1::Tensor, arg2::Tensor)
+    # First, make all letters unique
+    arg1_indices, arg2_indices = unique.(get_indices.((arg1, arg2)))
+    intersecting_letters =
+        unique(intersect(get_letters(arg1_indices), get_letters(arg2_indices)))
+
+    new_letters = Dict()
+    next_letter = get_next_letter(arg1, arg2)
+
+    for l ∈ intersecting_letters
+        new_letters[l] = next_letter
+        next_letter += 1
+    end
+
+    arg2 = replace_letters(arg2, new_letters)
+
+    # Sanity checks
     arg1_free_indices = get_free_indices(arg1)
     arg2_free_indices = get_free_indices(arg2)
 
@@ -445,6 +461,7 @@ function Base.broadcasted(::typeof(*), arg1::Tensor, arg2::Tensor)
         )
     end
 
+    # Then make all indices intersect
     new_arg1 = arg1
 
     for (li, ri) ∈ zip(arg1_free_indices, arg2_free_indices)
