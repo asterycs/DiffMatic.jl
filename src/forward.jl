@@ -131,6 +131,24 @@ function is_all_elementwise(arg1, arg2)
            num_common_ids == length(get_free_indices(arg2))
 end
 
+"""
+Detect an element-wise product with a ones-vector. Matches e.g.
+
+    A¹₈1¹
+    x¹y₆1¹
+
+Does not match e.g.
+
+    x¹1₁
+"""
+function is_tied_ones(arg::Value, other::Value)
+    if !(arg isa Literal) || arg.value != 1 || length(arg.indices) != 1
+        return false
+    end
+
+    return only(arg.indices) ∈ get_indices(other)
+end
+
 function is_diagm(arg::BinaryOperation{Mult})
     return is_diagm(arg.arg1, arg.arg2)
 end
@@ -172,6 +190,10 @@ function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::BinaryOperation{M
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Literal})
+    if is_tied_ones(arg2, arg1)
+        return evaluate(arg1)
+    end
+
     if arg1.arg1 isa Real
         return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
     end
@@ -525,6 +547,14 @@ function evaluate(::Mult, arg1::Power, arg2::BinaryOperation{Sub})
 end
 
 function evaluate(::Mult, arg1::Value, arg2::Value)
+    if is_tied_ones(arg2, arg1)
+        return evaluate(arg1)
+    end
+
+    if is_tied_ones(arg1, arg2)
+        return evaluate(arg2)
+    end
+
     return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
 end
 

@@ -1301,3 +1301,34 @@ end
         end
     end
 end
+
+@testset "a ones-vector times KrD is absorbed" begin
+    mult(l, r) = dc.BinaryOperation{dc.Mult}(l, r)
+
+    x = Variable("x", Upper(1))
+    d = KrD(Upper(1), Lower(2))
+    ones = Literal(1, Upper(2))
+
+    @test evaluate(mult(mult(d, x), ones)) == x
+    @test evaluate(mult(mult(x, d), ones)) == x
+
+    # TODO: 'is_tied_ones' currently only recognises a value of one.
+    @test_broken evaluate(mult(mult(d, x), Literal(3, Upper(2)))) == mult(3, x)
+    @test_broken evaluate(mult(mult(x, d), Literal(3, Upper(2)))) == mult(3, x)
+end
+
+@testset "a tied ones-vector is dropped but a contracted one is kept" begin
+    mult(l, r) = dc.BinaryOperation{dc.Mult}(l, r)
+
+    A = Variable("A", Upper(1), Lower(8))
+    x = Variable("x", Upper(1))
+
+    @test evaluate(mult(A, Literal(1, Upper(1)))) == A
+
+    # Is a sum - must be left alone.
+    summed = mult(x, Literal(1, Lower(1)))
+    @test evaluate(summed) == summed
+
+    threes = mult(A, Literal(3, Upper(1)))
+    @test evaluate(threes) == threes
+end

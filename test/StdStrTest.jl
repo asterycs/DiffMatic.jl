@@ -74,6 +74,42 @@ end
           "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"
 end
 
+@testset "test diagonal expressions in standard notation" begin
+    @matrix A
+    @vector x y z
+
+    # The Kronecker delta that 'diagm' introduces is removed by
+    # the vector of ones that 'diag' contracts against it, and that ones vector is then
+    # tied element-wise to the remainder, where it contributes nothing.
+    @test to_std(diag(diagm(x))) == "x"
+    @test to_std(diag(diagm(A * x))) == "Ax"
+    @test to_std(diag(diagm(diag(diagm(x))))) == "x"
+    @test to_std(jacobian(diag(diagm(A * x)), x)) == "A"
+
+    # Here KrD sits further inside the tree.
+    @test to_std(diag(diagm(x)) * y') == "xyᵀ"
+    @test to_std(y * diag(diagm(x))') == "yxᵀ"
+    @test to_std(diag(diagm(x))' * y) == "xᵀy"
+    @test to_std(A * diag(diagm(x))) == "Ax"
+    @test to_std(diag(diagm(x)) .* y) == "x ⊙ y"
+    @test to_std((diag(diagm(x)) .* y)' * z) == "(xᵀ ⊙ yᵀ)z"
+    @test to_std(sum(diag(diagm(A * x)))) == "vec(1)ᵀAx"
+
+    # Check that constants survive.
+    @test to_std(diagm(x') * vector(1)) == "x"
+    @test to_std(diagm(x') * vector(3)) == "3x"
+end
+
+@testset "test a contracted vector of ones is not dropped" begin
+    @matrix A
+    @vector x
+
+    @test to_std(sum(x)) == "sum(x)"
+    @test to_std(sum(A * x)) == "vec(1)ᵀAx"
+    @test to_std(gradient(sum(x), x)) == "vec(1)"
+    @test to_std(gradient(sum(A * x), x)) == "Aᵀvec(1)"
+end
+
 @testset "test derivative in standard notation" begin
     @matrix A B C X
     @vector x y z
