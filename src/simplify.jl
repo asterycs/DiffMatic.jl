@@ -12,15 +12,15 @@ function simplify(arg::UnaryOperation{Op}) where {Op}
 end
 
 function simplify(arg::BinaryOperation{Op}) where {Op}
-    return evaluate(
-        simplify(Op(), simplify(evaluate(arg.arg1)), simplify(evaluate(arg.arg2))),
-    )
-end
+    simplified =
+        evaluate(simplify(Op(), simplify(evaluate(arg.arg1)), simplify(evaluate(arg.arg2))))
 
-function simplify(::Mult, arg1::Variable, arg2::Variable)
-    return evaluate(
-        BinaryOperation{Mult}(simplify(evaluate(arg1)), simplify(evaluate(arg2))),
-    )
+    # Ensure the output is consistent.
+    if !issetequal(get_free_indices(simplified), get_free_indices(arg))
+        @assert false "Something went wrong, please open an issue with your input."
+    end
+
+    return simplified
 end
 
 function elementwise_indices(arg1, arg2)
@@ -65,35 +65,9 @@ end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
     arg2_free_ids = get_free_indices(arg2)
-    eliminated = eliminated_indices([get_free_indices(arg1); get_free_indices(arg2)])
 
-    if is_diagm(arg1) && !isempty(eliminated)
-        d = get_diag_delta(arg1)
-
-        @assert !isnothing(d)
-
-        reshaped = []
-
-        push!(
-            reshaped,
-            update_index(
-                arg1.arg1,
-                first(eliminated),
-                last(eliminated);
-                allow_shape_change = true,
-            ),
-        )
-        push!(reshaped, arg1.arg2)
-
-        reshaped = to_binary_operation(Mult(), reshaped)
-
-        if arg2.value != 1
-            reshaped = BinaryOperation{Mult}(arg2.value, reshaped)
-        end
-
-        return simplify(reshaped)
-    end
-
+    # A constant vector contracting an index that is shared element-wise
+    # in arg1 can be converted into a regular contraction.
     if can_contract(arg1, arg2) &&
        length(arg2_free_ids) == 1 &&
        !is_all_elementwise(arg1.arg1, arg1.arg2)
@@ -365,22 +339,17 @@ function simplify(::Mult, arg1::KrD, arg2::KrD)
         return BinaryOperation{Mult}(arg1, arg2)
     end
 
-    eliminated = eliminated_indices([get_free_indices(arg1); get_free_indices(arg2)])
-
-    if length(eliminated) != 2
-        @assert false "Not implemented, please open an issue with your input."
-    end
-
-    eliminated = only(unique(get_letters(eliminated)))
     common = indices_in_common(arg1, arg2)
 
     if isempty(common)
         return _multiply_with_krd(arg1, arg2)
     end
 
-    common = only(common)
+    if length(common) != 1
+        return BinaryOperation{Mult}(arg1, arg2)
+    end
 
-    return Literal(1, common)
+    return Literal(1, only(common))
 end
 
 function simplify(::Mult, arg1::Value, arg2::Value)

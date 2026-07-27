@@ -278,7 +278,7 @@ to_std(jacobian(diag(diagm(x' * B' * A * A)), x))
 
 # output
 
-"diagm(vec(1))AᵀAᵀB"
+"AᵀAᵀB"
 ```
 
 ### Derivative

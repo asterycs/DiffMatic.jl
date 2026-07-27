@@ -890,6 +890,10 @@ function LinearAlgebra.diag(m::Tensor, k::Integer = 0)
         throw(DomainError(k, "Cannot extract the k-th diagonal when k!=0"))
     end
 
+    if is_diagm(m)
+        return m * vector(1)
+    end
+
     return (m .* LinearAlgebra.I) * vector(1)
 end
 
