@@ -130,4 +130,10 @@ end
           "cos(cos(xᵀBAᵀx))((-1)sin(xᵀBAᵀx)(BAᵀ + ABᵀ) + (BAᵀx + ABᵀx)(-1)cos(xᵀBAᵀx)(xᵀABᵀ + xᵀBAᵀ)) + (-1)(-1)sin(xᵀBAᵀx)(BAᵀx + ABᵀx)sin(cos(xᵀBAᵀx))(-1)sin(xᵀBAᵀx)(xᵀABᵀ + xᵀBAᵀ)"
     @test to_std(hessian(x' * sin.(A * x), x)) ==
           "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(x ⊙ sin(Ax))A"
+
+    # These reach an order-3 intermediate.
+    @test to_std(hessian((A * x)' * sin.(B * x), x)) ==
+          "Aᵀdiagm(cos(Bx))B + (-1)Bᵀdiagm(Ax ⊙ sin(Bx))B + Bᵀdiagm(cos(Bx))A"
+    @test to_std(hessian((A * x)' * sin.(A * x), x)) ==
+          "Aᵀdiagm(cos(Ax))A + (-1)Aᵀdiagm(Ax ⊙ sin(Ax))A + Aᵀdiagm(cos(Ax))A"
 end

@@ -331,7 +331,8 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
         )
     end
 
-    return BinaryOperation{Mult}(arg1, arg2)
+    # Fallback for sift_down
+    return invoke(simplify, Tuple{Mult,BinaryOperation{Mult},Tensor}, Mult(), arg1, arg2)
 end
 
 function simplify(::Mult, arg1::KrD, arg2::KrD)
