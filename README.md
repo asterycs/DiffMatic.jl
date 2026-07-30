@@ -2,7 +2,7 @@
 
 [![Documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://asterycs.github.io/DiffMatic.jl/stable)
 [![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://asterycs.github.io/DiffMatic.jl/dev)
-[![Run tests](https://github.com/asterycs/DiffMatic.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/asterycs/DiffMatic.jl/actions/workflows/CI.yml)
+[![Run tests](https://github.com/asterycs/DiffMatic.jl/actions/workflows/tests.yml/badge.svg)](https://github.com/asterycs/DiffMatic.jl/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/gh/asterycs/DiffMatic.jl/graph/badge.svg?token=XIVXM5EPAC)](https://codecov.io/gh/asterycs/DiffMatic.jl)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
