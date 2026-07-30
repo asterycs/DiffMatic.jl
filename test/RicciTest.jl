@@ -491,6 +491,31 @@ end
     @test equivalent(op3.arg2, Variable("B", Lower(3), Upper(4)))
 end
 
+@testset "elementwise multiplication of a matrix and a transposed matrix" begin
+    A = Variable("A", Upper(1), Lower(2))
+    B = Variable("B", Upper(3), Lower(4))
+
+    op1 = A .* B'
+
+    @test typeof(op1) == dc.BinaryOperation{dc.Mult}
+    @test dc.get_free_indices(op1.arg1) == reverse(dc.get_free_indices(op1.arg2))
+    @test first(dc.get_free_indices(op1.arg1)) isa Upper
+    @test first(dc.get_free_indices(op1.arg2)) isa Lower
+
+    op2 = A' .* B
+
+    @test typeof(op2) == dc.BinaryOperation{dc.Mult}
+    @test dc.get_free_indices(op2.arg1) == reverse(dc.get_free_indices(op2.arg2))
+    @test first(dc.get_free_indices(op2.arg1)) isa Lower
+    @test first(dc.get_free_indices(op2.arg2)) isa Upper
+
+    op3 = A .* A'
+
+    @test typeof(op3) == dc.BinaryOperation{dc.Mult}
+    @test dc.get_free_indices(op3.arg1) == reverse(dc.get_free_indices(op3.arg2))
+    @test op3.arg1 != op3.arg2
+end
+
 @testset "elementwise multiplication vector-vector" begin
     x = Variable("x", Upper(1))
     y = Variable("y", Upper(2))

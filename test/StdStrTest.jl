@@ -110,6 +110,32 @@ end
     @test to_std(gradient(sum(A * x), x)) == "Aᵀvec(1)"
 end
 
+@testset "test elementwise multiplication in standard notation" begin
+    @matrix A B
+    @vector x
+
+    # Matched variance
+    @test to_std(A .* B) == "A ⊙ B"
+    @test to_std(A .* A) == "A ⊙ A"
+    @test to_std(A' .* B') == "Aᵀ ⊙ Bᵀ"
+
+    # Mixed variance
+    @test to_std(A .* B') == "A ⊙ Bᵀ"
+    @test to_std(A' .* B) == "Aᵀ ⊙ B"
+    @test to_std(A .* A') == "A ⊙ Aᵀ"
+    @test to_std(A' .* A) == "Aᵀ ⊙ A"
+
+    # Composed expressions
+    @test to_std((A .* A') * x) == "(A ⊙ Aᵀ)x"
+    @test to_std((A .* B') * x) == "(A ⊙ Bᵀ)x"
+    @test to_std(x' * (A .* A') * x) == "xᵀ(A ⊙ Aᵀ)x"
+    @test to_std(jacobian((A .* A') * x, x)) == "A ⊙ Aᵀ"
+    @test to_std(jacobian((A .* B') * x, x)) == "A ⊙ Bᵀ"
+    @test to_std(gradient(x' * (A .* A') * x, x)) == "(Aᵀ ⊙ A)x + (A ⊙ Aᵀ)x"
+    @test to_std(gradient(x' * (A .* B') * x, x)) == "(Aᵀ ⊙ B)x + (A ⊙ Bᵀ)x"
+    @test to_std(gradient(sum((A .* A') * x), x)) == "(Aᵀ ⊙ A)vec(1)"
+end
+
 @testset "test derivative in standard notation" begin
     @matrix A B C X
     @vector x y z

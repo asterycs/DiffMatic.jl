@@ -372,6 +372,10 @@ function to_ir(arg::BinaryOperation{Mult})
                 return ir.HadamardProduct(to_ir(terms[1]), to_ir(terms[2]))
             end
 
+            if arg1_free_ids == reverse(arg2_free_ids)
+                return ir.HadamardProduct(to_ir(terms[1]), to_ir(terms[2]))
+            end
+
             throw_not_std(arg)
         end
     end
