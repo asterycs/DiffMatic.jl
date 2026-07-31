@@ -830,6 +830,15 @@ function update_index(
 end
 
 function update_index(
+    arg::Real,
+    from::LowerOrUpperIndex,
+    to::LowerOrUpperIndex;
+    allow_shape_change = false,
+)
+    return arg
+end
+
+function update_index(
     arg::Union{Variable,Literal,KrD,Zero},
     from::LowerOrUpperIndex,
     to::LowerOrUpperIndex;
