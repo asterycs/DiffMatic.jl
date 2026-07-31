@@ -821,15 +821,6 @@ function update_index(
 end
 
 function update_index(
-    arg::Log,
-    from::LowerOrUpperIndex,
-    to::LowerOrUpperIndex;
-    allow_shape_change = false,
-)
-    return Log(update_index(arg.arg, from, to; allow_shape_change))
-end
-
-function update_index(
     arg::Real,
     from::LowerOrUpperIndex,
     to::LowerOrUpperIndex;

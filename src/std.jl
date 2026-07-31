@@ -218,10 +218,6 @@ function to_standard(term::UnaryOperation{Op}) where {Op}
     return UnaryOperation{Op}(to_standard(term.arg))
 end
 
-function to_standard(arg::Log)
-    return Log(to_standard(arg.arg))
-end
-
 function to_standard(term::Power)
     return Power(to_standard(term.base), term.exponent)
 end
