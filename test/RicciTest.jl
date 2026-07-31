@@ -135,8 +135,8 @@ end
     b = Variable("b", Upper(2))
     c = Variable("c")
 
-    funs = (abs, sign, sin, cos)
-    ops = (dc.Abs, dc.Sgn, dc.Sin, dc.Cos)
+    funs = (abs, sign, sin, cos, log, exp)
+    ops = (dc.Abs, dc.Sgn, dc.Sin, dc.Cos, dc.Log, dc.Exp)
 
     for (fun, op) ∈ zip(funs, ops)
         @test_throws DomainError fun(a * b)

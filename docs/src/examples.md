@@ -133,6 +133,21 @@ expr = log.(x)' * y
 
 log(x₃)y³
 ```
+#### Exp and element-wise exp
+```jldoctest usage
+expr = exp(x' * y)
+
+# output
+
+exp(x₃y³)
+```
+```jldoctest usage
+expr = exp.(A * x)
+
+# output
+
+exp(A¹₄x⁴)
+```
 #### Vector Norms
 ```jldoctest usage
 expr = norm(A * x, 2)
@@ -243,6 +258,20 @@ to_std(gradient(sum((A .* B) * C * x), x))
 # output
 
 "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
+```
+```jldoctest usage
+to_std(gradient(sum(exp.(A * x)), x))
+
+# output
+
+"Aᵀexp(Ax)"
+```
+```jldoctest usage
+to_std(gradient(y' * exp.(A * x), x))
+
+# output
+
+"Aᵀdiagm(exp(Ax))y"
 ```
 ### Jacobian
 ```jldoctest usage

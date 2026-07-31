@@ -217,4 +217,60 @@ end
 
         @test jhess(Â, x̂) ≈ ForwardDiff.hessian(x -> f(Â, x), x̂)
     end
+
+    @testset "function exp.(A * x)" begin
+        f(A, x) = exp.(A * x)
+
+        jfun = eval(to_std(f(A, x); format = dc.JuliaFunc()))
+
+        @test jfun(Â, x̂) ≈ f(Â, x̂)
+    end
+
+    @testset "function exp(x' * x)" begin
+        f(x) = exp(x' * x)
+
+        jfun = eval(to_std(f(x); format = dc.JuliaFunc()))
+
+        @test only(jfun(x̂)) ≈ f(x̂)
+    end
+
+    @testset "gradient of sum(exp.(A * x))" begin
+        f(A, x) = sum(exp.(A * x))
+
+        jgrad = eval(to_std(gradient(f(A, x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, x̂) ≈ ForwardDiff.gradient(x -> f(Â, x), x̂)
+    end
+
+    @testset "gradient of exp(x' * x)" begin
+        f(x) = exp(x' * x)
+
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
+    end
+
+    @testset "gradient of y' * exp.(A * x)" begin
+        f(A, x, y) = y' * exp.(A * x)
+
+        jgrad = eval(to_std(gradient(f(A, x, y), x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, x̂, ŷ) ≈ ForwardDiff.gradient(x -> f(Â, x, ŷ), x̂)
+    end
+
+    @testset "jacobian of exp.(A * x)" begin
+        f(A, x) = exp.(A * x)
+
+        jjac = eval(to_std(jacobian(f(A, x), x); format = dc.JuliaFunc()))
+
+        @test jjac(Â, x̂) ≈ ForwardDiff.jacobian(x -> f(Â, x), x̂)
+    end
+
+    @testset "hessian of sum(exp.(A * x))" begin
+        f(A, x) = sum(exp.(A * x))
+
+        jhess = eval(to_std(hessian(f(A, x), x); format = dc.JuliaFunc()))
+
+        @test jhess(Â, x̂) ≈ ForwardDiff.hessian(x -> f(Â, x), x̂)
+    end
 end

@@ -66,8 +66,8 @@ c * A
 cA¹₂
 ```
 Supported operators and functions when creating expressions:
-  - Basic operators `+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos` and `log`
-  - Element-wise operators `sin.`, `cos.`, `abs.`, `.*`, `.^` and `log.`
+  - Basic operators `+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos`, `log` and `exp`
+  - Element-wise operators `sin.`, `cos.`, `abs.`, `.*`, `.^`, `log.` and `exp.`
   - Diagonal matrix using `LinearAlgebra.diagm`
   - Vector of a matrix diagonal using `LinearAlgebra.diag`
   - Vector 1-norm and 2-norm can be computed with `LinearAlgebra.norm(..., 1)` and `LinearAlgebra.norm(..., 2)`

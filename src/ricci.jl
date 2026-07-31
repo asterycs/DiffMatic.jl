@@ -178,6 +178,7 @@ struct Sgn end
 struct Sin end
 struct Cos end
 struct Log end
+struct Exp end
 
 function Base.:(==)(left::UnaryOperation{Op}, right::UnaryOperation{Op}) where {Op}
     return left.arg == right.arg
@@ -533,6 +534,18 @@ end
 
 function Base.broadcasted(::typeof(log), arg::Tensor)
     return UnaryOperation{Log}(arg)
+end
+
+function Base.exp(arg::Tensor)
+    if !isempty(get_free_indices(arg))
+        throw(DomainError(arg, "Argument is not a scalar, use exp. for element-wise exp."))
+    end
+
+    return UnaryOperation{Exp}(arg)
+end
+
+function Base.broadcasted(::typeof(exp), arg::Tensor)
+    return UnaryOperation{Exp}(arg)
 end
 
 function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
@@ -1001,6 +1014,10 @@ end
 
 function to_string(arg::UnaryOperation{Log})
     return "log($(arg.arg))"
+end
+
+function to_string(arg::UnaryOperation{Exp})
+    return "exp($(arg.arg))"
 end
 
 function parenthesize(arg)

@@ -54,6 +54,10 @@ function diff(arg::UnaryOperation{Log}, wrt::Variable)
     return BinaryOperation{Mult}(Power(arg.arg, -1), diff(arg.arg, wrt))
 end
 
+function diff(arg::UnaryOperation{Exp}, wrt::Variable)
+    return BinaryOperation{Mult}(UnaryOperation{Exp}(arg.arg), diff(arg.arg, wrt))
+end
+
 function diff(arg::Power, wrt::Variable)
     outer = replace_bound_letters(arg.base, wrt)
 

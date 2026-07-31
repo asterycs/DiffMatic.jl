@@ -110,6 +110,21 @@ end
     @test to_std(gradient(sum(A * x), x)) == "Aᵀvec(1)"
 end
 
+@testset "test exp in standard notation" begin
+    @matrix A
+    @vector x y
+
+    @test to_std(exp.(A * x)) == "exp(Ax)"
+    @test to_std(exp(x' * x)) == "exp(xᵀx)"
+    @test to_std(sum(exp.(A * x))) == "sum(exp(Ax))"
+
+    @test to_std(gradient(sum(exp.(A * x)), x)) == "Aᵀexp(Ax)"
+    @test to_std(gradient(exp(x' * x), x)) == "exp(xᵀx)2x"
+    @test to_std(gradient(y' * exp.(A * x), x)) == "Aᵀdiagm(exp(Ax))y"
+    @test to_std(jacobian(exp.(A * x), x)) == "diagm(exp(Ax))A"
+    @test to_std(hessian(sum(exp.(A * x)), x)) == "Aᵀdiagm(exp(Ax))A"
+end
+
 @testset "test elementwise multiplication in standard notation" begin
     @matrix A B
     @vector x

@@ -69,6 +69,10 @@ struct Log <: IR
     arg::IR
 end
 
+struct Exp <: IR
+    arg::IR
+end
+
 struct Power <: IR
     base::IR
     exponent::Union{Int,Rational{Int}}
@@ -131,6 +135,10 @@ function _get_variables(arg::Cos)
 end
 
 function _get_variables(arg::Log)
+    return _get_variables(arg.arg)
+end
+
+function _get_variables(arg::Exp)
     return _get_variables(arg.arg)
 end
 
@@ -509,6 +517,10 @@ end
 
 function to_ir(arg::UnaryOperation{Log})
     return ir.Log(to_ir(arg.arg))
+end
+
+function to_ir(arg::UnaryOperation{Exp})
+    return ir.Exp(to_ir(arg.arg))
 end
 
 function to_ir(arg::Power)

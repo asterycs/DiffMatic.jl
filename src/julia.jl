@@ -55,6 +55,10 @@ function to_julia(arg::ir.Log)
     return :(log.($(to_julia(arg.arg))))
 end
 
+function to_julia(arg::ir.Exp)
+    return :(exp.($(to_julia(arg.arg))))
+end
+
 function to_julia(arg::ir.Add)
     return :($(to_julia(arg.l)) + $(to_julia(arg.r)))
 end

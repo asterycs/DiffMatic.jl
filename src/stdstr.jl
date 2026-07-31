@@ -152,6 +152,12 @@ function to_std_str(arg::ir.Log)
     return "log(" * out * ")"
 end
 
+function to_std_str(arg::ir.Exp)
+    out = to_std_str(arg.arg)
+
+    return "exp(" * out * ")"
+end
+
 function superscript(value::Rational)
     absvalue = abs(value)
 
