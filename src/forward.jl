@@ -141,8 +141,8 @@ Does not match e.g.
 
     x¹1₁
 """
-function is_tied_ones(arg::Value, other::Value)
-    if !(arg isa Literal) || arg.value != 1 || length(arg.indices) != 1
+function is_tied_constant(arg::Value, other::Value)
+    if !(arg isa Literal) || length(arg.indices) != 1
         return false
     end
 
@@ -190,8 +190,8 @@ function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::BinaryOperation{M
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Literal})
-    if is_tied_ones(arg2, arg1)
-        return evaluate(arg1)
+    if is_tied_constant(arg2, arg1)
+        return evaluate(BinaryOperation{Mult}(arg2.value, arg1))
     end
 
     if arg1.arg1 isa Real
@@ -547,12 +547,12 @@ function evaluate(::Mult, arg1::Power, arg2::BinaryOperation{Sub})
 end
 
 function evaluate(::Mult, arg1::Value, arg2::Value)
-    if is_tied_ones(arg2, arg1)
-        return evaluate(arg1)
+    if is_tied_constant(arg2, arg1)
+        return evaluate(BinaryOperation{Mult}(arg2.value, arg1))
     end
 
-    if is_tied_ones(arg1, arg2)
-        return evaluate(arg2)
+    if is_tied_constant(arg1, arg2)
+        return evaluate(BinaryOperation{Mult}(arg1.value, arg2))
     end
 
     return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))

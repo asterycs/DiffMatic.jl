@@ -1312,9 +1312,8 @@ end
     @test evaluate(mult(mult(d, x), ones)) == x
     @test evaluate(mult(mult(x, d), ones)) == x
 
-    # TODO: 'is_tied_ones' currently only recognises a value of one.
-    @test_broken evaluate(mult(mult(d, x), Literal(3, Upper(2)))) == mult(3, x)
-    @test_broken evaluate(mult(mult(x, d), Literal(3, Upper(2)))) == mult(3, x)
+    @test evaluate(mult(mult(d, x), Literal(3, Upper(2)))) == mult(3, x)
+    @test evaluate(mult(mult(x, d), Literal(3, Upper(2)))) == mult(3, x)
 end
 
 @testset "a tied ones-vector is dropped but a contracted one is kept" begin
@@ -1330,5 +1329,5 @@ end
     @test evaluate(summed) == summed
 
     threes = mult(A, Literal(3, Upper(1)))
-    @test evaluate(threes) == threes
+    @test evaluate(threes) == mult(3, A)
 end
