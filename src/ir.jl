@@ -510,6 +510,8 @@ function to_ir(arg::BinaryOperation{Mult})
         elseif arg.arg2 isa Variable
             return ir.Product(to_ir(arg.arg2), to_ir(arg.arg1))
         end
+
+        return ir.Product(to_ir(arg.arg1), to_ir(arg.arg2))
     end
 
     throw_not_std(arg)
