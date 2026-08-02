@@ -178,3 +178,27 @@ end
     @test to_std(hessian((A * x)' * sin.(A * x), x)) ==
           "Aᵀdiagm(cos(Ax))A + (-1)Aᵀdiagm(Ax ⊙ sin(Ax))A + Aᵀdiagm(cos(Ax))A"
 end
+
+@testset "test graph rewriting of products" begin
+    @matrix A B C
+    @vector x y
+
+    # One node, one pendant, two edges to the boundary.
+    @test to_std(hessian(y' * sin.(A * x), x)) == "(-1)Aᵀdiagm(sin(Ax) ⊙ y)A"
+
+    # One node, two pendants.
+    @test to_std(hessian(sin.(A * x)' * cos.(B * x), x)) ==
+          "(-1)Bᵀdiagm(cos(Bx) ⊙ sin(Ax))B + (-1)Bᵀdiagm(sin(Bx) ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Bx) ⊙ cos(Ax))B + (-1)Aᵀdiagm(sin(Ax) ⊙ cos(Bx))A"
+
+    # Now with a sum rather than an inner product.
+    @test to_std(hessian(sum(sin.(A * x) .* cos.(B * x)), x)) ==
+          "(-1)Bᵀdiagm(cos(Bx) ⊙ sin(Ax))B + (-1)Bᵀdiagm(sin(Bx) ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Bx) ⊙ cos(Ax))B + (-1)Aᵀdiagm(sin(Ax) ⊙ cos(Bx))A"
+
+    # One node with three pendants.
+    @test to_std(hessian((x .* y)' * sin.(A * x), x)) ==
+          "Iᵀdiagm(y ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Ax) ⊙ x ⊙ y)A + Aᵀdiagm(y ⊙ cos(Ax))I"
+
+    # Two nodes joined by an edge, so two 'diagm's in the same term, and a term that collapses into a pendant of its neighbour.
+    @test to_std(hessian(sin.(A * x)' * B * cos.(C * x), x)) ==
+          "(-1)(Cᵀdiagm(sin(Cx))Bᵀdiagm(cos(Ax))A + Cᵀdiagm(cos(Cx) ⊙ Bᵀsin(Ax))C) + (-1)Aᵀdiagm(cos(Ax))Bdiagm(sin(Cx))C + (-1)Aᵀdiagm(sin(Ax) ⊙ Bcos(Cx))A"
+end

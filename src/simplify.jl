@@ -135,56 +135,272 @@ function can_apply(l, r)
     return false
 end
 
-function sift_down(arg::Tensor, tree::BinaryOperation{Mult})
-    arg_ids = get_free_indices(arg)
+function build_graph(factors)
+    pendants = Dict{Int,Vector{Any}}()
+    edges = Vector{Tuple{Any,Vector{Int}}}()
+    scalars = Any[]
 
-    l_ids = get_free_indices(tree.arg1)
-    r_ids = get_free_indices(tree.arg2)
+    for f ∈ factors
+        ids = get_free_indices(f)
 
-    # In this case, 'arg' and 'tree' have the same modes, then we can do element-wise multiplication
-    if isempty(setdiff(arg_ids, l_ids)) && isempty(setdiff(l_ids, arg_ids))
-        new_tree = BinaryOperation{Mult}(BinaryOperation{Mult}(arg, tree.arg1), tree.arg2)
-        @assert length(get_free_indices(new_tree)) ==
-                length(get_free_indices(BinaryOperation{Mult}(tree, arg)))
+        if isempty(ids)
+            push!(scalars, f)
+            continue
+        end
 
-        return new_tree
-    elseif isempty(setdiff(arg_ids, r_ids)) && isempty(setdiff(r_ids, arg_ids))
-        new_tree = BinaryOperation{Mult}(tree.arg1, BinaryOperation{Mult}(tree.arg2, arg))
-        @assert length(get_free_indices(new_tree)) ==
-                length(get_free_indices(BinaryOperation{Mult}(tree, arg)))
+        if length(ids) > 2
+            return nothing
+        end
 
-        return new_tree
+        letters = [i.letter for i ∈ ids]
+
+        # A factor carrying the same letter twice is a trace.
+        if length(letters) != length(unique(letters))
+            return nothing
+        end
+
+        if length(ids) == 1
+            push!(get!(pendants, only(letters), Any[]), f)
+        else
+            push!(edges, (f, letters))
+        end
     end
 
-    # Otherwise, recurse
-    if isempty(setdiff(arg_ids, l_ids))
-        new_tree = BinaryOperation{Mult}(sift_down(arg, tree.arg1), tree.arg2)
-        @assert length(get_free_indices(new_tree)) ==
-                length(get_free_indices(BinaryOperation{Mult}(tree, arg)))
+    return (pendants, edges, scalars)
+end
 
-        return new_tree
-    elseif isempty(setdiff(arg_ids, r_ids))
-        new_tree = BinaryOperation{Mult}(tree.arg1, sift_down(arg, tree.arg2))
-        @assert length(get_free_indices(new_tree)) ==
-                length(get_free_indices(BinaryOperation{Mult}(tree, arg)))
+function set_letter_variance(f, letter, upper)
+    for i ∈ get_free_indices(f)
+        if i.letter != letter
+            continue
+        end
 
-        return new_tree
+        target = upper ? Upper(letter) : Lower(letter)
+
+        if i != target
+            f = update_index(f, i, target; allow_shape_change = true)
+        end
+    end
+
+    return f
+end
+
+function node_degrees(edges)
+    degree = Dict{Int,Int}()
+
+    for (_, ls) ∈ edges, l ∈ ls
+        degree[l] = get(degree, l, 0) + 1
+    end
+
+    return degree
+end
+
+function find_dead_end(pendants, edges, pinned)
+    degree = node_degrees(edges)
+
+    for (k, (_, ls)) ∈ enumerate(edges)
+        for (near, far) ∈ ((ls[1], ls[2]), (ls[2], ls[1]))
+            if degree[near] == 1 && !(near ∈ pinned)
+                return (k, near, far)
+            end
+        end
     end
 
     return nothing
 end
 
-function flip_indices(ids, arg)
-    for i ∈ ids
-        arg = update_index(arg, i, flip(i); allow_shape_change = true)
+function collapse_dead_ends!(pendants, edges, pinned)
+    while true
+        dead = find_dead_end(pendants, edges, pinned)
+
+        if isnothing(dead)
+            return
+        end
+
+        k, near, far = dead
+        f, _ = edges[k]
+
+        parts = Any[set_letter_variance(p, near, true) for p ∈ get(pendants, near, Any[])]
+        push!(parts, set_letter_variance(f, near, false))
+        folded = to_binary_operation(Mult(), parts)
+        delete!(pendants, near)
+        deleteat!(edges, k)
+        push!(get!(pendants, far, Any[]), folded)
+    end
+end
+
+function walk_path(pendants, edges, start)
+    visited_edges = Set{Int}()
+    nodes = Int[]
+    path_edges = Any[]
+    node = start
+
+    while true
+        if node ∈ nodes
+            return nothing
+        end
+
+        push!(nodes, node)
+        next = nothing
+
+        for (j, (_, js)) ∈ enumerate(edges)
+            if j ∉ visited_edges && node ∈ js
+                next = j
+                break
+            end
+        end
+
+        if isnothing(next)
+            break
+        end
+
+        g, gs = edges[next]
+        push!(visited_edges, next)
+        push!(path_edges, g)
+        node = only(filter(!isequal(node), gs))
     end
 
-    return arg
+    if length(visited_edges) != length(edges)
+        return nothing
+    end
+
+    return (nodes, path_edges)
+end
+
+function letter_variance(f, letter)
+    ids = filter(i -> i.letter == letter, get_free_indices(f))
+
+    return isempty(ids) ? nothing : first(ids)
+end
+
+function orient(nodes, path_edges, pendants, pinned)
+    if isempty(path_edges)
+        ps = get(pendants, only(nodes), Any[])
+
+        return isempty(ps) ? nothing : Vector{Any}[ps]
+    end
+
+    anchor = letter_variance(first(path_edges), first(nodes))
+
+    if isnothing(anchor)
+        return nothing
+    end
+
+    tie_upper = anchor isa Lower
+    last_node = last(nodes)
+
+    if last_node ∈ pinned
+        far = letter_variance(last(path_edges), last_node)
+
+        if isnothing(far) || (far isa Upper) != tie_upper
+            return nothing
+        end
+    end
+
+    groups = Vector{Any}[]
+
+    for (k, n) ∈ enumerate(nodes)
+        terminal = k == length(nodes)
+        ps = get(pendants, n, Any[])
+
+        if !isempty(ps)
+            if n ∈ pinned
+                push!(groups, Any[p for p ∈ ps])
+            else
+                v = terminal ? !tie_upper : tie_upper
+                push!(groups, Any[set_letter_variance(p, n, v) for p ∈ ps])
+            end
+        end
+
+        if terminal
+            continue
+        end
+
+        e = path_edges[k]
+        m = nodes[k+1]
+
+        if !(n ∈ pinned)
+            e = set_letter_variance(e, n, !tie_upper)
+        end
+
+        if !(m ∈ pinned)
+            e = set_letter_variance(e, m, tie_upper)
+        end
+
+        push!(groups, Any[e])
+    end
+
+    return groups
+end
+
+# Factor graph (https://www.eigentales.com/Factor-Graphs/) based reordering.
+function graph_rewrite(arg1, arg2, target_indices)
+    factors = [collect_factors(arg1); collect_factors(arg2)]
+    pinned = Set(i.letter for i ∈ target_indices)
+
+    built = build_graph(factors)
+
+    if isnothing(built)
+        return nothing
+    end
+
+    pendants, edges, scalars = built
+
+    collapse_dead_ends!(pendants, edges, pinned)
+
+    degree = node_degrees(edges)
+
+    if any(d -> d > 2, values(degree))
+        return nothing
+    end
+
+    nodes = union(Set(keys(pendants)), Set(l for (_, ls) ∈ edges for l ∈ ls))
+
+    starts = if isempty(edges)
+        length(nodes) == 1 ? collect(nodes) : Int[]
+    else
+        [l for l ∈ pinned if get(degree, l, 0) == 1]
+    end
+
+    for start ∈ starts
+        walked = walk_path(pendants, edges, start)
+
+        if isnothing(walked)
+            continue
+        end
+
+        visited, path_edges = walked
+
+        if !issubset(nodes, Set(visited))
+            continue
+        end
+
+        groups = orient(visited, path_edges, pendants, pinned)
+
+        if isnothing(groups)
+            continue
+        end
+
+        emitted = [to_binary_operation(Mult(), g) for g ∈ groups]
+        rewritten = to_binary_operation(Mult(), [scalars; emitted])
+
+        if issetequal(get_free_indices(rewritten), target_indices)
+            return rewritten
+        end
+    end
+
+    return nothing
 end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
     op = BinaryOperation{Mult}(arg1, arg2)
     target_indices = unique(get_free_indices(op))
+
+    rewritten = graph_rewrite(arg1, arg2, target_indices)
+
+    if !isnothing(rewritten)
+        return rewritten
+    end
 
     if is_diagm(arg1) &&
        !is_elementwise_multiplication(arg1, arg2) &&
@@ -272,43 +488,6 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
         end
     end
 
-    arg1_free_indices = get_free_indices(arg1)
-    arg2_free_indices = get_free_indices(arg2)
-
-    if length(arg1_free_indices) > 2 && length(target_indices) <= 2
-        new_tree = sift_down(
-            arg2,
-            BinaryOperation{Mult}(
-                flip_indices(get_free_indices(arg2'), arg1.arg1),
-                arg1.arg2,
-            ),
-        )
-
-        if isnothing(new_tree)
-            new_tree = sift_down(
-                arg2,
-                BinaryOperation{Mult}(
-                    arg1.arg1,
-                    flip_indices(get_free_indices(arg2'), arg1.arg2),
-                ),
-            )
-        end
-
-        if !isnothing(new_tree)
-            @assert length(get_free_indices(new_tree)) <= 2
-            return new_tree
-        end
-    end
-
-    if length(arg2_free_indices) > 2 && length(target_indices) <= 2
-        new_tree = sift_down(arg1, arg2)
-
-        if !isnothing(new_tree)
-            @assert length(get_free_indices(new_tree)) <= 2
-            return new_tree
-        end
-    end
-
     return op
 end
 
@@ -331,7 +510,6 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mul
         )
     end
 
-    # Fallback for sift_down
     return invoke(simplify, Tuple{Mult,BinaryOperation{Mult},Tensor}, Mult(), arg1, arg2)
 end
 

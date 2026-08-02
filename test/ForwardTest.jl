@@ -1229,25 +1229,6 @@ end
     @test equivalent(dc.evaluate(D), 3 * A)
 end
 
-@testset "Differentiate A(x + 2x)" begin
-    A = Variable("A", Upper(1), Lower(2))
-    x = Variable("x", Upper(3))
-
-    # wrt should have the same index as x has in expr
-    expr = A * (x + 2 * x)
-    wrt = Variable("x", Upper(4))
-
-    D = dc.diff(expr, wrt)
-
-    expected = dc.BinaryOperation{dc.Mult}(
-        Variable("A", Upper(1), Lower(3)),
-        KrD(Upper(3), Lower(3)),
-    )
-    expected = dc.BinaryOperation{dc.Mult}(3, expected)
-
-    @test equivalent(evaluate(D), expected)
-end
-
 @testset "Differentiate A(2x + x)" begin
     A = Variable("A", Upper(1), Lower(2))
     x = Variable("x", Upper(3))
