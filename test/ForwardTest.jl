@@ -1233,7 +1233,7 @@ end
     A = Variable("A", Upper(1), Lower(2))
     x = Variable("x", Upper(3))
 
-    D = dc.diff(A * (x + 2 * x), Variable("x", Upper(5)))
+    D = dc.diff(A * (2 * x + x), Variable("x", Upper(5)))
 
     @test equivalent(dc.evaluate(D), 3 * A)
 end
