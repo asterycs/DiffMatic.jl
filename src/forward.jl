@@ -39,23 +39,33 @@ function diff(arg::Real, wrt::Variable)
 end
 
 function diff(arg::UnaryOperation{Abs}, wrt::Variable)
-    return BinaryOperation{Mult}(UnaryOperation{Sgn}(arg.arg), diff(arg.arg, wrt))
+    outer = replace_bound_letters(arg.arg, wrt)
+
+    return BinaryOperation{Mult}(UnaryOperation{Sgn}(outer), diff(arg.arg, wrt))
 end
 
 function diff(arg::UnaryOperation{Sin}, wrt::Variable)
-    return BinaryOperation{Mult}(UnaryOperation{Cos}(arg.arg), diff(arg.arg, wrt))
+    outer = replace_bound_letters(arg.arg, wrt)
+
+    return BinaryOperation{Mult}(UnaryOperation{Cos}(outer), diff(arg.arg, wrt))
 end
 
 function diff(arg::UnaryOperation{Cos}, wrt::Variable)
-    return BinaryOperation{Mult}(-UnaryOperation{Sin}(arg.arg), diff(arg.arg, wrt))
+    outer = replace_bound_letters(arg.arg, wrt)
+
+    return BinaryOperation{Mult}(-UnaryOperation{Sin}(outer), diff(arg.arg, wrt))
 end
 
 function diff(arg::UnaryOperation{Log}, wrt::Variable)
-    return BinaryOperation{Mult}(Power(arg.arg, -1), diff(arg.arg, wrt))
+    outer = replace_bound_letters(arg.arg, wrt)
+
+    return BinaryOperation{Mult}(Power(outer, -1), diff(arg.arg, wrt))
 end
 
 function diff(arg::UnaryOperation{Exp}, wrt::Variable)
-    return BinaryOperation{Mult}(UnaryOperation{Exp}(arg.arg), diff(arg.arg, wrt))
+    outer = replace_bound_letters(arg.arg, wrt)
+
+    return BinaryOperation{Mult}(UnaryOperation{Exp}(outer), diff(arg.arg, wrt))
 end
 
 function diff(arg::Power, wrt::Variable)
@@ -68,9 +78,12 @@ function diff(arg::Power, wrt::Variable)
 end
 
 function diff(arg::BinaryOperation{Mult}, wrt::Variable)
+    d1 = diff(arg.arg1, wrt)
+    d2 = diff(arg.arg2, wrt)
+
     return BinaryOperation{Add}(
-        BinaryOperation{Mult}(arg.arg1, diff(arg.arg2, wrt)),
-        BinaryOperation{Mult}(diff(arg.arg1, wrt), arg.arg2),
+        BinaryOperation{Mult}(replace_bound_letters(arg.arg1, wrt, d2), d2),
+        BinaryOperation{Mult}(d1, replace_bound_letters(arg.arg2, wrt, d1)),
     )
 end
 
@@ -78,7 +91,11 @@ function diff(arg::BinaryOperation{Op}, wrt::Variable) where {Op<:AdditiveOperat
     return BinaryOperation{Op}(diff(arg.arg1, wrt), diff(arg.arg2, wrt))
 end
 
-function replace_bound_letters(arg::Tensor, letters_to_skip::Tensor...)
+function replace_bound_letters(arg::Real, letters_to_skip...)
+    return arg
+end
+
+function replace_bound_letters(arg::Tensor, letters_to_skip...)
     letters = unique(get_letters(get_indices(arg)))
     free_letters = unique(get_letters(get_free_indices(arg)))
     bound_letters = setdiff(letters, free_letters)
