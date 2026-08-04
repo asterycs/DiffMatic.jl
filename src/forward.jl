@@ -203,7 +203,7 @@ function is_diagm(arg1::Value, arg2::Value)
         return is_diagm(arg1)
     end
 
-    return is_diagm(arg1) || is_diagm(arg2)
+    return is_diagm(arg1) && is_diagm(arg2)
 end
 
 function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::BinaryOperation{Mult})
