@@ -409,7 +409,7 @@ function to_ir(arg::BinaryOperation{Mult})
     end
 
     if isempty(target_indices) && (first(terms) isa Literal || last(terms) isa Literal)
-        tensor = if first(terms) == Literal
+        tensor = if first(terms) isa Literal
             last(terms)
         else
             first(terms)
