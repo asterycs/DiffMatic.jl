@@ -64,35 +64,78 @@ function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
 end
 
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
+    op = BinaryOperation{Mult}(arg1, arg2)
+
     arg2_free_ids = get_free_indices(arg2)
 
-    # A constant vector contracting an index that is shared element-wise
-    # in arg1 can be converted into a regular contraction.
-    if can_contract(arg1, arg2) &&
-       length(arg2_free_ids) == 1 &&
-       !is_all_elementwise(arg1.arg1, arg1.arg2)
-        elwise_ids = elementwise_indices(arg1.arg1, arg1.arg2)
-
-        target_idx = only(arg2_free_ids)
-
-        if flip(target_idx) ∈ elwise_ids
-            new_r = update_index(
-                arg1.arg2,
-                flip(target_idx),
-                target_idx;
-                allow_shape_change = true,
-            )
-            reshaped = evaluate(BinaryOperation{Mult}(arg1.arg1, evaluate(new_r)))
-
-            if arg2.value != 1
-                reshaped = BinaryOperation{Mult}(arg2.value, reshaped)
-            end
-
-            return simplify(reshaped)
-        end
+    if !can_contract(arg1, arg2) || length(arg2_free_ids) != 1
+        return op
     end
 
-    return BinaryOperation{Mult}(arg1, arg2)
+    target_idx = only(arg2_free_ids)
+    tied_idx = flip(target_idx)
+    factors = collect_factors(arg1)
+
+    carriers = [k for k ∈ eachindex(factors) if tied_idx ∈ get_free_indices(factors[k])]
+
+    if length(carriers) < 2
+        return op
+    end
+
+    # Find element-wise product of matrices
+    rest = [i for k ∈ carriers for i ∈ get_free_indices(factors[k]) if i != tied_idx]
+
+    if length(unique(rest)) != length(rest)
+        return op
+    end
+
+    delta = findfirst(k -> factors[k] isa KrD, carriers)
+    reshaped = nothing
+
+    if isnothing(delta)
+        # E.g. x¹y¹1₁
+        chosen = first(carriers)
+        factors[chosen] =
+            update_index(factors[chosen], tied_idx, target_idx; allow_shape_change = true)
+        reshaped = evaluate(to_binary_operation(Mult(), factors))
+    else
+        # E.g. arg1 = x₁δ₁² arg2 = 1¹
+        k = carriers[delta]
+        wire_ids = filter(!isequal(tied_idx), get_free_indices(factors[k]))
+
+        if length(wire_ids) != 1
+            return op
+        end
+
+        wire = only(wire_ids)
+        merged = Any[]
+
+        for j ∈ eachindex(factors)
+            if j == k
+                continue
+            end
+
+            factor = factors[j]
+
+            if j ∈ carriers
+                factor = update_index(factors[j], tied_idx, wire; allow_shape_change = true)
+            end
+
+            push!(merged, factor)
+        end
+
+        reshaped = evaluate(to_binary_operation(Mult(), merged))
+    end
+
+    if !issetequal(get_free_indices(reshaped), get_free_indices(op))
+        return op
+    end
+
+    if arg2.value != 1
+        reshaped = BinaryOperation{Mult}(arg2.value, reshaped)
+    end
+
+    return simplify(reshaped)
 end
 
 function simplify(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
