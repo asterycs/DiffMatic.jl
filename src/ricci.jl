@@ -125,6 +125,16 @@ struct BinaryOperation{Op} <: Tensor where {Op}
     arg2::Value
 end
 
+# Used only in to_ir as an intermediate step when lowering products
+struct Lowered <: Tensor
+    value::Any
+    indices::IndexList
+end
+
+function get_indices(arg::Lowered)
+    return arg.indices
+end
+
 Base.hash(op::BinaryOperation{Op}, h::UInt) where {Op} = hash(op.arg1, hash(op.arg1, h))
 
 abstract type AdditiveOperation end

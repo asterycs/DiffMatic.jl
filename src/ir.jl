@@ -388,6 +388,12 @@ function to_ir(arg::BinaryOperation{Mult})
         end
     end
 
+    diagonal = extract_diagonal(collect_factors(arg), get_free_indices(arg))
+
+    if !isnothing(diagonal)
+        return diagonal
+    end
+
     if length(target_indices) == 1
         if all(length.(unique(get_free_indices.(terms))) .== 1)
             return reduce(
@@ -527,6 +533,65 @@ end
 
 function to_ir(arg::Power)
     return ir.Power(to_ir(arg.base), arg.exponent)
+end
+
+# Examples:
+#
+#     A₄⁴ δ₄⁵                 ->  diag(A)
+#     x⁴ A⁴₄                  ->  xᵀdiag(A)
+#     cos(A₂⁶x₆) A₂⁵ B₂²      ->  Aᵀ(cos(Ax) ⊙ diag(B))
+#
+function extract_diagonal(terms, free_ids)
+    for mi ∈ eachindex(terms)
+        # Leave these to the trace path.
+        if terms[mi] isa KrD
+            continue
+        end
+
+        m_ids = get_indices(terms[mi])
+
+        if length(m_ids) != 2 || first(m_ids) != flip(last(m_ids))
+            continue
+        end
+
+        letter = first(m_ids).letter
+        rest = [k for k ∈ eachindex(terms) if k != mi]
+
+        # Every other factor has to be on that letter, or this is not one diagonal.
+        if isempty(rest) ||
+           !all(k -> letter ∈ [i.letter for i ∈ get_free_indices(terms[k])], rest)
+            continue
+        end
+
+        fresh = get_next_letter(terms...)
+        as_matrix = update_index(
+            terms[mi],
+            last(m_ids),
+            same_to(last(m_ids), fresh);
+            allow_shape_change = true,
+        )
+        diagonal = ir.Diag(to_ir(as_matrix))
+
+        for variance ∈ (Upper(letter), Lower(letter))
+            rebuilt = to_binary_operation(
+                Mult(),
+                [Lowered(diagonal, IndexList([variance])); [terms[k] for k ∈ rest]],
+            )
+
+            @assert issetequal(get_free_indices(rebuilt), free_ids)
+            return to_ir(rebuilt)
+        end
+    end
+
+    return nothing
+end
+
+function to_ir(arg::Lowered)
+    if length(arg.indices) == 1 && only(arg.indices) isa Lower
+        return ir.Transpose(arg.value)
+    end
+
+    return arg.value
 end
 
 function is_trace(arg)
