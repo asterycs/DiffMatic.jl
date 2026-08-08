@@ -378,6 +378,39 @@ function orient(nodes, path_edges, pendants, pinned)
     return groups
 end
 
+function find_parallel_edges(edges)
+    for i ∈ eachindex(edges)
+        for j ∈ eachindex(edges)
+            if i >= j
+                continue
+            end
+
+            i_ids = get_free_indices(edges[i][1])
+            j_ids = get_free_indices(edges[j][1])
+
+            if issetequal(i_ids, j_ids)
+                return (i, j)
+            end
+        end
+    end
+
+    return nothing
+end
+
+function contract_parallel_edges!(edges)
+    while true
+        found = find_parallel_edges(edges)
+
+        if isnothing(found)
+            return
+        end
+
+        i, j = found
+        edges[i] = (BinaryOperation{Mult}(edges[i][1], edges[j][1]), edges[i][2])
+        deleteat!(edges, j)
+    end
+end
+
 # Factor graph (https://www.eigentales.com/Factor-Graphs/) based reordering.
 function graph_rewrite(arg1, arg2, target_indices)
     factors = [collect_factors(arg1); collect_factors(arg2)]
@@ -390,6 +423,8 @@ function graph_rewrite(arg1, arg2, target_indices)
     end
 
     pendants, edges, scalars = built
+
+    contract_parallel_edges!(edges)
 
     collapse_dead_ends!(pendants, edges, pinned)
 
