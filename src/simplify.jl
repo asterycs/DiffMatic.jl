@@ -66,6 +66,8 @@ end
 function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
     op = BinaryOperation{Mult}(arg1, arg2)
 
+    op = invoke(simplify, Tuple{Mult,BinaryOperation{Mult},Tensor}, Mult(), arg1, arg2)
+
     arg2_free_ids = get_free_indices(arg2)
 
     if !can_contract(arg1, arg2) || length(arg2_free_ids) != 1
