@@ -179,13 +179,13 @@ g_fun(An, Bn, xn)
 The `JuliaFunc` generator may use functions and primitives defined in `LinearAlgebra`, such as e.g. `diagm` and `I`. These functions need to be explicitly imported by the user prior to usage:
 
 ```jldoctest usage
-g = gradient(log.(A * x)' * x, x)
-g_fun = eval(to_std(g; format = JuliaFunc()))
+h = hessian(x' * sin.(A * x), x)
+h_fun = eval(to_std(h; format = JuliaFunc()))
 
-An = exp(3) * ones(3,3)
+An = ones(3,3)
 xn = Float64[1; 0; 0]
 
-g_fun(An, xn)
+h_fun(An, xn)
 
 # output
 
@@ -195,14 +195,14 @@ ERROR: UndefVarError: `diagm` not defined
 ```jldoctest usage
 using LinearAlgebra: diagm
 
-g_fun(An, xn)
+h_fun(An, xn)
 
 # output
 
-3-element Vector{Float64}:
- 4.0
- 4.0
- 4.0
+3×3 Matrix{Float64}:
+ 0.239134  0.239134  0.239134
+ 0.239134  0.239134  0.239134
+ 0.239134  0.239134  0.239134
 ```
 
 The order of the arguments of the generated function can be specified through `JuliaFunc`:

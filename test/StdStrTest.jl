@@ -16,10 +16,10 @@ using LinearAlgebra: tr, diag, diagm, norm
     @test to_std(gradient((x .* c)' * x, x)) == "2(x ⊙ c)"
     @test to_std(gradient((x + y)' * x, x)) == "2x + y"
     @test to_std(gradient((x - y)' * x, x)) == "2x - y"
-    @test to_std(gradient(sin(tr(x * x')), x)) == "cos(xᵀx)2x"
-    @test to_std(gradient(cos(tr(x * x')), x)) == "(-1)sin(xᵀx)2x"
+    @test to_std(gradient(sin(tr(x * x')), x)) == "2cos(xᵀx)x"
+    @test to_std(gradient(cos(tr(x * x')), x)) == "(-2)sin(xᵀx)x"
     @test to_std(gradient(tr(A), x)) == "vec(0)"
-    @test to_std(gradient(abs(x' * x), x)) == "sgn(xᵀx)2x"
+    @test to_std(gradient(abs(x' * x), x)) == "2sgn(xᵀx)x"
     @test to_std(gradient(x' * B' * A * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std(gradient((A' * B * x)' * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std(gradient(a * sin.(y)' * x, x)) == "asin(y)"
@@ -42,8 +42,8 @@ using LinearAlgebra: tr, diag, diagm, norm
     @test to_std(gradient(sum(x)^2, x)) == "2sum(xᵀ)vec(1)"
     @test to_std(gradient(sum(x .^ 2)^2, x)) == "2sum(xᵀ²)2x"
     @test to_std(gradient(sum((x + y) .^ 2), x)) == "2(x + y)"
-    @test to_std(gradient(sum((x .* y) .^ 2), x)) == "2(x ⊙ y ⊙ y)"
-    @test to_std(gradient(sum((A * x - y) .^ 2), x)) == "2(AᵀAx - Aᵀy)"
+    @test to_std(gradient(sum((x .* y) .^ 2), x)) == "2(y ⊙ x ⊙ y)" # TODO: Fold the y:s
+    @test to_std(gradient(sum((A * x - y) .^ 2), x)) == "2(AᵀAx - Aᵀy)" # TODO: Would be less work to factor out At
     @test to_std(gradient(log.(x)'*x, x)) == "vec(1) + log(x)"
     @test to_std(gradient(log.(x)'*log.(x), x)) == "2(log(x) ⊘ x)"
     @test to_std(gradient((x' * A * x) ^ (-2), x)) == "(-2)(xᵀAᵀx)⁻³Aᵀx + (-2)(xᵀAᵀx)⁻³Ax"
@@ -53,9 +53,9 @@ using LinearAlgebra: tr, diag, diagm, norm
           "(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x"
     @test to_std(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
     @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(x ⊙ y ⊙ c)"
-    @test to_std(gradient(norm(A * x, 2), x)) == "1/2sum((xᵀAᵀ)²)⁻¹⸍²2AᵀAx"
-    @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀdiagm(vec(1) ⊘ (Ax))x + log(Ax)" # TODO: Simplify diagm(quotient) * vec
-    @test to_std(gradient(x' * sin.(A * x), x)) == "Aᵀdiagm(cos(Ax))x + sin(Ax)"
+    @test to_std(gradient(norm(A * x, 2), x)) == "1/1sum((xᵀAᵀ)²)⁻¹⸍²AᵀAx" # TODO: Collapse the leading fraction
+    @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀ(x ⊘ (Ax)) + log(Ax)"
+    @test to_std(gradient(x' * sin.(A * x), x)) == "Aᵀ(cos(Ax) ⊙ x) + sin(Ax)"
 end
 
 @testset "test Jacobian in standard notation" begin
@@ -93,7 +93,7 @@ end
     @test to_std(A * diag(diagm(x))) == "Ax"
     @test to_std(diag(diagm(x)) .* y) == "x ⊙ y"
     @test to_std((diag(diagm(x)) .* y)' * z) == "(xᵀ ⊙ yᵀ)z"
-    @test to_std(sum(diag(diagm(A * x)))) == "vec(1)ᵀAx"
+    @test to_std(sum(diag(diagm(A * x)))) == "sum(xᵀAᵀ)"
 
     # Check that constants survive.
     @test to_std(diagm(x') * vector(1)) == "x"
@@ -105,7 +105,7 @@ end
     @vector x
 
     @test to_std(sum(x)) == "sum(x)"
-    @test to_std(sum(A * x)) == "vec(1)ᵀAx"
+    @test to_std(sum(A * x)) == "sum(xᵀAᵀ)"
     @test to_std(gradient(sum(x), x)) == "vec(1)"
     @test to_std(gradient(sum(A * x), x)) == "Aᵀvec(1)"
 end
@@ -119,8 +119,8 @@ end
     @test to_std(sum(exp.(A * x))) == "sum(exp(Ax))"
 
     @test to_std(gradient(sum(exp.(A * x)), x)) == "Aᵀexp(Ax)"
-    @test to_std(gradient(exp(x' * x), x)) == "exp(xᵀx)2x"
-    @test to_std(gradient(y' * exp.(A * x), x)) == "Aᵀdiagm(exp(Ax))y"
+    @test to_std(gradient(exp(x' * x), x)) == "2exp(xᵀx)x"
+    @test to_std(gradient(y' * exp.(A * x), x)) == "Aᵀ(exp(Ax) ⊙ y)"
     @test to_std(jacobian(exp.(A * x), x)) == "diagm(exp(Ax))A"
     @test to_std(hessian(sum(exp.(A * x)), x)) == "Aᵀdiagm(exp(Ax))A"
 end
@@ -143,7 +143,7 @@ end
     # Composed expressions
     @test to_std((A .* A') * x) == "(A ⊙ Aᵀ)x"
     @test to_std((A .* B') * x) == "(A ⊙ Bᵀ)x"
-    @test to_std(x' * (A .* A') * x) == "xᵀ(A ⊙ Aᵀ)x"
+    @test to_std(x' * (A .* A') * x) == "xᵀ(Aᵀ ⊙ A)x"
     @test to_std(jacobian((A .* A') * x, x)) == "A ⊙ Aᵀ"
     @test to_std(jacobian((A .* B') * x, x)) == "A ⊙ Bᵀ"
     @test to_std(gradient(x' * (A .* A') * x, x)) == "(Aᵀ ⊙ A)x + (A ⊙ Aᵀ)x"
@@ -155,7 +155,7 @@ end
     @matrix A B C X
     @vector x y z
 
-    @test to_std(derivative(diag(A)'*x, A)) == "Iᵀdiagm(x)"
+    @test to_std(derivative(diag(A)'*x, A)) == "diagm(x)I"
     @test to_std(derivative(sum(-y .* (X*z)), X)) == "(-1)zyᵀ"
     @test to_std(derivative(sum((A .* B) * C * x), x)) == "vec(1)ᵀ(A ⊙ B)C"
 end
@@ -168,15 +168,15 @@ end
     @test to_std(hessian(2 * x' * A * x, x)) == "2Aᵀ + 2A"
     @test to_std(hessian(2 * x' * x, x)) == "4I"
     @test to_std(hessian(sin(cos(x' * A * B' * x)), x)) ==
-          "cos(cos(xᵀBAᵀx))(-1)(sin(xᵀBAᵀx)BAᵀ + BAᵀxcos(xᵀBAᵀx)xᵀBAᵀ + BAᵀxcos(xᵀBAᵀx)xᵀABᵀ) + (-1)sin(xᵀBAᵀx)BAᵀxsin(cos(xᵀBAᵀx))sin(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(cos(xᵀBAᵀx))sin(xᵀBAᵀx)xᵀBAᵀ + cos(cos(xᵀBAᵀx))(-1)(sin(xᵀBAᵀx)ABᵀ + ABᵀxcos(xᵀBAᵀx)xᵀBAᵀ + ABᵀxcos(xᵀBAᵀx)xᵀABᵀ) + (-1)sin(xᵀBAᵀx)ABᵀxsin(cos(xᵀBAᵀx))sin(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(cos(xᵀBAᵀx))sin(xᵀBAᵀx)xᵀBAᵀ"
+          "(-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))BAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ + (-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))ABᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ"
     @test to_std(hessian(x' * sin.(A * x), x)) ==
-          "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(x ⊙ sin(Ax))A"
+          "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(sin(Ax) ⊙ x)A"
 
     # These reach an order-3 intermediate.
     @test to_std(hessian((A * x)' * sin.(B * x), x)) ==
-          "Aᵀdiagm(cos(Bx))B + (-1)Bᵀdiagm(Ax ⊙ sin(Bx))B + Bᵀdiagm(cos(Bx))A"
+          "Aᵀdiagm(cos(Bx))B + (-1)Bᵀdiagm(sin(Bx) ⊙ Ax)B + Bᵀdiagm(cos(Bx))A"
     @test to_std(hessian((A * x)' * sin.(A * x), x)) ==
-          "Aᵀdiagm(cos(Ax))A + (-1)Aᵀdiagm(Ax ⊙ sin(Ax))A + Aᵀdiagm(cos(Ax))A"
+          "Aᵀdiagm(cos(Ax))A + (-1)Aᵀdiagm(sin(Ax) ⊙ Ax)A + Aᵀdiagm(cos(Ax))A"
 end
 
 @testset "test graph rewriting of products" begin
@@ -196,7 +196,7 @@ end
 
     # One node with three pendants.
     @test to_std(hessian((x .* y)' * sin.(A * x), x)) ==
-          "Iᵀdiagm(y ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Ax) ⊙ x ⊙ y)A + Aᵀdiagm(y ⊙ cos(Ax))I"
+          "Iᵀdiagm(y ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Ax) ⊙ x ⊙ y)A + Aᵀdiagm(y ⊙ cos(Ax))"
 
     # Two nodes joined by an edge, so two 'diagm's in the same term, and a term that collapses into a pendant of its neighbour.
     @test to_std(hessian(sin.(A * x)' * B * cos.(C * x), x)) ==

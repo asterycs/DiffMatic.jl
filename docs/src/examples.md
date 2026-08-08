@@ -215,14 +215,14 @@ to_std(gradient(sin(tr(x * x')), x))
 
 # output
 
-"cos(xᵀx)2x"
+"2cos(xᵀx)x"
 ```
 ```jldoctest usage
 to_std(gradient(abs(x' * x), x))
 
 # output
 
-"sgn(xᵀx)2x"
+"2sgn(xᵀx)x"
 ```
 ```jldoctest usage
 to_std(gradient(log.(x)'*x, x))
@@ -271,7 +271,7 @@ to_std(gradient(y' * exp.(A * x), x))
 
 # output
 
-"Aᵀdiagm(exp(Ax))y"
+"Aᵀ(exp(Ax) ⊙ y)"
 ```
 ### Jacobian
 ```jldoctest usage
