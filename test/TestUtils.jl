@@ -48,6 +48,14 @@ function equivalent(left::KrD, right::KrD)
     return can_remap(left.indices, right.indices)
 end
 
+function equivalent(left::dc.Literal, right::dc.Literal)
+    return left.value == right.value && can_remap(left.indices, right.indices)
+end
+
+function equivalent(left::dc.Power, right::dc.Power)
+    return left.exponent == right.exponent && equivalent(left.base, right.base)
+end
+
 function equivalent(left::Zero, right::Zero)
     return can_remap(dc.get_free_indices(left), dc.get_free_indices(right))
 end
