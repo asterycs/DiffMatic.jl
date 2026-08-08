@@ -82,13 +82,30 @@ function diff(arg::BinaryOperation{Mult}, wrt::Variable)
     d2 = diff(arg.arg2, wrt)
 
     return BinaryOperation{Add}(
-        BinaryOperation{Mult}(replace_bound_letters(arg.arg1, wrt, d2), d2),
-        BinaryOperation{Mult}(d1, replace_bound_letters(arg.arg2, wrt, d1)),
+        BinaryOperation{Mult}(replace_colliding_letters(arg.arg1, d2, wrt), d2),
+        BinaryOperation{Mult}(d1, replace_colliding_letters(arg.arg2, d1, wrt)),
     )
 end
 
 function diff(arg::BinaryOperation{Op}, wrt::Variable) where {Op<:AdditiveOperation}
     return BinaryOperation{Op}(diff(arg.arg1, wrt), diff(arg.arg2, wrt))
+end
+
+function bound_letters(arg)
+    return setdiff(get_letters(get_indices(arg)), get_letters(get_free_indices(arg)))
+end
+
+function replace_colliding_letters(arg, other, letters_to_skip...)
+    colliding = intersect(bound_letters(arg), bound_letters(other))
+
+    if isempty(colliding)
+        return arg
+    end
+
+    next_letter = get_next_letter(arg, other, letters_to_skip...)
+    letter_map = Dict(colliding[i] => next_letter + i - 1 for i ∈ eachindex(colliding))
+
+    return replace_letters(arg, letter_map)
 end
 
 function replace_bound_letters(arg::Real, letters_to_skip...)
