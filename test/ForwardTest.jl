@@ -1269,16 +1269,30 @@ end
         sum((x + y) .^ 2), #
     )
 
+    # Check semantic equality. Differentiation before and after evaluate starts from different
+    # expressions with different letters and thus yields expressions with different letters.
     for expr ∈ exprs
         @testset "$(dc.to_string(expr))" begin
             var = Variable("A", Upper(10), Lower(11))
-            @test evaluate(dc.diff(evaluate(expr), var)) == evaluate(dc.diff(expr, var))
+            @test equivalent(
+                evaluate(dc.diff(evaluate(expr), var)),
+                evaluate(dc.diff(expr, var)),
+            )
             var = Variable("x", Upper(10))
-            @test evaluate(dc.diff(evaluate(expr), var)) == evaluate(dc.diff(expr, var))
+            @test equivalent(
+                evaluate(dc.diff(evaluate(expr), var)),
+                evaluate(dc.diff(expr, var)),
+            )
             var = Variable("y", Upper(10))
-            @test evaluate(dc.diff(evaluate(expr), var)) == evaluate(dc.diff(expr, var))
+            @test equivalent(
+                evaluate(dc.diff(evaluate(expr), var)),
+                evaluate(dc.diff(expr, var)),
+            )
             var = Variable("c", Upper(10))
-            @test evaluate(dc.diff(evaluate(expr), var)) == evaluate(dc.diff(expr, var))
+            @test equivalent(
+                evaluate(dc.diff(evaluate(expr), var)),
+                evaluate(dc.diff(expr, var)),
+            )
         end
     end
 end
