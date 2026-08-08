@@ -17,7 +17,6 @@ function diff(arg::Variable, wrt::Variable)
     end
 
     indices = LowerOrUpperIndex[arg.indices; [flip(i) for i ∈ wrt.indices]]
-    indices = eliminate_indices(indices)
 
     return Zero(unique(indices)...)
 end
