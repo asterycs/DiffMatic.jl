@@ -43,11 +43,11 @@ using LinearAlgebra: tr, diag, diagm, norm
     @test to_std(gradient(sum(x .^ 2)^2, x)) == "2sum(xᵀ²)2x"
     @test to_std(gradient(sum((x + y) .^ 2), x)) == "2(x + y)"
     @test to_std(gradient(sum((x .* y) .^ 2), x)) == "2(x ⊙ y ⊙ y)"
-    @test to_std(gradient(sum((A * x - y) .^ 2), x)) == "2Aᵀ(Ax - y)"
+    @test to_std(gradient(sum((A * x - y) .^ 2), x)) == "2(AᵀAx - Aᵀy)"
     @test to_std(gradient(log.(x)'*x, x)) == "vec(1) + log(x)"
     @test to_std(gradient(log.(x)'*log.(x), x)) == "2(log(x) ⊘ x)"
-    @test to_std(gradient((x' * A * x) ^ (-2), x)) == "(-2)(xᵀAᵀx)⁻³(Aᵀx + Ax)"
-    @test to_std(gradient((x' * A * x) ^ 2, x)) == "2xᵀAᵀx(Aᵀx + Ax)"
+    @test to_std(gradient((x' * A * x) ^ (-2), x)) == "(-2)(xᵀAᵀx)⁻³Aᵀx + (-2)(xᵀAᵀx)⁻³Ax"
+    @test to_std(gradient((x' * A * x) ^ 2, x)) == "2xᵀAᵀxAᵀx + 2xᵀAᵀxAx"
     @test to_std(gradient(((A .* B) * C * x)' * x, x)) == "(A ⊙ B)Cx + Cᵀ(Aᵀ ⊙ Bᵀ)x"
     @test to_std(gradient(((A .* (B .* C)) * C * x)' * x, x)) ==
           "(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x"
@@ -71,7 +71,7 @@ end
     @test to_std(jacobian(sin.(A * x + y), x)) == "diagm(cos(Ax + y))A"
     @test to_std(jacobian(diag(diagm(x' * B' * A * A)), x)) == "AᵀAᵀB"
     @test to_std(jacobian(((A .* B) * C * x)' * x * x, x)) ==
-          "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"
+          "xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + xxᵀCᵀ(Aᵀ ⊙ Bᵀ) + xxᵀ(A ⊙ B)C"
 end
 
 @testset "test diagonal expressions in standard notation" begin
@@ -168,7 +168,7 @@ end
     @test to_std(hessian(2 * x' * A * x, x)) == "2Aᵀ + 2A"
     @test to_std(hessian(2 * x' * x, x)) == "4I"
     @test to_std(hessian(sin(cos(x' * A * B' * x)), x)) ==
-          "cos(cos(xᵀBAᵀx))((-1)sin(xᵀBAᵀx)(BAᵀ + ABᵀ) + (BAᵀx + ABᵀx)(-1)cos(xᵀBAᵀx)(xᵀABᵀ + xᵀBAᵀ)) + (-1)(-1)sin(xᵀBAᵀx)(BAᵀx + ABᵀx)sin(cos(xᵀBAᵀx))(-1)sin(xᵀBAᵀx)(xᵀABᵀ + xᵀBAᵀ)"
+          "cos(cos(xᵀBAᵀx))(-1)(sin(xᵀBAᵀx)BAᵀ + BAᵀxcos(xᵀBAᵀx)xᵀBAᵀ + BAᵀxcos(xᵀBAᵀx)xᵀABᵀ) + (-1)sin(xᵀBAᵀx)BAᵀxsin(cos(xᵀBAᵀx))sin(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(cos(xᵀBAᵀx))sin(xᵀBAᵀx)xᵀBAᵀ + cos(cos(xᵀBAᵀx))(-1)(sin(xᵀBAᵀx)ABᵀ + ABᵀxcos(xᵀBAᵀx)xᵀBAᵀ + ABᵀxcos(xᵀBAᵀx)xᵀABᵀ) + (-1)sin(xᵀBAᵀx)ABᵀxsin(cos(xᵀBAᵀx))sin(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(cos(xᵀBAᵀx))sin(xᵀBAᵀx)xᵀBAᵀ"
     @test to_std(hessian(x' * sin.(A * x), x)) ==
           "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(x ⊙ sin(Ax))A"
 

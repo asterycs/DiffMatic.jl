@@ -470,28 +470,31 @@ function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Tensor)
     return evaluate(Mult(), arg2, arg1)
 end
 
+# TODO: It is pessimistic to always expand the sum/difference, but it always works.
+# Consider the following input:
+#
+# to_std(hessian((A * x)' * diagm(sin.(B * x)) * (C * x), x)
+#
+# arg1 = C₁₀₁₃
+# arg2 = A⁸₄x⁴cos(B₈¹²x₁₂)B₈¹¹δ₈¹⁰ + sin(B₈⁷x₇)δ₈¹⁰A⁸¹¹
+#
+# In order to identify that we need to expand the sum then we must collect the free
+# indices of every factor and check if the length is > 2 and whether it contracts
+# with arg1. For now we always expand.
 function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Add})
-    if length(get_free_indices(arg1)) > 2 || length(get_free_indices(arg2)) > 2
-        return evaluate(
-            Add(),
-            evaluate(Mult(), arg1, evaluate(arg2.arg1)),
-            evaluate(Mult(), arg1, evaluate(arg2.arg2)),
-        )
-    end
-
-    return BinaryOperation{Mult}(arg1, arg2)
+    return evaluate(
+        Add(),
+        evaluate(Mult(), arg1, evaluate(arg2.arg1)),
+        evaluate(Mult(), arg1, evaluate(arg2.arg2)),
+    )
 end
 
 function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Sub})
-    if length(get_free_indices(arg1)) > 2 || length(get_free_indices(arg2)) > 2
-        return evaluate(
-            Sub(),
-            evaluate(Mult(), arg1, evaluate(arg2.arg1)),
-            evaluate(Mult(), arg1, evaluate(arg2.arg2)),
-        )
-    end
-
-    return BinaryOperation{Mult}(arg1, arg2)
+    return evaluate(
+        Sub(),
+        evaluate(Mult(), arg1, evaluate(arg2.arg1)),
+        evaluate(Mult(), arg1, evaluate(arg2.arg2)),
+    )
 end
 
 function evaluate(::Mult, arg1::Union{KrD,Literal}, arg2::BinaryOperation{Add})

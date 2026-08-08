@@ -143,9 +143,9 @@ end
     trApB = add(Variable("A", Upper(2), Lower(2)), Variable("B", Upper(2), Lower(2)))
 
     @test to_std(trApB) == "tr(A) + tr(B)"
-    @test to_std(mul(trApB, A)) == "(tr(A) + tr(B))A"
-    @test to_std(mul(trApB, B)) == "(tr(A) + tr(B))B"
-    @test to_std(mul(mul(trApB, A), x)) == "(tr(A) + tr(B))Ax"
+    @test to_std(mul(trApB, A)) == "tr(A)A + tr(B)A"
+    @test to_std(mul(trApB, B)) == "tr(A)B + tr(B)B"
+    @test to_std(mul(mul(trApB, A), x)) == "tr(A)Ax + tr(B)Ax"
 end
 
 @testset "to_std output is correct with all covariant bilinar form-vector contraction" begin

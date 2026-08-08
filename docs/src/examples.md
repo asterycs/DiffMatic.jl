@@ -243,7 +243,7 @@ to_std(gradient((x' * A * x) ^ (-2), x))
 
 # output
 
-"(-2)(xᵀAᵀx)⁻³(Aᵀx + Ax)"
+"(-2)(xᵀAᵀx)⁻³Aᵀx + (-2)(xᵀAᵀx)⁻³Ax"
 ```
 ```jldoctest usage
 to_std(gradient(((A .* (B .* C)) * C * x)' * x, x))
@@ -300,7 +300,7 @@ to_std(jacobian(((A .* B) * C * x)' * x * x, x))
 
 # output
 
-"xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)"
+"xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + xxᵀCᵀ(Aᵀ ⊙ Bᵀ) + xxᵀ(A ⊙ B)C"
 ```
 ```jldoctest usage
 to_std(jacobian(diag(diagm(x' * B' * A * A)), x))
