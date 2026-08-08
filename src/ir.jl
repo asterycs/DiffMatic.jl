@@ -166,6 +166,10 @@ function _get_variables(arg::Trace)
     return _get_variables(arg.arg)
 end
 
+function _get_variables(arg::Diag)
+    return _get_variables(arg.arg)
+end
+
 function _get_variables(arg::Diagm)
     return _get_variables(arg.arg)
 end
