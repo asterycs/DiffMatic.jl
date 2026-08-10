@@ -112,11 +112,11 @@ A¹₅B⁵₇B₉⁷C⁹₁</code></pre><h2 id="Derivatives-in-Standard-Notation
 
 # output
 
-&quot;cos(xᵀx)2x&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(abs(x&#39; * x), x))
+&quot;2cos(xᵀx)x&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(abs(x&#39; * x), x))
 
 # output
 
-&quot;sgn(xᵀx)2x&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(log.(x)&#39;*x, x))
+&quot;2sgn(xᵀx)x&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(log.(x)&#39;*x, x))
 
 # output
 
@@ -128,7 +128,7 @@ A¹₅B⁵₇B₉⁷C⁹₁</code></pre><h2 id="Derivatives-in-Standard-Notation
 
 # output
 
-&quot;(-2)(xᵀAᵀx)⁻³(Aᵀx + Ax)&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(((A .* (B .* C)) * C * x)&#39; * x, x))
+&quot;(-2)(xᵀAᵀx)⁻³Aᵀx + (-2)(xᵀAᵀx)⁻³Ax&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(((A .* (B .* C)) * C * x)&#39; * x, x))
 
 # output
 
@@ -144,7 +144,7 @@ A¹₅B⁵₇B₉⁷C⁹₁</code></pre><h2 id="Derivatives-in-Standard-Notation
 
 # output
 
-&quot;Aᵀdiagm(exp(Ax))y&quot;</code></pre><h3 id="Jacobian"><a class="docs-heading-anchor" href="#Jacobian">Jacobian</a><a id="Jacobian-1"></a><a class="docs-heading-anchor-permalink" href="#Jacobian" title="Permalink"></a></h3><pre><code class="language-julia hljs">to_std(jacobian(A * x, x))
+&quot;Aᵀ(exp(Ax) ⊙ y)&quot;</code></pre><h3 id="Jacobian"><a class="docs-heading-anchor" href="#Jacobian">Jacobian</a><a id="Jacobian-1"></a><a class="docs-heading-anchor-permalink" href="#Jacobian" title="Permalink"></a></h3><pre><code class="language-julia hljs">to_std(jacobian(A * x, x))
 
 # output
 
@@ -160,7 +160,7 @@ A¹₅B⁵₇B₉⁷C⁹₁</code></pre><h2 id="Derivatives-in-Standard-Notation
 
 # output
 
-&quot;xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + x(xᵀCᵀ(Aᵀ ⊙ Bᵀ) + xᵀ(A ⊙ B)C)&quot;</code></pre><pre><code class="language-julia hljs">to_std(jacobian(diag(diagm(x&#39; * B&#39; * A * A)), x))
+&quot;xᵀCᵀ(Aᵀ ⊙ Bᵀ)xI + xxᵀCᵀ(Aᵀ ⊙ Bᵀ) + xxᵀ(A ⊙ B)C&quot;</code></pre><pre><code class="language-julia hljs">to_std(jacobian(diag(diagm(x&#39; * B&#39; * A * A)), x))
 
 # output
 
@@ -168,4 +168,4 @@ A¹₅B⁵₇B₉⁷C⁹₁</code></pre><h2 id="Derivatives-in-Standard-Notation
 
 # output
 
-&quot;I&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../usage/">« Differentiating Matrix Expressions</a><a class="docs-footer-nextpage" href="../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Friday 31 July 2026 21:54">Friday 31 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+&quot;I&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../usage/">« Differentiating Matrix Expressions</a><a class="docs-footer-nextpage" href="../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 10 August 2026 18:58">Monday 10 August 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
