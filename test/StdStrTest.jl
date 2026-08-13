@@ -100,6 +100,17 @@ end
     @test to_std(diagm(x') * vector(3)) == "3x"
 end
 
+@testset "test trace expressions in standard notation" begin
+    @matrix A B
+
+    @test to_std(tr(A)) == "tr(A)"
+    @test to_std(tr(A * B)) == "tr(AB)"
+    @test to_std(tr(A .* B)) == "tr(A ⊙ B)" # TODO: More efficient would be diag(A)' * diag(B)
+    @test to_std(tr(tr(A) * B)) == "tr(A)tr(B)"
+    @test to_std(tr(A) * B) == "tr(A)B"
+    @test to_std(tr(A) * tr(B)) == "tr(A)tr(B)"
+end
+
 @testset "test a contracted vector of ones is not dropped" begin
     @matrix A
     @vector x
