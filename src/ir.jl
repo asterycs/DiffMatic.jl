@@ -389,7 +389,21 @@ function to_ir(arg::BinaryOperation{Mult})
             end
 
             throw_not_std(arg)
+        elseif isempty(target_indices) &&
+               length(eliminated_indices([get_indices(arg.arg1); get_indices(arg.arg2)])) ==
+               4
+            # This is a Hadamard product between two matrices.
+            # The individual factors look like traces - need to drop them.
+            l = to_ir(terms[1])
+            r = to_ir(terms[2])
+            return ir.Trace(ir.HadamardProduct(l.arg, r.arg))
         end
+    end
+
+    if length(get_free_indices(arg.arg1)) == 2 &&
+       length(get_free_indices(arg.arg2)) == 2 &&
+       isempty(target_indices)
+        return ir.Trace(ir.Product(to_ir(arg.arg1), to_ir(arg.arg2)))
     end
 
     diagonal = extract_diagonal(collect_factors(arg), get_free_indices(arg))

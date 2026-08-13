@@ -152,8 +152,8 @@ function evaluate(::Mult, arg1::T, arg2::BinaryOperation{Mult}) where {T<:Real}
 end
 
 function indices_in_common(arg1, arg2)
-    arg1_indices = get_free_indices(arg1)
-    arg2_indices = get_free_indices(arg2)
+    arg1_indices = get_indices(arg1)
+    arg2_indices = get_indices(arg2)
 
     return intersect(arg1_indices, arg2_indices)
 end
