@@ -414,7 +414,7 @@ end
 # Factor graph (https://www.eigentales.com/Factor-Graphs/) based reordering.
 function graph_rewrite(arg1, arg2, target_indices)
     factors = [collect_factors(arg1); collect_factors(arg2)]
-    pinned = Set(i.letter for i ∈ target_indices)
+    pinned = [i.letter for i ∈ target_indices]
 
     built = build_graph(factors)
 

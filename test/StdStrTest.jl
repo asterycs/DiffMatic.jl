@@ -207,7 +207,7 @@ end
 
     # One node with three pendants.
     @test to_std(hessian((x .* y)' * sin.(A * x), x)) ==
-          "Iᵀdiagm(y ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Ax) ⊙ x ⊙ y)A + Aᵀdiagm(y ⊙ cos(Ax))"
+          "Iᵀdiagm(y ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Ax) ⊙ x ⊙ y)A + Aᵀdiagm(y ⊙ cos(Ax))I"
 
     # Two nodes joined by an edge, so two 'diagm's in the same term, and a term that collapses into a pendant of its neighbour.
     @test to_std(hessian(sin.(A * x)' * B * cos.(C * x), x)) ==
