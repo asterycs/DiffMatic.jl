@@ -251,8 +251,8 @@ end
 end
 
 @testset "evaluate sum of difference and product" begin
-    a = Variable("a", Upper(1))
-    b = dc.UnaryOperation{dc.Sin}(Variable("b", Lower(1)))
+    a = Variable("a")
+    b = dc.UnaryOperation{dc.Sin}(Variable("b", Upper(1)))
     c = Variable("c", Upper(1))
 
     function mult(l, r)
