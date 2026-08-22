@@ -596,8 +596,9 @@ function extract_diagonal(terms, free_ids)
                 [Lowered(diagonal, IndexList([variance])); [terms[k] for k ∈ rest]],
             )
 
-            @assert issetequal(get_free_indices(rebuilt), free_ids)
-            return to_ir(rebuilt)
+            if issetequal(get_free_indices(rebuilt), free_ids)
+                return to_ir(rebuilt)
+            end
         end
     end
 

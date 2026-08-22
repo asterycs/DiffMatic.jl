@@ -122,6 +122,14 @@ end
         @test jfun(Â, B̂, Ĉ) ≈ f(Â, B̂, Ĉ)
     end
 
+    @testset "function tr(diagm(x) * A)" begin
+        f(A, x) = tr(diagm(x) * A)
+
+        jfun = eval(to_std(f(A, x); format = dc.JuliaFunc()))
+
+        @test only(jfun(Â, x̂)) ≈ f(Â, x̂)
+    end
+
     @testset "function log(A' * x)" begin
         f(A, x) = log.(A' * x)
 
