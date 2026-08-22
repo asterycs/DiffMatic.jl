@@ -110,6 +110,13 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Literal)
         end
 
         wire = only(wire_ids)
+
+        # Prevent the merge from tying to other factors.
+        # Example: diag(A * B) -> A⁶₅B⁵₇δ⁶₇1⁷ -> A⁶₅B⁵⁶.
+        if any(j -> j ∉ carriers && wire ∈ get_free_indices(factors[j]), eachindex(factors))
+            return op
+        end
+
         merged = Any[]
 
         for j ∈ eachindex(factors)

@@ -103,7 +103,7 @@ end
     @test to_std(diagm(x') * vector(3)) == "3x"
 
     @test_broken to_std(jacobian(diag(A * diagm(x)), x)) == "(A ⊙ I)diagm(vec(1))I"
-    @test_broken to_std(diag(A * B)) == "(AB ⊙ I)vec(1)"
+    @test to_std(diag(A * B)) == "(AB ⊙ I)vec(1)"
 end
 
 @testset "test trace expressions in standard notation" begin
