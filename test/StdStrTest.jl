@@ -56,6 +56,7 @@ using LinearAlgebra: tr, diag, diagm, norm
     @test to_std(gradient(norm(A * x, 2), x)) == "1/1sum((xᵀAᵀ)²)⁻¹⸍²AᵀAx" # TODO: Collapse the leading fraction
     @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀ(x ⊘ (Ax)) + log(Ax)"
     @test to_std(gradient(x' * sin.(A * x), x)) == "Aᵀ(cos(Ax) ⊙ x) + sin(Ax)"
+    @test_broken to_std(gradient(tr(diagm(x) * A * diagm(y) * B), x)) isa String
 end
 
 @testset "test Jacobian in standard notation" begin
@@ -75,7 +76,7 @@ end
 end
 
 @testset "test diagonal expressions in standard notation" begin
-    @matrix A
+    @matrix A B
     @vector x y z
 
     # The Kronecker delta that 'diagm' introduces is removed by
@@ -84,6 +85,8 @@ end
     @test to_std(diag(diagm(x))) == "x"
     @test to_std(diag(diagm(A * x))) == "Ax"
     @test to_std(diag(diagm(diag(diagm(x))))) == "x"
+    @test to_std(diag(A)' * x) == "vec(1)ᵀ(Aᵀ ⊙ Iᵀ)x" # TODO: Make simpler
+    @test_broken to_std(sum(diag(A))) == "tr(A)"
     @test to_std(jacobian(diag(diagm(A * x)), x)) == "A"
 
     # Here KrD sits further inside the tree.
@@ -98,6 +101,9 @@ end
     # Check that constants survive.
     @test to_std(diagm(x') * vector(1)) == "x"
     @test to_std(diagm(x') * vector(3)) == "3x"
+
+    @test_broken to_std(jacobian(diag(A * diagm(x)), x)) == "(A ⊙ I)diagm(vec(1))I"
+    @test_broken to_std(diag(A * B)) == "(AB ⊙ I)vec(1)"
 end
 
 @testset "test trace expressions in standard notation" begin
@@ -109,6 +115,13 @@ end
     @test to_std(tr(tr(A) * B)) == "tr(A)tr(B)"
     @test to_std(tr(A) * B) == "tr(A)B"
     @test to_std(tr(A) * tr(B)) == "tr(A)tr(B)"
+end
+
+@testset "matrix sum" begin
+    @matrix A
+
+    @test_broken to_std(sum(A)) == "sum(A)" # TODO: Could be sum(sum(A)) as well to not overload sum
+    @test_broken to_std(sum(A .* B)) == "sum(A ⊙ B)"
 end
 
 @testset "test a contracted vector of ones is not dropped" begin
@@ -182,6 +195,7 @@ end
           "(-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))BAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ + (-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))ABᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ"
     @test to_std(hessian(x' * sin.(A * x), x)) ==
           "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(x ⊙ sin(Ax))A"
+    @test_broken to_std(hessian(tr(A), x)) == "mat(0)"
 
     # These reach an order-3 intermediate.
     @test to_std(hessian((A * x)' * sin.(B * x), x)) ==
