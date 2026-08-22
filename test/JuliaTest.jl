@@ -130,6 +130,22 @@ end
         @test jfun(Â, x̂) ≈ f(Â, x̂)
     end
 
+    @testset "function sum(x .* y .* z)" begin
+        f(x, y, z) = sum(x .* y .* z)
+
+        jfun = eval(to_std(f(x, y, z); format = dc.JuliaFunc()))
+
+        @test only(jfun(x̂, ŷ, ẑ)) ≈ f(x̂, ŷ, ẑ)
+    end
+
+    @testset "function sum(sin.(A * x) .* cos.(B * x) .* x)" begin
+        f(A, B, x) = sum(sin.(A * x) .* cos.(B * x) .* x)
+
+        jfun = eval(to_std(f(A, B, x); format = dc.JuliaFunc()))
+
+        @test only(jfun(Â, B̂, x̂)) ≈ f(Â, B̂, x̂)
+    end
+
     @testset "gradient of x'*x" begin
         f(x) = x' * x
 

@@ -411,6 +411,53 @@ function contract_parallel_edges!(edges)
     end
 end
 
+# Put hadamard products at the start
+function sort_factors(factors)
+    selected_factors = falses(length(factors))
+    sorted_factors = Any[]
+
+    for (fi, _) ∈ enumerate(factors)
+        if selected_factors[fi]
+            continue
+        end
+
+        factor = factors[fi]
+        indices = get_free_indices(factor)
+        added = false
+
+        for (oi, _) ∈ enumerate(factors)
+            if selected_factors[oi]
+                continue
+            end
+            if oi == fi
+                continue
+            end
+
+            other_indices = get_free_indices(factors[oi])
+
+            if isempty(setdiff(indices, other_indices)) &&
+               length(indices) == length(other_indices)
+                push!(sorted_factors, factors[oi])
+                added = true
+                selected_factors[oi] = true
+            end
+        end
+
+        if added
+            push!(sorted_factors, factors[fi])
+            selected_factors[fi] = true
+        end
+    end
+
+    for (si, _) ∈ enumerate(selected_factors)
+        if !selected_factors[si]
+            push!(sorted_factors, factors[si])
+        end
+    end
+
+    return sorted_factors
+end
+
 # Factor graph (https://www.eigentales.com/Factor-Graphs/) based reordering.
 function graph_rewrite(arg1, arg2, target_indices)
     factors = [collect_factors(arg1); collect_factors(arg2)]
@@ -461,7 +508,16 @@ function graph_rewrite(arg1, arg2, target_indices)
             continue
         end
 
-        emitted = [to_binary_operation(Mult(), g) for g ∈ groups]
+        # Hadamard products have precedence and need to be at the start
+        sorted_groups = Any[]
+
+        for group ∈ groups
+            sorted_group = sort_factors(group)
+
+            push!(sorted_groups, sorted_group)
+        end
+
+        emitted = [to_binary_operation(Mult(), g) for g ∈ sorted_groups]
         rewritten = to_binary_operation(Mult(), [scalars; emitted])
 
         if issetequal(get_free_indices(rewritten), target_indices)

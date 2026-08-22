@@ -23,12 +23,12 @@ using LinearAlgebra: tr, diag, diagm, norm
     @test to_std(gradient(x' * B' * A * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std(gradient((A' * B * x)' * A * x, x)) == "AᵀAᵀBx + BᵀAAx"
     @test to_std(gradient(a * sin.(y)' * x, x)) == "asin(y)"
-    @test to_std(gradient(a * sin.(x)' * y, x)) == "a(cos(x) ⊙ y)"
+    @test to_std(gradient(a * sin.(x)' * y, x)) == "a(y ⊙ cos(x))"
     @test to_std(gradient(sin.(y)' * x * a, x)) == "asin(y)"
-    @test to_std(gradient(sin.(x)' * y * a, x)) == "a(cos(x) ⊙ y)"
+    @test to_std(gradient(sin.(x)' * y * a, x)) == "a(y ⊙ cos(x))"
     @test to_std(gradient(x' * sin.(y) * a, x)) == "asin(y)"
-    @test to_std(gradient(y' * sin.(x) * a, x)) == "a(cos(x) ⊙ y)"
-    @test to_std(gradient(sin.(x .* y)' * x, x)) == "y ⊙ cos(x ⊙ y) ⊙ x + sin(x ⊙ y)"
+    @test to_std(gradient(y' * sin.(x) * a, x)) == "a(y ⊙ cos(x))"
+    @test to_std(gradient(sin.(x .* y)' * x, x)) == "cos(x ⊙ y) ⊙ x ⊙ y + sin(x ⊙ y)"
     @test to_std(gradient(sum(x), x)) == "vec(1)"
     @test to_std(gradient(2 * sum(x), x)) == "2vec(1)"
     @test to_std(gradient(sum(2 * x), x)) == "2vec(1)"
@@ -52,7 +52,7 @@ using LinearAlgebra: tr, diag, diagm, norm
     @test to_std(gradient(((A .* (B .* C)) * C * x)' * x, x)) ==
           "(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x"
     @test to_std(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
-    @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(x ⊙ y ⊙ c)"
+    @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(y ⊙ c ⊙ x)"
     @test to_std(gradient(norm(A * x, 2), x)) == "1/1sum((xᵀAᵀ)²)⁻¹⸍²AᵀAx" # TODO: Collapse the leading fraction
     @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀ(x ⊘ (Ax)) + log(Ax)"
     @test to_std(gradient(x' * sin.(A * x), x)) == "Aᵀ(cos(Ax) ⊙ x) + sin(Ax)"
@@ -92,7 +92,7 @@ end
     @test to_std(diag(diagm(x))' * y) == "xᵀy"
     @test to_std(A * diag(diagm(x))) == "Ax"
     @test to_std(diag(diagm(x)) .* y) == "x ⊙ y"
-    @test to_std((diag(diagm(x)) .* y)' * z) == "(xᵀ ⊙ yᵀ)z"
+    @test to_std((diag(diagm(x)) .* y)' * z) == "(yᵀ ⊙ xᵀ)z"
     @test to_std(sum(diag(diagm(A * x)))) == "sum(xᵀAᵀ)"
 
     # Check that constants survive.
@@ -181,13 +181,13 @@ end
     @test to_std(hessian(sin(cos(x' * A * B' * x)), x)) ==
           "(-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))BAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ + (-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))ABᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ"
     @test to_std(hessian(x' * sin.(A * x), x)) ==
-          "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(sin(Ax) ⊙ x)A"
+          "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(x ⊙ sin(Ax))A"
 
     # These reach an order-3 intermediate.
     @test to_std(hessian((A * x)' * sin.(B * x), x)) ==
-          "Aᵀdiagm(cos(Bx))B + (-1)Bᵀdiagm(sin(Bx) ⊙ Ax)B + Bᵀdiagm(cos(Bx))A"
+          "Aᵀdiagm(cos(Bx))B + (-1)Bᵀdiagm(Ax ⊙ sin(Bx))B + Bᵀdiagm(cos(Bx))A"
     @test to_std(hessian((A * x)' * sin.(A * x), x)) ==
-          "Aᵀdiagm(cos(Ax))A + (-1)Aᵀdiagm(sin(Ax) ⊙ Ax)A + Aᵀdiagm(cos(Ax))A"
+          "Aᵀdiagm(cos(Ax))A + (-1)Aᵀdiagm(Ax ⊙ sin(Ax))A + Aᵀdiagm(cos(Ax))A"
 end
 
 @testset "test graph rewriting of products" begin
@@ -195,11 +195,11 @@ end
     @vector x y
 
     # One node, one pendant, two edges to the boundary.
-    @test to_std(hessian(y' * sin.(A * x), x)) == "(-1)Aᵀdiagm(sin(Ax) ⊙ y)A"
+    @test to_std(hessian(y' * sin.(A * x), x)) == "(-1)Aᵀdiagm(y ⊙ sin(Ax))A"
 
     # One node, two pendants.
     @test to_std(hessian(sin.(A * x)' * cos.(B * x), x)) ==
-          "(-1)Bᵀdiagm(cos(Bx) ⊙ sin(Ax))B + (-1)Bᵀdiagm(sin(Bx) ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Bx) ⊙ cos(Ax))B + (-1)Aᵀdiagm(sin(Ax) ⊙ cos(Bx))A"
+          "(-1)Bᵀdiagm(sin(Ax) ⊙ cos(Bx))B + (-1)Bᵀdiagm(cos(Ax) ⊙ sin(Bx))A + (-1)Aᵀdiagm(cos(Ax) ⊙ sin(Bx))B + (-1)Aᵀdiagm(cos(Bx) ⊙ sin(Ax))A"
 
     # Now with a sum rather than an inner product.
     @test to_std(hessian(sum(sin.(A * x) .* cos.(B * x)), x)) ==
@@ -207,9 +207,9 @@ end
 
     # One node with three pendants.
     @test to_std(hessian((x .* y)' * sin.(A * x), x)) ==
-          "Iᵀdiagm(y ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Ax) ⊙ x ⊙ y)A + Aᵀdiagm(y ⊙ cos(Ax))I"
+          "Iᵀdiagm(cos(Ax) ⊙ y)A + (-1)Aᵀdiagm(x ⊙ y ⊙ sin(Ax))A + Aᵀdiagm(cos(Ax) ⊙ y)I"
 
     # Two nodes joined by an edge, so two 'diagm's in the same term, and a term that collapses into a pendant of its neighbour.
     @test to_std(hessian(sin.(A * x)' * B * cos.(C * x), x)) ==
-          "(-1)(Cᵀdiagm(sin(Cx))Bᵀdiagm(cos(Ax))A + Cᵀdiagm(cos(Cx) ⊙ Bᵀsin(Ax))C) + (-1)Aᵀdiagm(cos(Ax))Bdiagm(sin(Cx))C + (-1)Aᵀdiagm(sin(Ax) ⊙ Bcos(Cx))A"
+          "(-1)(Cᵀdiagm(sin(Cx))Bᵀdiagm(cos(Ax))A + Cᵀdiagm(Bᵀsin(Ax) ⊙ cos(Cx))C) + (-1)Aᵀdiagm(cos(Ax))Bdiagm(sin(Cx))C + (-1)Aᵀdiagm(Bcos(Cx) ⊙ sin(Ax))A"
 end

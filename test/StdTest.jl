@@ -271,12 +271,12 @@ end
 
     @test to_std(mul(x, x)) == "x ⊙ x"
     @test to_std(mul(x, y)) == "x ⊙ y"
-    @test to_std(mul(mul(x, y), z)) == "x ⊙ y ⊙ z"
-    @test to_std(mul(z, mul(x, y))) == "x ⊙ y ⊙ z"
-    @test to_std(mul(mul(mul(x, y), z), v)) == "x ⊙ y ⊙ z ⊙ v"
-    @test to_std(mul(v, mul(mul(x, y), z))) == "x ⊙ y ⊙ z ⊙ v"
-    @test to_std(mul(v, mul(z, mul(x, y)))) == "x ⊙ y ⊙ z ⊙ v"
-    @test to_std(mul(mul(z, v), mul(x, y))) == "z ⊙ v ⊙ x ⊙ y"
+    @test to_std(mul(mul(x, y), z)) == "y ⊙ z ⊙ x"
+    @test to_std(mul(z, mul(x, y))) == "y ⊙ z ⊙ x"
+    @test to_std(mul(mul(mul(x, y), z), v)) == "z ⊙ x ⊙ v ⊙ y"
+    @test to_std(mul(v, mul(mul(x, y), z))) == "z ⊙ x ⊙ v ⊙ y"
+    @test to_std(mul(v, mul(z, mul(x, y)))) == "z ⊙ x ⊙ v ⊙ y"
+    @test to_std(mul(mul(z, v), mul(x, y))) == "v ⊙ x ⊙ y ⊙ z"
 end
 
 @testset "to_std output is correct with vector and trace of identity" begin
