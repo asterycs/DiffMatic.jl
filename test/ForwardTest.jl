@@ -56,11 +56,11 @@ end
     d = KrD(Upper(2), Lower(1))
 
     function lgp(l, r)
-        return dc.UnaryOperation{dc.Sin}(dc.BinaryOperation{dc.Mult}(l, r))
+        return dc.UnaryOperation{dc.Log}(dc.BinaryOperation{dc.Mult}(l, r))
     end
 
-    @test dc.evaluate(lgp(x, d)) == dc.UnaryOperation{dc.Sin}(Variable("x", Upper(2)))
-    @test dc.evaluate(lgp(d, x)) == dc.UnaryOperation{dc.Sin}(Variable("x", Upper(2)))
+    @test dc.evaluate(lgp(x, d)) == dc.UnaryOperation{dc.Log}(Variable("x", Upper(2)))
+    @test dc.evaluate(lgp(d, x)) == dc.UnaryOperation{dc.Log}(Variable("x", Upper(2)))
 end
 
 @testset "evaluate product of log and KrD" begin
@@ -69,14 +69,14 @@ end
     d_unrelated = KrD(Upper(5), Lower(6))
 
     function prodlogl(l, r)
-        return dc.BinaryOperation{dc.Mult}(dc.UnaryOperation{dc.Sin}(l), r)
+        return dc.BinaryOperation{dc.Mult}(dc.UnaryOperation{dc.Log}(l), r)
     end
 
     function prodlogr(l, r)
-        return dc.BinaryOperation{dc.Mult}(l, dc.UnaryOperation{dc.Sin}(r))
+        return dc.BinaryOperation{dc.Mult}(l, dc.UnaryOperation{dc.Log}(r))
     end
 
-    expected = dc.UnaryOperation{dc.Sin}(Variable("x", Upper(2)))
+    expected = dc.UnaryOperation{dc.Log}(Variable("x", Upper(2)))
 
     @test dc.evaluate(prodlogl(x, d)) == expected
     @test dc.evaluate(prodlogr(d, x)) == expected
