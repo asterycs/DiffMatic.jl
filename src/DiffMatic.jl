@@ -12,6 +12,7 @@ include("simplify.jl")
 include("std.jl")
 include("expand.jl")
 include("forward.jl")
+include("diff.jl")
 include("julia.jl")
 include("stdstr.jl")
 
