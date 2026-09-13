@@ -462,57 +462,6 @@ function _multiply_with_krd(arg1::Union{Variable,Literal,KrD}, arg2::KrD)
     return newarg
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::Tensor)
-    return evaluate(Mult(), arg2, arg1)
-end
-
-function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Tensor)
-    return evaluate(Mult(), arg2, arg1)
-end
-
-# TODO: It is pessimistic to always expand the sum/difference, but it always works.
-# Consider the following input:
-#
-# to_std(hessian((A * x)' * diagm(sin.(B * x)) * (C * x), x)
-#
-# arg1 = C₁₀₁₃
-# arg2 = A⁸₄x⁴cos(B₈¹²x₁₂)B₈¹¹δ₈¹⁰ + sin(B₈⁷x₇)δ₈¹⁰A⁸¹¹
-#
-# In order to identify that we need to expand the sum then we must collect the free
-# indices of every factor and check if the length is > 2 and whether it contracts
-# with arg1. For now we always expand.
-function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Add})
-    return evaluate(
-        Add(),
-        evaluate(Mult(), arg1, evaluate(arg2.arg1)),
-        evaluate(Mult(), arg1, evaluate(arg2.arg2)),
-    )
-end
-
-function evaluate(::Mult, arg1::Tensor, arg2::BinaryOperation{Sub})
-    return evaluate(
-        Sub(),
-        evaluate(Mult(), arg1, evaluate(arg2.arg1)),
-        evaluate(Mult(), arg1, evaluate(arg2.arg2)),
-    )
-end
-
-function evaluate(::Mult, arg1::Union{KrD,Literal}, arg2::BinaryOperation{Add})
-    return evaluate(
-        Add(),
-        evaluate(Mult(), arg1, evaluate(arg2.arg1)),
-        evaluate(Mult(), arg1, evaluate(arg2.arg2)),
-    )
-end
-
-function evaluate(::Mult, arg1::Union{KrD,Literal}, arg2::BinaryOperation{Sub})
-    return evaluate(
-        Sub(),
-        evaluate(Mult(), arg1, evaluate(arg2.arg1)),
-        evaluate(Mult(), arg1, evaluate(arg2.arg2)),
-    )
-end
-
 function evaluate(::Mult, arg1::Zero, arg2::BinaryOperation{Add})
     return evaluate(Mult(), arg2, arg1)
 end
@@ -529,61 +478,12 @@ function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Zero)
     return _multiply_by_zero(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Add})
-    return BinaryOperation{Mult}(arg1, arg2)
-end
-
-function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Add})
-    return evaluate(Mult(), arg2, arg1)
-end
-
-function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Sub})
-    return BinaryOperation{Add}(
-        BinaryOperation{Sub}(
-            BinaryOperation{Mult}(arg1.arg1, arg2.arg1),
-            BinaryOperation{Mult}(arg1.arg1, arg2.arg2),
-        ),
-        BinaryOperation{Sub}(
-            BinaryOperation{Mult}(arg1.arg2, arg2.arg1),
-            BinaryOperation{Mult}(arg1.arg2, arg2.arg2),
-        ),
-    )
-end
-
-function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Sub})
-    return BinaryOperation{Add}(
-        BinaryOperation{Sub}(
-            BinaryOperation{Mult}(arg1.arg1, arg2.arg1),
-            BinaryOperation{Mult}(arg1.arg1, arg2.arg2),
-        ),
-        BinaryOperation{Sub}(
-            BinaryOperation{Mult}(arg1.arg2, arg2.arg2),
-            BinaryOperation{Mult}(arg1.arg2, arg2.arg1),
-        ),
-    )
-end
-
 function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::Power)
     return evaluate(Mult(), arg2, arg1)
 end
 
 function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Power)
     return evaluate(Mult(), arg2, arg1)
-end
-
-
-function evaluate(::Mult, arg1::Power, arg2::BinaryOperation{Add})
-    return BinaryOperation{Add}(
-        evaluate(Mult(), arg1, arg2.arg1),
-        evaluate(Mult(), arg1, arg2.arg2),
-    )
-end
-
-function evaluate(::Mult, arg1::Power, arg2::BinaryOperation{Sub})
-    return BinaryOperation{Sub}(
-        evaluate(Mult(), arg1, arg2.arg1),
-        evaluate(Mult(), arg1, arg2.arg2),
-    )
 end
 
 function evaluate(::Mult, arg1::Value, arg2::Value)

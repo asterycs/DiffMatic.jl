@@ -93,12 +93,18 @@ end
     x = Variable("x", Upper(1))
     y = Variable("y", Upper(1))
 
+    mul = (l, r) -> dc.BinaryOperation{dc.Mult}(l, r)
+
     l = dc.BinaryOperation{dc.Add}(a, b)
     r = dc.BinaryOperation{dc.Add}(x, y)
 
     e = dc.BinaryOperation{dc.Mult}(l, r)
+    expected = dc.BinaryOperation{dc.Add}(
+        dc.BinaryOperation{dc.Add}(mul(a, x), mul(a, y)),
+        dc.BinaryOperation{dc.Add}(mul(b, x), mul(b, y)),
+    )
 
-    @test dc.evaluate(e) == e
+    @test dc.evaluate(e) == expected
 end
 
 @testset "evaluate trivially simplifiable quotient" begin
