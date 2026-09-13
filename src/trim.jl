@@ -3,19 +3,19 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-function evaluate(arg::Union{Variable,Literal,KrD,Zero,Real})
+function trim(arg::Union{Variable,Literal,KrD,Zero,Real})
     return arg
 end
 
-function evaluate(arg::UnaryOperation{Op}) where {Op}
-    return UnaryOperation{Op}(evaluate(arg.arg))
+function trim(arg::UnaryOperation{Op}) where {Op}
+    return UnaryOperation{Op}(trim(arg.arg))
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Real)
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::BinaryOperation{Mult}, arg2::Real)
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::T, arg2::BinaryOperation{Mult}) where {T<:Real}
+function trim(::Mult, arg1::T, arg2::BinaryOperation{Mult}) where {T<:Real}
     if arg1 == T(1)
         return arg2
     end
@@ -28,7 +28,7 @@ function evaluate(::Mult, arg1::T, arg2::BinaryOperation{Mult}) where {T<:Real}
         return BinaryOperation{Mult}(arg1 * arg2.arg1, arg2.arg2)
     end
 
-    return BinaryOperation{Mult}(arg1, evaluate(arg2))
+    return BinaryOperation{Mult}(arg1, trim(arg2))
 end
 
 function indices_in_common(arg1, arg2)
@@ -102,13 +102,13 @@ function is_diagm(arg1::Value, arg2::Value)
     return is_diagm(arg1) && is_diagm(arg2)
 end
 
-function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::BinaryOperation{Mult})
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::Union{Variable,Literal}, arg2::BinaryOperation{Mult})
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Literal})
+function trim(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Literal})
     if is_tied_constant(arg2, arg1)
-        return evaluate(BinaryOperation{Mult}(arg2.value, arg1))
+        return trim(BinaryOperation{Mult}(arg2.value, arg1))
     end
 
     if arg1.arg1 isa Real
@@ -116,13 +116,13 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Lite
     end
 
     if arg1.arg1 isa KrD && can_contract(arg1.arg1, arg2) && !can_contract(arg1.arg2, arg2)
-        new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
+        new_arg1 = trim(Mult(), arg1.arg1, arg2)
         return BinaryOperation{Mult}(new_arg1, arg1.arg2)
     end
 
     if arg1.arg2 isa KrD && can_contract(arg1.arg2, arg2) && !can_contract(arg1.arg1, arg2)
-        new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
-        return evaluate(Mult(), arg1.arg1, new_arg2)
+        new_arg2 = trim(Mult(), arg1.arg2, arg2)
+        return trim(Mult(), arg1.arg1, new_arg2)
     end
 
     is_arg1_elementwise = is_elementwise_multiplication(arg1.arg1, arg1.arg2)
@@ -131,43 +131,43 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Lite
         is_elementwise_multiplication(arg1.arg2, arg2)
 
     if is_arg1_elementwise || are_both_elwise
-        return BinaryOperation{Mult}(evaluate(arg1), arg2)
+        return BinaryOperation{Mult}(trim(arg1), arg2)
     end
 
     if can_contract(arg1.arg2, arg2)
-        new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
+        new_arg2 = trim(Mult(), arg1.arg2, arg2)
         return BinaryOperation{Mult}(arg1.arg1, new_arg2)
     elseif can_contract(arg1.arg1, arg2)
-        new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
+        new_arg1 = trim(Mult(), arg1.arg1, arg2)
         return BinaryOperation{Mult}(new_arg1, arg1.arg2)
     end
 
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
+function trim(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     if arg1.arg1 == -1 && arg2.arg1 == -1
         return BinaryOperation{Mult}(arg1.arg2, arg2.arg2)
     elseif arg1.arg1 == -1
         return BinaryOperation{Mult}(
             arg1.arg1,
-            evaluate(BinaryOperation{Mult}(arg1.arg2, arg2)),
+            trim(BinaryOperation{Mult}(arg1.arg2, arg2)),
         )
     elseif arg2.arg1 == -1
         return BinaryOperation{Mult}(
             arg2.arg1,
-            evaluate(BinaryOperation{Mult}(arg2.arg2, arg1)),
+            trim(BinaryOperation{Mult}(arg2.arg2, arg1)),
         )
     end
 
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
+function trim(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     ci = indices_in_common(arg1.arg1, arg1.arg2)
 
     if !isempty(ci)
@@ -175,30 +175,30 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
         er = eliminated_indices([ci; arg2.indices[2]])
 
         if !isempty(el)
-            return evaluate(
+            return trim(
                 BinaryOperation{Mult}(
-                    evaluate(Mult(), arg1.arg1, arg2), # order of the indices in arg2 determines which one is contracted
-                    evaluate(Mult(), arg1.arg2, arg2),
+                    trim(Mult(), arg1.arg1, arg2), # order of the indices in arg2 determines which one is contracted
+                    trim(Mult(), arg1.arg2, arg2),
                 ),
             )
         elseif !isempty(er)
             rd = KrD(reverse(arg2.indices)...)
 
-            return evaluate(
+            return trim(
                 BinaryOperation{Mult}(
-                    evaluate(Mult(), arg1.arg1, rd),
-                    evaluate(Mult(), arg1.arg2, rd),
+                    trim(Mult(), arg1.arg1, rd),
+                    trim(Mult(), arg1.arg2, rd),
                 ),
             )
         end
     end
 
     if can_contract(arg1.arg2, arg2)
-        new_arg2 = evaluate(Mult(), arg1.arg2, arg2)
-        return BinaryOperation{Mult}(evaluate(arg1.arg1), new_arg2)
+        new_arg2 = trim(Mult(), arg1.arg2, arg2)
+        return BinaryOperation{Mult}(trim(arg1.arg1), new_arg2)
     elseif can_contract(arg1.arg1, arg2)
-        new_arg1 = evaluate(Mult(), arg1.arg1, arg2)
-        return BinaryOperation{Mult}(new_arg1, evaluate(arg1.arg2))
+        new_arg1 = trim(Mult(), arg1.arg1, arg2)
+        return BinaryOperation{Mult}(new_arg1, trim(arg1.arg2))
     elseif arg1.arg1 isa Real
         return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
     else
@@ -206,8 +206,8 @@ function evaluate(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
     end
 end
 
-function evaluate(::Mult, arg1::Zero, arg2::UnaryOperation)
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::Zero, arg2::UnaryOperation)
+    return trim(Mult(), arg2, arg1)
 end
 
 # Assumes one argument is of type 'Zero'
@@ -217,89 +217,89 @@ function _multiply_by_zero(arg1, arg2)
     return Zero(free_indices...)
 end
 
-function evaluate(::Mult, arg1::UnaryOperation, arg2::Zero)
+function trim(::Mult, arg1::UnaryOperation, arg2::Zero)
     return _multiply_by_zero(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::Zero, arg2::Tensor)
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::Zero, arg2::Tensor)
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::Tensor, arg2::Zero)
+function trim(::Mult, arg1::Tensor, arg2::Zero)
     return _multiply_by_zero(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::KrD, arg2::Zero)
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::KrD, arg2::Zero)
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::Zero, arg2::KrD)
+function trim(::Mult, arg1::Zero, arg2::KrD)
     return _multiply_by_zero(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::KrD, arg2::UnaryOperation)
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::KrD, arg2::UnaryOperation)
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::UnaryOperation{Op}, arg2::KrD) where {Op}
-    attempt = UnaryOperation{Op}(evaluate(Mult(), evaluate(arg1.arg), evaluate(arg2)))
+function trim(::Mult, arg1::UnaryOperation{Op}, arg2::KrD) where {Op}
+    attempt = UnaryOperation{Op}(trim(Mult(), trim(arg1.arg), trim(arg2)))
 
     # This ensures that arg1.base and arg2 can contract and that the contraction is simple
     if length(get_free_indices(attempt)) == length(get_free_indices(arg1))
         return attempt
     end
 
-    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Mult}(trim(arg1), trim(arg2))
 end
 
-function evaluate(::Mult, arg1::Power, arg2::KrD)
-    attempt = Power(evaluate(Mult(), evaluate(arg1.base), evaluate(arg2)), arg1.exponent)
+function trim(::Mult, arg1::Power, arg2::KrD)
+    attempt = Power(trim(Mult(), trim(arg1.base), trim(arg2)), arg1.exponent)
 
     # This ensures that arg1.base and arg2 can contract and that the contraction is simple
     if length(get_free_indices(attempt)) == length(get_free_indices(arg1))
         return attempt
     end
 
-    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Mult}(trim(arg1), trim(arg2))
 end
 
-function evaluate(::Mult, arg1::Tensor, arg2::Power)
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::Tensor, arg2::Power)
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::Power, arg2::Tensor)
+function trim(::Mult, arg1::Power, arg2::Tensor)
     if arg1.exponent == -1 && arg1.base == arg2
         return Literal(1, get_free_indices(arg2)...)
     end
 
-    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Mult}(trim(arg1), trim(arg2))
 end
 
-function evaluate(::Mult, arg1::Power, arg2::Power)
+function trim(::Mult, arg1::Power, arg2::Power)
     if isequal(arg1.base, arg2.base)
         return Power(arg1.base, arg1.exponent + arg2.exponent)
     end
 
-    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Mult}(trim(arg1), trim(arg2))
 end
 
-function evaluate(::Mult, arg1::Zero, arg2::Power)
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::Zero, arg2::Power)
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::Power, arg2::Zero)
+function trim(::Mult, arg1::Power, arg2::Zero)
     return _multiply_by_zero(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::Union{Variable,Literal}, arg2::KrD)
+function trim(::Mult, arg1::Union{Variable,Literal}, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::KrD, arg2::Union{Variable,Literal})
+function trim(::Mult, arg1::KrD, arg2::Union{Variable,Literal})
     return _multiply_with_krd(arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::KrD, arg2::KrD)
+function trim(::Mult, arg1::KrD, arg2::KrD)
     return _multiply_with_krd(arg1, arg2)
 end
 
@@ -342,47 +342,47 @@ function _multiply_with_krd(arg1::Union{Variable,Literal,KrD}, arg2::KrD)
     return newarg
 end
 
-function evaluate(::Mult, arg1::Zero, arg2::BinaryOperation{Add})
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::Zero, arg2::BinaryOperation{Add})
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::Zero, arg2::BinaryOperation{Sub})
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::Zero, arg2::BinaryOperation{Sub})
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::Zero)
+function trim(::Mult, arg1::BinaryOperation{Add}, arg2::Zero)
     return _multiply_by_zero(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Zero)
+function trim(::Mult, arg1::BinaryOperation{Sub}, arg2::Zero)
     return _multiply_by_zero(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Add}, arg2::Power)
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::BinaryOperation{Add}, arg2::Power)
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::BinaryOperation{Sub}, arg2::Power)
-    return evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::BinaryOperation{Sub}, arg2::Power)
+    return trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::Value, arg2::Value)
+function trim(::Mult, arg1::Value, arg2::Value)
     if is_tied_constant(arg2, arg1)
-        return evaluate(BinaryOperation{Mult}(arg2.value, arg1))
+        return trim(BinaryOperation{Mult}(arg2.value, arg1))
     end
 
     if is_tied_constant(arg1, arg2)
-        return evaluate(BinaryOperation{Mult}(arg1.value, arg2))
+        return trim(BinaryOperation{Mult}(arg1.value, arg2))
     end
 
-    return BinaryOperation{Mult}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Mult}(trim(arg1), trim(arg2))
 end
 
-function evaluate(::Mult, arg1::Tensor, arg2::Real)
-    evaluate(Mult(), arg2, arg1)
+function trim(::Mult, arg1::Tensor, arg2::Real)
+    trim(Mult(), arg2, arg1)
 end
 
-function evaluate(::Mult, arg1::T, arg2::Tensor) where {T<:Real}
+function trim(::Mult, arg1::T, arg2::Tensor) where {T<:Real}
     if arg1 == T(1)
         return arg2
     end
@@ -395,41 +395,41 @@ function evaluate(::Mult, arg1::T, arg2::Tensor) where {T<:Real}
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::Zero, arg2::Zero)
+function trim(::Mult, arg1::Zero, arg2::Zero)
     return _multiply_by_zero(arg1, arg2)
 end
 
-function evaluate(::Mult, arg1::Zero, arg2::Real)
-    return evaluate(arg1)
+function trim(::Mult, arg1::Zero, arg2::Real)
+    return trim(arg1)
 end
 
-function evaluate(::Mult, arg1::Real, arg2::Zero)
-    return evaluate(arg2)
+function trim(::Mult, arg1::Real, arg2::Zero)
+    return trim(arg2)
 end
 
-function evaluate(::Add, arg1::Zero, arg2::Zero)
+function trim(::Add, arg1::Zero, arg2::Zero)
     @assert is_permutation(arg1, arg2)
 
     return arg1
 end
 
-function evaluate(::Add, arg1::Zero, arg2::Value)
+function trim(::Add, arg1::Zero, arg2::Value)
     @assert is_permutation(arg1, arg2)
 
-    return evaluate(arg2)
+    return trim(arg2)
 end
 
-function evaluate(::Add, arg1::Value, arg2::Zero)
+function trim(::Add, arg1::Value, arg2::Zero)
     @assert is_permutation(arg1, arg2)
 
-    return evaluate(arg1)
+    return trim(arg1)
 end
 
-function evaluate(::Add, arg1::Real, arg2::Real)
+function trim(::Add, arg1::Real, arg2::Real)
     return arg1 + arg2
 end
 
-function evaluate(::Add, arg1::Value, arg2::Value)
+function trim(::Add, arg1::Value, arg2::Value)
     arg1_indices = get_free_indices(arg1)
     arg2_indices = get_free_indices(arg2)
 
@@ -442,277 +442,269 @@ function evaluate(::Add, arg1::Value, arg2::Value)
     return BinaryOperation{Add}(arg1, arg2)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Mult}, arg2::Zero)
-    return invoke(evaluate, Tuple{Add,Value,Zero}, Add(), arg1, arg2)
+function trim(::Add, arg1::BinaryOperation{Mult}, arg2::Zero)
+    return invoke(trim, Tuple{Add,Value,Zero}, Add(), arg1, arg2)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
+function trim(::Add, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     return _add_to_product(arg1, arg2)
 end
 
-function evaluate(::Add, arg1::Value, arg2::BinaryOperation{Mult})
+function trim(::Add, arg1::Value, arg2::BinaryOperation{Mult})
     return _add_to_product(arg2, arg1)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Mult}, arg2::Value)
+function trim(::Add, arg1::BinaryOperation{Mult}, arg2::Value)
     return _add_to_product(arg1, arg2)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Sub})
+function trim(::Add, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Sub})
     return _add_to_product(arg1, arg2)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Mult})
+function trim(::Add, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Mult})
     return _add_to_product(arg2, arg1)
 end
 
 function _add_to_product(arg1::BinaryOperation{Mult}, arg2::Value)
-    if evaluate(arg1.arg1) isa Real && evaluate(arg1.arg2) == evaluate(arg2)
-        return BinaryOperation{Mult}(evaluate(arg1.arg1) + 1, evaluate(arg2))
+    if trim(arg1.arg1) isa Real && trim(arg1.arg2) == trim(arg2)
+        return BinaryOperation{Mult}(trim(arg1.arg1) + 1, trim(arg2))
     end
 
-    return BinaryOperation{Add}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Add}(trim(arg1), trim(arg2))
 end
 
 function _add_to_product(arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Add})
-    if evaluate(arg1) == evaluate(arg2.arg1)
+    if trim(arg1) == trim(arg2.arg1)
         return BinaryOperation{Add}(
-            evaluate(BinaryOperation{Mult}(2, evaluate(arg1))),
-            evaluate(arg2.arg2),
+            trim(BinaryOperation{Mult}(2, trim(arg1))),
+            trim(arg2.arg2),
         )
     end
 
-    if evaluate(arg1) == evaluate(arg2.arg2)
+    if trim(arg1) == trim(arg2.arg2)
         return BinaryOperation{Add}(
-            evaluate(BinaryOperation{Mult}(2, evaluate(arg1))),
-            evaluate(arg2.arg1),
+            trim(BinaryOperation{Mult}(2, trim(arg1))),
+            trim(arg2.arg1),
         )
     end
 
-    if evaluate(arg1.arg1) isa Real && evaluate(arg1.arg2) == evaluate(arg2.arg1)
-        return evaluate(
+    if trim(arg1.arg1) isa Real && trim(arg1.arg2) == trim(arg2.arg1)
+        return trim(
             BinaryOperation{Add}(
-                evaluate(
-                    BinaryOperation{Mult}(evaluate(arg1.arg1) + 1, evaluate(arg1.arg2)),
-                ),
-                evaluate(arg2.arg2),
+                trim(BinaryOperation{Mult}(trim(arg1.arg1) + 1, trim(arg1.arg2))),
+                trim(arg2.arg2),
             ),
         )
     end
 
-    if evaluate(arg1.arg1) isa Real && evaluate(arg1.arg2) == evaluate(arg2.arg2)
-        return evaluate(
+    if trim(arg1.arg1) isa Real && trim(arg1.arg2) == trim(arg2.arg2)
+        return trim(
             BinaryOperation{Add}(
-                evaluate(
-                    BinaryOperation{Mult}(evaluate(arg1.arg1) + 1, evaluate(arg1.arg2)),
-                ),
-                evaluate(arg2.arg1),
+                trim(BinaryOperation{Mult}(trim(arg1.arg1) + 1, trim(arg1.arg2))),
+                trim(arg2.arg1),
             ),
         )
     end
 
-    return BinaryOperation{Add}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Add}(trim(arg1), trim(arg2))
 end
 
 function _add_to_product(arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Sub})
-    if evaluate(arg1) == evaluate(arg2.arg1)
+    if trim(arg1) == trim(arg2.arg1)
         return BinaryOperation{Sub}(
-            evaluate(BinaryOperation{Mult}(2, evaluate(arg1))),
-            evaluate(arg2.arg2),
+            trim(BinaryOperation{Mult}(2, trim(arg1))),
+            trim(arg2.arg2),
         )
     end
 
-    if evaluate(arg1.arg1) isa Real && evaluate(arg1.arg2) == evaluate(arg2.arg1)
-        return evaluate(
+    if trim(arg1.arg1) isa Real && trim(arg1.arg2) == trim(arg2.arg1)
+        return trim(
             BinaryOperation{Sub}(
-                evaluate(
-                    BinaryOperation{Mult}(evaluate(arg1.arg1) + 1, evaluate(arg1.arg2)),
-                ),
-                evaluate(arg2.arg2),
+                trim(BinaryOperation{Mult}(trim(arg1.arg1) + 1, trim(arg1.arg2))),
+                trim(arg2.arg2),
             ),
         )
     end
 
-    if evaluate(arg1.arg1) isa Real && evaluate(arg1.arg2) == evaluate(arg2.arg2)
-        return evaluate(
+    if trim(arg1.arg1) isa Real && trim(arg1.arg2) == trim(arg2.arg2)
+        return trim(
             BinaryOperation{Add}(
-                evaluate(
-                    BinaryOperation{Mult}(evaluate(arg1.arg1) - 1, evaluate(arg1.arg2)),
-                ),
-                evaluate(arg2.arg1),
+                trim(BinaryOperation{Mult}(trim(arg1.arg1) - 1, trim(arg1.arg2))),
+                trim(arg2.arg1),
             ),
         )
     end
 
-    if evaluate(arg1) == evaluate(arg2.arg2)
-        return evaluate(arg2.arg1)
+    if trim(arg1) == trim(arg2.arg2)
+        return trim(arg2.arg1)
     end
 
-    return BinaryOperation{Add}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Add}(trim(arg1), trim(arg2))
 end
 
 function _add_to_product(arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     if is_permutation(collect_factors(arg1), collect_factors(arg2))
-        return BinaryOperation{Mult}(2, evaluate(arg1))
+        return BinaryOperation{Mult}(2, trim(arg1))
     end
 
-    return BinaryOperation{Add}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Add}(trim(arg1), trim(arg2))
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Add})
+function trim(::Add, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Add})
     if arg1.arg1 == arg2.arg1
         return BinaryOperation{Add}(
             BinaryOperation{Mult}(2, arg1.arg1),
-            evaluate(BinaryOperation{Add}(arg1.arg2, arg2.arg2)),
+            trim(BinaryOperation{Add}(arg1.arg2, arg2.arg2)),
         )
     end
 
     if arg1.arg1 == arg2.arg2
         return BinaryOperation{Add}(
             BinaryOperation{Mult}(2, arg1.arg1),
-            evaluate(BinaryOperation{Add}(arg1.arg2, arg2.arg1)),
+            trim(BinaryOperation{Add}(arg1.arg2, arg2.arg1)),
         )
     end
 
     if arg1.arg2 == arg2.arg1
         return BinaryOperation{Add}(
             BinaryOperation{Mult}(2, arg1.arg2),
-            evaluate(BinaryOperation{Add}(arg1.arg1, arg2.arg2)),
+            trim(BinaryOperation{Add}(arg1.arg1, arg2.arg2)),
         )
     end
 
     if arg1.arg2 == arg2.arg2
         return BinaryOperation{Add}(
             BinaryOperation{Mult}(2, arg1.arg2),
-            evaluate(BinaryOperation{Add}(arg1.arg1, arg2.arg1)),
+            trim(BinaryOperation{Add}(arg1.arg1, arg2.arg1)),
         )
     end
 
     return BinaryOperation{Add}(arg1, arg2)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Add}, arg2::Zero)
-    return invoke(evaluate, Tuple{Add,Value,Zero}, Add(), arg1, arg2)
+function trim(::Add, arg1::BinaryOperation{Add}, arg2::Zero)
+    return invoke(trim, Tuple{Add,Value,Zero}, Add(), arg1, arg2)
 end
 
-function evaluate(::Add, arg1::Zero, arg2::BinaryOperation{Add})
-    return invoke(evaluate, Tuple{Add,Zero,Value}, Add(), arg1, arg2)
+function trim(::Add, arg1::Zero, arg2::BinaryOperation{Add})
+    return invoke(trim, Tuple{Add,Zero,Value}, Add(), arg1, arg2)
 end
 
-function evaluate(::Add, arg1::Zero, arg2::BinaryOperation{Mult})
-    invoke(evaluate, Tuple{Add,Zero,Value}, Add(), arg1, arg2)
+function trim(::Add, arg1::Zero, arg2::BinaryOperation{Mult})
+    invoke(trim, Tuple{Add,Zero,Value}, Add(), arg1, arg2)
 end
 
-function evaluate(::Add, arg1::Value, arg2::BinaryOperation{Add})
-    return evaluate(Add(), arg2, arg1)
+function trim(::Add, arg1::Value, arg2::BinaryOperation{Add})
+    return trim(Add(), arg2, arg1)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Add})
+function trim(::Add, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Add})
     return _add_to_product(arg1, arg2)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Add}, arg2::Value)
-    if evaluate(arg1.arg1) == evaluate(arg2)
+function trim(::Add, arg1::BinaryOperation{Add}, arg2::Value)
+    if trim(arg1.arg1) == trim(arg2)
         return BinaryOperation{Add}(
-            BinaryOperation{Mult}(2, evaluate(arg1.arg1)),
-            evaluate(arg1.arg2),
+            BinaryOperation{Mult}(2, trim(arg1.arg1)),
+            trim(arg1.arg2),
         )
     end
 
-    if evaluate(arg1.arg2) == evaluate(arg2)
+    if trim(arg1.arg2) == trim(arg2)
         return BinaryOperation{Add}(
-            BinaryOperation{Mult}(2, evaluate(arg1.arg2)),
-            evaluate(arg1.arg1),
+            BinaryOperation{Mult}(2, trim(arg1.arg2)),
+            trim(arg1.arg1),
         )
     end
 
-    return BinaryOperation{Add}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Add}(trim(arg1), trim(arg2))
 end
 
-function evaluate(::Add, arg1::Value, arg2::BinaryOperation{Sub})
-    return evaluate(Add(), arg2, arg1)
+function trim(::Add, arg1::Value, arg2::BinaryOperation{Sub})
+    return trim(Add(), arg2, arg1)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Sub}, arg2::Value)
-    if evaluate(arg1.arg1) == evaluate(arg2)
+function trim(::Add, arg1::BinaryOperation{Sub}, arg2::Value)
+    if trim(arg1.arg1) == trim(arg2)
         return BinaryOperation{Sub}(
-            BinaryOperation{Mult}(2, evaluate(arg1.arg1)),
-            evaluate(arg1.arg2),
+            BinaryOperation{Mult}(2, trim(arg1.arg1)),
+            trim(arg1.arg2),
         )
     end
 
-    if evaluate(arg1.arg2) == evaluate(arg2)
-        return evaluate(arg1.arg1)
+    if trim(arg1.arg2) == trim(arg2)
+        return trim(arg1.arg1)
     end
 
-    return BinaryOperation{Add}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Add}(trim(arg1), trim(arg2))
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Sub}, arg2::Zero)
-    return invoke(evaluate, Tuple{Add,Value,Zero}, Add(), arg1, arg2)
+function trim(::Add, arg1::BinaryOperation{Sub}, arg2::Zero)
+    return invoke(trim, Tuple{Add,Value,Zero}, Add(), arg1, arg2)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Mult})
+function trim(::Add, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Mult})
     return _add_to_product(arg2, arg1)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Sub})
-    return evaluate(Add(), arg2, arg1)
+function trim(::Add, arg1::BinaryOperation{Add}, arg2::BinaryOperation{Sub})
+    return trim(Add(), arg2, arg1)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Add})
+function trim(::Add, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Add})
     if arg1.arg1 == arg2.arg1
-        return evaluate(
+        return trim(
             BinaryOperation{Add}(
-                evaluate(BinaryOperation{Mult}(2, arg1.arg1)),
-                evaluate(BinaryOperation{Sub}(arg2.arg2, arg1.arg2)),
+                trim(BinaryOperation{Mult}(2, arg1.arg1)),
+                trim(BinaryOperation{Sub}(arg2.arg2, arg1.arg2)),
             ),
         )
     end
 
     if arg1.arg1 == arg2.arg2
-        return evaluate(
+        return trim(
             BinaryOperation{Add}(
-                evaluate(BinaryOperation{Mult}(2, arg1.arg1)),
-                evaluate(BinaryOperation{Sub}(arg2.arg1, arg1.arg2)),
+                trim(BinaryOperation{Mult}(2, arg1.arg1)),
+                trim(BinaryOperation{Sub}(arg2.arg1, arg1.arg2)),
             ),
         )
     end
 
     if arg1.arg2 == arg2.arg1
-        return evaluate(Add(), arg1.arg1, arg2.arg2)
+        return trim(Add(), arg1.arg1, arg2.arg2)
     end
 
     if arg1.arg2 == arg2.arg2
-        return evaluate(Add(), arg1.arg1, arg2.arg1)
+        return trim(Add(), arg1.arg1, arg2.arg1)
     end
 
     return BinaryOperation{Add}(arg1, arg2)
 end
 
-function evaluate(::Add, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Sub})
+function trim(::Add, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Sub})
     if arg1.arg1 == arg2.arg1
-        return evaluate(
+        return trim(
             BinaryOperation{Sub}(
-                evaluate(BinaryOperation{Mult}(2, arg1.arg1)),
-                evaluate(BinaryOperation{Add}(arg1.arg2, arg2.arg2)),
+                trim(BinaryOperation{Mult}(2, arg1.arg1)),
+                trim(BinaryOperation{Add}(arg1.arg2, arg2.arg2)),
             ),
         )
     end
 
     if arg1.arg1 == arg2.arg2
-        return evaluate(BinaryOperation{Sub}(arg2.arg1, arg1.arg2))
+        return trim(BinaryOperation{Sub}(arg2.arg1, arg1.arg2))
     end
 
     if arg1.arg2 == arg2.arg1
-        return evaluate(BinaryOperation{Sub}(arg1.arg1, arg2.arg2))
+        return trim(BinaryOperation{Sub}(arg1.arg1, arg2.arg2))
     end
 
     if arg1.arg2 == arg2.arg2
-        return evaluate(
+        return trim(
             BinaryOperation{Sub}(
-                evaluate(BinaryOperation{Add}(arg1.arg1, arg2.arg1)),
-                evaluate(BinaryOperation{Mult}(2, arg1.arg2)),
+                trim(BinaryOperation{Add}(arg1.arg1, arg2.arg1)),
+                trim(BinaryOperation{Mult}(2, arg1.arg2)),
             ),
         )
     end
@@ -720,33 +712,33 @@ function evaluate(::Add, arg1::BinaryOperation{Sub}, arg2::BinaryOperation{Sub})
     return BinaryOperation{Add}(arg1, arg2)
 end
 
-function evaluate(::Add, arg1::Zero, arg2::BinaryOperation{Sub})
-    return invoke(evaluate, Tuple{Add,Zero,Value}, Add(), arg1, arg2)
+function trim(::Add, arg1::Zero, arg2::BinaryOperation{Sub})
+    return invoke(trim, Tuple{Add,Zero,Value}, Add(), arg1, arg2)
 end
 
-function evaluate(::Sub, arg1::Zero, arg2::Zero)
+function trim(::Sub, arg1::Zero, arg2::Zero)
     @assert is_permutation(arg1, arg2)
 
     return arg1
 end
 
-function evaluate(::Sub, arg1::Zero, arg2::Value)
+function trim(::Sub, arg1::Zero, arg2::Value)
     @assert is_permutation(arg1, arg2)
 
-    return -evaluate(arg2)
+    return -trim(arg2)
 end
 
-function evaluate(::Sub, arg1::Value, arg2::Zero)
+function trim(::Sub, arg1::Value, arg2::Zero)
     @assert is_permutation(arg1, arg2)
 
-    return evaluate(arg1)
+    return trim(arg1)
 end
 
-function evaluate(::Sub, arg1::Real, arg2::Real)
+function trim(::Sub, arg1::Real, arg2::Real)
     return arg1 - arg2
 end
 
-function evaluate(::Sub, arg1, arg2)
+function trim(::Sub, arg1, arg2)
     arg1_indices = get_free_indices(arg1)
     arg2_indices = get_free_indices(arg2)
 
@@ -759,47 +751,47 @@ function evaluate(::Sub, arg1, arg2)
     return BinaryOperation{Sub}(arg1, arg2)
 end
 
-function evaluate(::Sub, arg1::Zero, arg2::BinaryOperation{Mult})
-    return invoke(evaluate, Tuple{Sub,Zero,Value}, Sub(), arg1, arg2)
+function trim(::Sub, arg1::Zero, arg2::BinaryOperation{Mult})
+    return invoke(trim, Tuple{Sub,Zero,Value}, Sub(), arg1, arg2)
 end
 
-function evaluate(::Sub, arg1::BinaryOperation{Mult}, arg2::Zero)
-    return invoke(evaluate, Tuple{Sub,Value,Zero}, Sub(), arg1, arg2)
+function trim(::Sub, arg1::BinaryOperation{Mult}, arg2::Zero)
+    return invoke(trim, Tuple{Sub,Value,Zero}, Sub(), arg1, arg2)
 end
 
-function evaluate(::Sub, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
+function trim(::Sub, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     return _sub_from_product(arg1, arg2)
 end
 
-function evaluate(::Sub, arg1::BinaryOperation{Mult}, arg2::Value)
+function trim(::Sub, arg1::BinaryOperation{Mult}, arg2::Value)
     return _sub_from_product(arg1, arg2)
 end
 
 function _sub_from_product(arg1::BinaryOperation{Mult}, arg2::Value)
-    if evaluate(arg1) == evaluate(arg2)
+    if trim(arg1) == trim(arg2)
         arg1_indices = get_free_indices(arg1)
         return Zero(arg1_indices...)
     end
 
-    if evaluate(arg1.arg1) isa Real && evaluate(arg1.arg2) == evaluate(arg2)
-        return evaluate(BinaryOperation{Mult}(evaluate(arg1.arg1) - 1, evaluate(arg2)))
+    if trim(arg1.arg1) isa Real && trim(arg1.arg2) == trim(arg2)
+        return trim(BinaryOperation{Mult}(trim(arg1.arg1) - 1, trim(arg2)))
     end
 
-    return BinaryOperation{Sub}(evaluate(arg1), evaluate(arg2))
+    return BinaryOperation{Sub}(trim(arg1), trim(arg2))
 end
 
-function evaluate(op::Power)
+function trim(op::Power)
     if op.exponent == 1
-        return evaluate(op.base)
+        return trim(op.base)
     end
 
-    return Power(evaluate(op.base), op.exponent)
+    return Power(trim(op.base), op.exponent)
 end
 
-function evaluate(op::BinaryOperation{Mult})
-    return evaluate(Mult(), evaluate(op.arg1), evaluate(op.arg2))
+function trim(op::BinaryOperation{Mult})
+    return trim(Mult(), trim(op.arg1), trim(op.arg2))
 end
 
-function evaluate(op::BinaryOperation{Op}) where {Op<:AdditiveOperation}
-    return evaluate(Op(), evaluate(op.arg1), evaluate(op.arg2))
+function trim(op::BinaryOperation{Op}) where {Op<:AdditiveOperation}
+    return trim(Op(), trim(op.arg1), trim(op.arg2))
 end
