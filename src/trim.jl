@@ -261,7 +261,7 @@ function trim(::Mult, arg1::Tensor, arg2::Real)
     trim(Mult(), arg2, arg1)
 end
 
-function trim(::Mult, arg1::T, arg2::Tensor) where {T<:Real}
+function trim(::Mult, arg1::T, arg2::Value) where {T<:Real}
     if arg1 == T(1)
         return arg2
     end
