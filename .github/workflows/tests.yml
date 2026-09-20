@@ -21,16 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version:
-          - 'lts'
-          - '1'
-          - 'pre'
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macOS-latest
-        arch:
-          - x64
+        version: ['lts', '1', 'pre']
         include:
           - os: macOS-latest
             arch: aarch64
