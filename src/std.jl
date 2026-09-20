@@ -126,7 +126,7 @@ gradient(x' * A * x, x)
 
 # output
 
-x⁴A₄⁶ + A⁶⁵x₅
+x⁴A₄⁶ + x₅A⁶⁵
 ```
 """
 function gradient(expr, wrt::Variable)

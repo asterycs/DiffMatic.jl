@@ -90,7 +90,7 @@ g = gradient(expr, x) # The second argument denotes the differentiation variable
 
 # output
 
-2A₄⁶B₆⁸x⁴ + 2B₆⁷x₇A⁸⁶
+2A₄⁶x⁴B₆⁸ + 2B₆⁷A⁸⁶x₇
 ```
 
 ```jldoctest usage
@@ -98,7 +98,7 @@ H = hessian(expr, x)
 
 # output
 
-2A₉⁶B₆⁸ + 2B₆₉A⁸⁶
+2B₆⁸A₉⁶ + 2B₆₉A⁸⁶
 ```
 
 [`jacobian`](@ref) requires a column vector as input:

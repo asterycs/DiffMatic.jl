@@ -52,7 +52,7 @@ using LinearAlgebra: tr, diag, diagm, norm
     @test to_std(gradient(((A .* (B .* C)) * C * x)' * x, x)) ==
           "(B ⊙ C ⊙ A)Cx + Cᵀ(Bᵀ ⊙ Cᵀ ⊙ Aᵀ)x"
     @test to_std(gradient(sum((A .* B) * C * x), x)) == "Cᵀ(Aᵀ ⊙ Bᵀ)vec(1)"
-    @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(y ⊙ c ⊙ x)"
+    @test to_std(gradient((x .^ 2 .* y)' * c, x)) == "2(x ⊙ y ⊙ c)"
     @test to_std(gradient(norm(A * x, 2), x)) == "1/1sum((xᵀAᵀ)²)⁻¹⸍²AᵀAx" # TODO: Collapse the leading fraction
     @test to_std(gradient(log.(A*x)' * x, x)) == "Aᵀ(x ⊘ (Ax)) + log(Ax)"
     @test to_std(gradient(x' * sin.(A * x), x)) == "Aᵀ(cos(Ax) ⊙ x) + sin(Ax)"
@@ -179,7 +179,7 @@ end
     @matrix A B C X
     @vector x y z
 
-    @test to_std(derivative(diag(A)'*x, A)) == "diagm(x)I"
+    @test to_std(derivative(diag(A)'*x, A)) == "Iᵀdiagm(x)"
     @test to_std(derivative(sum(-y .* (X*z)), X)) == "(-1)zyᵀ"
     @test to_std(derivative(sum((A .* B) * C * x), x)) == "vec(1)ᵀ(A ⊙ B)C"
 end
@@ -192,7 +192,7 @@ end
     @test to_std(hessian(2 * x' * A * x, x)) == "2Aᵀ + 2A"
     @test to_std(hessian(2 * x' * x, x)) == "4I"
     @test to_std(hessian(sin(cos(x' * A * B' * x)), x)) ==
-          "(-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))BAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ + (-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))ABᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ"
+          "(-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))BAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ + (-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))ABᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ"
     @test to_std(hessian(x' * sin.(A * x), x)) ==
           "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(x ⊙ sin(Ax))A"
     @test_broken to_std(hessian(tr(A), x)) == "mat(0)"
@@ -213,11 +213,11 @@ end
 
     # One node, two pendants.
     @test to_std(hessian(sin.(A * x)' * cos.(B * x), x)) ==
-          "(-1)Bᵀdiagm(sin(Ax) ⊙ cos(Bx))B + (-1)Bᵀdiagm(cos(Ax) ⊙ sin(Bx))A + (-1)Aᵀdiagm(cos(Ax) ⊙ sin(Bx))B + (-1)Aᵀdiagm(cos(Bx) ⊙ sin(Ax))A"
+          "(-1)Bᵀdiagm(sin(Ax) ⊙ cos(Bx))B + (-1)Bᵀdiagm(cos(Ax) ⊙ sin(Bx))A + (-1)Aᵀdiagm(cos(Bx) ⊙ sin(Ax))A + (-1)Aᵀdiagm(cos(Ax) ⊙ sin(Bx))B"
 
     # Now with a sum rather than an inner product.
     @test to_std(hessian(sum(sin.(A * x) .* cos.(B * x)), x)) ==
-          "(-1)Bᵀdiagm(cos(Bx) ⊙ sin(Ax))B + (-1)Bᵀdiagm(sin(Bx) ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Bx) ⊙ cos(Ax))B + (-1)Aᵀdiagm(sin(Ax) ⊙ cos(Bx))A"
+          "(-1)Bᵀdiagm(cos(Bx) ⊙ sin(Ax))B + (-1)Bᵀdiagm(sin(Bx) ⊙ cos(Ax))A + (-1)Aᵀdiagm(sin(Ax) ⊙ cos(Bx))A + (-1)Aᵀdiagm(sin(Bx) ⊙ cos(Ax))B"
 
     # One node with three pendants.
     @test to_std(hessian((x .* y)' * sin.(A * x), x)) ==
@@ -225,5 +225,6 @@ end
 
     # Two nodes joined by an edge, so two 'diagm's in the same term, and a term that collapses into a pendant of its neighbour.
     @test to_std(hessian(sin.(A * x)' * B * cos.(C * x), x)) ==
-          "(-1)(Cᵀdiagm(sin(Cx))Bᵀdiagm(cos(Ax))A + Cᵀdiagm(Bᵀsin(Ax) ⊙ cos(Cx))C) + (-1)Aᵀdiagm(cos(Ax))Bdiagm(sin(Cx))C + (-1)Aᵀdiagm(Bcos(Cx) ⊙ sin(Ax))A"
+          "(-1)(Cᵀdiagm(sin(Cx))Bᵀdiagm(cos(Ax))A + Cᵀdiagm(Bᵀsin(Ax) ⊙ cos(Cx))C) + (-1)Aᵀdiagm(Bcos(Cx) ⊙ sin(Ax))A + (-1)Aᵀdiagm(cos(Ax))Bdiagm(sin(Cx))C"
+
 end

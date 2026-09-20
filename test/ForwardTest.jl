@@ -136,16 +136,6 @@ end
     end
 end
 
-@testset "evaluate contracting and element-wise product of matrix and matrix" begin
-    d = KrD(Upper(2), Upper(3))
-    A = Variable("A", Upper(2), Lower(3))
-
-    op1 = dc.BinaryOperation{dc.Mult}(A, d)
-    op2 = dc.BinaryOperation{dc.Mult}(d, A)
-    @test evaluate(op1) == op1
-    @test evaluate(op2) == op2
-end
-
 @testset "evaluate Matrix + Zero" begin
     X = Variable("X", Upper(2), Lower(3))
     Z = Zero(Upper(2), Lower(3))

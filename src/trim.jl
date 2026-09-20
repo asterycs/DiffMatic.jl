@@ -115,33 +115,6 @@ function trim(::Mult, arg1::BinaryOperation{Mult}, arg2::Union{Variable,Literal}
         return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
     end
 
-    if arg1.arg1 isa KrD && can_contract(arg1.arg1, arg2) && !can_contract(arg1.arg2, arg2)
-        new_arg1 = trim(Mult(), arg1.arg1, arg2)
-        return BinaryOperation{Mult}(new_arg1, arg1.arg2)
-    end
-
-    if arg1.arg2 isa KrD && can_contract(arg1.arg2, arg2) && !can_contract(arg1.arg1, arg2)
-        new_arg2 = trim(Mult(), arg1.arg2, arg2)
-        return trim(Mult(), arg1.arg1, new_arg2)
-    end
-
-    is_arg1_elementwise = is_elementwise_multiplication(arg1.arg1, arg1.arg2)
-    are_both_elwise =
-        is_elementwise_multiplication(arg1.arg1, arg2) &&
-        is_elementwise_multiplication(arg1.arg2, arg2)
-
-    if is_arg1_elementwise || are_both_elwise
-        return BinaryOperation{Mult}(trim(arg1), arg2)
-    end
-
-    if can_contract(arg1.arg2, arg2)
-        new_arg2 = trim(Mult(), arg1.arg2, arg2)
-        return BinaryOperation{Mult}(arg1.arg1, new_arg2)
-    elseif can_contract(arg1.arg1, arg2)
-        new_arg1 = trim(Mult(), arg1.arg1, arg2)
-        return BinaryOperation{Mult}(new_arg1, arg1.arg2)
-    end
-
     return BinaryOperation{Mult}(arg1, arg2)
 end
 
@@ -161,49 +134,6 @@ function trim(::Mult, arg1::BinaryOperation{Mult}, arg2::BinaryOperation{Mult})
     end
 
     return BinaryOperation{Mult}(arg1, arg2)
-end
-
-function trim(::Mult, arg1::KrD, arg2::BinaryOperation{Mult})
-    return trim(Mult(), arg2, arg1)
-end
-
-function trim(::Mult, arg1::BinaryOperation{Mult}, arg2::KrD)
-    ci = indices_in_common(arg1.arg1, arg1.arg2)
-
-    if !isempty(ci)
-        el = eliminated_indices([ci; arg2.indices[1]])
-        er = eliminated_indices([ci; arg2.indices[2]])
-
-        if !isempty(el)
-            return trim(
-                BinaryOperation{Mult}(
-                    trim(Mult(), arg1.arg1, arg2), # order of the indices in arg2 determines which one is contracted
-                    trim(Mult(), arg1.arg2, arg2),
-                ),
-            )
-        elseif !isempty(er)
-            rd = KrD(reverse(arg2.indices)...)
-
-            return trim(
-                BinaryOperation{Mult}(
-                    trim(Mult(), arg1.arg1, rd),
-                    trim(Mult(), arg1.arg2, rd),
-                ),
-            )
-        end
-    end
-
-    if can_contract(arg1.arg2, arg2)
-        new_arg2 = trim(Mult(), arg1.arg2, arg2)
-        return BinaryOperation{Mult}(trim(arg1.arg1), new_arg2)
-    elseif can_contract(arg1.arg1, arg2)
-        new_arg1 = trim(Mult(), arg1.arg1, arg2)
-        return BinaryOperation{Mult}(new_arg1, trim(arg1.arg2))
-    elseif arg1.arg1 isa Real
-        return BinaryOperation{Mult}(arg1.arg1, BinaryOperation{Mult}(arg1.arg2, arg2))
-    else
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
 end
 
 function trim(::Mult, arg1::Zero, arg2::UnaryOperation)
@@ -289,57 +219,6 @@ end
 
 function trim(::Mult, arg1::Power, arg2::Zero)
     return _multiply_by_zero(arg1, arg2)
-end
-
-function trim(::Mult, arg1::Union{Variable,Literal}, arg2::KrD)
-    return _multiply_with_krd(arg1, arg2)
-end
-
-function trim(::Mult, arg1::KrD, arg2::Union{Variable,Literal})
-    return _multiply_with_krd(arg2, arg1)
-end
-
-function trim(::Mult, arg1::KrD, arg2::KrD)
-    return _multiply_with_krd(arg1, arg2)
-end
-
-function _multiply_with_krd(arg1::Union{Variable,Literal,KrD}, arg2::KrD)
-    arg1_indices = get_free_indices(arg1)
-    contracting_index = eliminated_indices([arg1_indices; get_indices(arg2)])
-
-    if isempty(contracting_index) # Is an outer product
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
-
-    if is_elementwise_multiplication(arg1, arg2)
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
-
-    if is_trace(arg1) || is_trace(arg2)
-        return BinaryOperation{Mult}(arg1, arg2)
-    end
-
-    @assert can_contract(arg1, arg2)
-    @assert length(arg2.indices) == 2
-
-    newarg = deepcopy(arg1)
-    empty!(newarg.indices)
-
-    contracted = false
-
-    for i ∈ arg1.indices
-        if flip(i) == arg2.indices[1] && !contracted
-            push!(newarg.indices, arg2.indices[2])
-            contracted = true
-        elseif flip(i) == arg2.indices[2] && !contracted
-            push!(newarg.indices, arg2.indices[1])
-            contracted = true
-        else
-            push!(newarg.indices, i)
-        end
-    end
-
-    return newarg
 end
 
 function trim(::Mult, arg1::Zero, arg2::BinaryOperation{Add})

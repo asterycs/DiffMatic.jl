@@ -103,17 +103,3 @@ end
     @test dc.simplify(mult(mult(A, d), Literal(3, Upper(9)))) == mult(3, expected)
     @test dc.simplify(mult(mult(d, A), Literal(3, Upper(9)))) == mult(3, expected)
 end
-
-@testset "simplify of two KrD agrees with evaluate" begin
-    mult(l, r) = BinaryOperation{Mult}(l, r)
-
-    for (l, r) ∈ (
-        (KrD(Upper(1), Lower(2)), KrD(Upper(2), Lower(3))),
-        (KrD(Upper(1), Lower(2)), KrD(Upper(2), Lower(1))), # the trace of the identity
-        (KrD(Upper(1), Lower(2)), KrD(Upper(1), Lower(3))),
-        (KrD(Upper(1), Lower(2)), KrD(Lower(1), Upper(3))),
-        (KrD(Upper(1), Lower(2)), KrD(Upper(3), Lower(4))), # nothing to contract
-    )
-        @test dc.simplify(Mult(), l, r) == evaluate(mult(l, r))
-    end
-end

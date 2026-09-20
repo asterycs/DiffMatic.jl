@@ -176,7 +176,7 @@ expr = tr(A*B*B'*C)
 
 # output
 
-A¹₅B⁵₇B₉⁷C⁹₁
+B₉⁷C⁹₂B⁵₇A²₅
 ```
 
 ## Derivatives in Standard Notation

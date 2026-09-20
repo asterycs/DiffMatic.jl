@@ -5,5 +5,6 @@
 
 function evaluate(op)
     op = expand(op)
+    op = collapse(op)
     return trim(op)
 end

@@ -663,10 +663,6 @@ function simplify(::Mult, arg1::KrD, arg2::KrD)
 
     common = indices_in_common(arg1, arg2)
 
-    if isempty(common)
-        return _multiply_with_krd(arg1, arg2)
-    end
-
     if length(common) != 1
         return BinaryOperation{Mult}(arg1, arg2)
     end
