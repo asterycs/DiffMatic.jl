@@ -23,38 +23,6 @@ function simplify(arg::BinaryOperation{Op}) where {Op}
     return simplified
 end
 
-function elementwise_indices(arg1, arg2)
-    arg1_indices = get_free_indices(arg1)
-    arg2_indices = get_free_indices(arg2)
-
-    return intersect(arg1_indices, arg2_indices)
-end
-
-function get_diag_delta(arg::BinaryOperation{Mult})
-    l = get_diag_delta(arg.arg1)
-    r = get_diag_delta(arg.arg2)
-
-    if !isnothing(l)
-        return l
-    elseif !isnothing(r)
-        return r
-    end
-
-    return nothing
-end
-
-function get_diag_delta(arg::KrD)
-    if first(arg.indices).letter != last(arg.indices).letter
-        return arg
-    end
-
-    return nothing
-end
-
-function get_diag_delta(arg)
-    return nothing
-end
-
 function to_binary_operation(op::Op, terms::AbstractArray) where {Op}
     if length(terms) == 1
         return first(terms)
@@ -543,92 +511,6 @@ function simplify(::Mult, arg1::BinaryOperation{Mult}, arg2::Tensor)
 
     if !isnothing(rewritten)
         return rewritten
-    end
-
-    if is_diagm(arg1) &&
-       !is_elementwise_multiplication(arg1, arg2) &&
-       length(get_free_indices(op)) == 1
-        d = get_diag_delta(arg1)
-
-        @assert !isnothing(d)
-
-        factors = collect_factors(arg1)
-        vector_factors = filter(f -> f != d, factors)
-        reshaped = []
-
-        for f ∈ factors
-            if isequal(f, d)
-                continue
-            end
-
-            free_ids = get_free_indices(f)
-
-            if isempty(free_ids)
-                push!(reshaped, f)
-            elseif length(free_ids) == 1 || length(free_ids) == 2
-                @assert length(target_indices) == 1
-
-                vector_index =
-                    only(get_free_indices(to_binary_operation(Mult(), vector_factors)))
-
-                current_idx = intersect(free_ids, [vector_index])
-
-                if !isempty(current_idx)
-                    f = update_index(
-                        f,
-                        vector_index,
-                        only(target_indices);
-                        allow_shape_change = true,
-                    )
-                end
-
-                push!(reshaped, f)
-            else
-                @assert false "Not implemented, please open an issue with your input"
-            end
-        end
-
-        arg2_ids = get_free_indices(arg2)
-
-        if length(arg2_ids) == 1
-            arg2 = update_index(
-                arg2,
-                only(arg2_ids),
-                only(target_indices);
-                allow_shape_change = true,
-            )
-            push!(reshaped, arg2)
-        else
-            @assert false "Not implemented, please open an issue with your input"
-        end
-
-        return to_binary_operation(Mult(), reshaped)
-    end
-
-    if length(get_free_indices(arg1)) > 2 && length(get_free_indices(arg2)) == 1
-        if can_apply(arg1.arg1, arg2) &&
-           can_apply(arg1.arg2, arg2) &&
-           arg1.arg1 isa KrD &&
-           arg1.arg2 isa KrD
-            r_free_indices = get_free_indices(arg2)
-
-            new_r = update_index(
-                arg2,
-                only(r_free_indices),
-                first(target_indices);
-                allow_shape_change = true,
-            )
-
-            eliminated = eliminated_indices([get_free_indices(arg1); r_free_indices])
-            new_l = update_index(
-                arg1.arg2,
-                first(eliminated),
-                first(target_indices);
-                allow_shape_change = true,
-            )
-
-            return BinaryOperation{Mult}(new_l, new_r)
-        end
     end
 
     return op
