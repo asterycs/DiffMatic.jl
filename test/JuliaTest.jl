@@ -25,7 +25,7 @@ using LinearAlgebra: tr, diag, diagm, norm, I
     @test fun(x, B, A) == x
 end
 
-@testset "test interface: too many user supplied function arguments yields warning" begin
+@testset "test interface: extra user supplied function arguments are kept" begin
     @matrix A B C
     @vector x
 
@@ -33,15 +33,14 @@ end
 
     expr = A * B * x
 
-    @test_logs (:warn, "Ignoring unused variables: [\"C\"]") fun =
-        to_std(expr; format = fmt)
+    fun = to_std(expr; format = fmt)
     fun = eval(fun)
 
     A = Matrix(I, 2, 2)
     B = Matrix(I, 2, 2)
     x = [1; 1]
 
-    @test fun(x, B, A) == x
+    @test fun(x, B, C, A) == x
 end
 
 @testset "test interface: more than one occurrence per argument throws" begin

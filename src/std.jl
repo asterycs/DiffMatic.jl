@@ -461,44 +461,36 @@ end
 
 function create_function_arguments(
     variables::AbstractArray,
-    requested_arguments::Union{AbstractArray,Nothing},
+    arguments::Union{AbstractArray,Nothing},
 )
-    if isnothing(requested_arguments)
+    if isnothing(arguments)
         return sort(variables)
     end
 
-    unlisted_variables = setdiff(variables, requested_arguments)
+    unlisted_variables = setdiff(variables, arguments)
 
     if !isempty(unlisted_variables)
         throw(
             DomainError(
-                requested_arguments,
+                arguments,
                 "Following function argument(s) $unlisted_variables were unspecified.",
             ),
         )
     end
 
-    if length(unique(requested_arguments)) > length(variables)
-        unused_variables = setdiff(requested_arguments, variables)
-
-        @warn "Ignoring unused variables: $(unused_variables)"
-    end
-
-    used_variables = filter(x -> x ∈ variables, requested_arguments)
-
-    variable_counts = count_values(used_variables)
+    variable_counts = count_values(arguments)
 
     if any(values(variable_counts) .!= 1)
         invalid = collect(filter(v -> variable_counts[v] != 1, keys(variable_counts)))
         throw(
             DomainError(
-                requested_arguments,
+                arguments,
                 "Function argument(s) $invalid specified in multiple positions.",
             ),
         )
     end
 
-    return used_variables
+    return arguments
 end
 
 function _to_std(format::JuliaFunc, arg)
