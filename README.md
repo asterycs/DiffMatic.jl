@@ -10,55 +10,85 @@
 
 ### Example
 
-Create a matrix and a vector:
+Create a matrix and two vectors:
 
 ```julia
-using DiffMatic
+julia> using DiffMatic
 
-@matrix A
-@vector x
+julia> @matrix A;
+
+julia> @vector x y;
 ```
-Create an expression:
+Create an expression and differentiate it:
 ```julia
-expr = x' * A * x
-```
-The variable `expr` now contains an internal representation of the expression `x' * A * x`.
+julia> expr = x' * sin.(A * x);
 
-Compute the gradient and the Hessian with respect to the vector `x`.
-```julia
-g = gradient(expr, x)
-H = hessian(expr, x)
+julia> g = gradient(expr, x);
+
+julia> H = hessian(expr, x);
 ```
 Convert the gradient and the Hessian to standard notation using `to_std`:
 ```julia
-to_std(g) # "Aᵀx + Ax"
-to_std(H) # "Aᵀ + A"
+julia> to_std(g)
+
+# output
+
+"Aᵀ(cos(Ax) ⊙ x) + sin(Ax)"
+
+julia> to_std(H)
+
+# output
+
+"diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(x ⊙ sin(Ax))A"
 ```
 
 Jacobians can be computed with `jacobian`:
 
 ```julia
-to_std(jacobian(A * x, x)) # "A"
+julia> to_std(jacobian(sin.(A * x + y), x))
+
+# output
+
+"diagm(cos(Ax + y))A"
 ```
 
 The function `derivative` can be used to compute arbitrary derivatives.
 
 ```julia
-to_std(derivative(tr(A), A)) # "I"
+julia> to_std(derivative(tr(A), A))
+
+# output
+
+"I"
 ```
-The function `to_std` will throw an exception when given an expression that that cannot be converted to
-standard notation.
+Runnable Julia code can also be generated directly:
+
+```julia
+julia> to_std(H; format = JuliaFunc())
+
+# output
+
+quote
+    #= ... =#
+    function (A, x)
+        #= ... =#
+        return diagm(cos.(A * x)) * A + (transpose(A) * diagm(cos.(A * x)) + -1 * (transpose(A) * (diagm(x .* sin.(A * x)) * A)))
+    end
+end
+```
 
 ### Supported functions and operators
 
-- Basic operators `+`, `-`, `'`, `*`, `^`, `abs`, `sin`, `cos`, `log` and `exp`
-- Element-wise operators `sin.`, `cos.`, `abs.`, `.*`, `.^`, `log.` and `exp.`
+- Basic operators `+`, `-`, `'`, `*`, `^`, `abs`, `sign`, `sin`, `cos`, `log` and `exp`
+- Element-wise operators `sin.`, `cos.`, `abs.`, `sign.`, `.*`, `.^`, `log.` and `exp.`
 - Diagonal matrix using `LinearAlgebra.diagm`
 - Vector of a matrix diagonal using `LinearAlgebra.diag`
 - Vector 1-norm and 2-norm using `LinearAlgebra.norm(..., 1)` and `LinearAlgebra.norm(..., 2)`
 - Sums of vectors using `sum`
 - Matrix traces using `LinearAlgebra.tr`
 - `LinearAlgebra.I` for the identity matrix
+- Standard notation output: `tr`, `diag`, `diagm`, `sum`, `vec(1)`, `⊙` (element-wise
+  product) and `⊘` (element-wise division)
 
 ### Installation
 
