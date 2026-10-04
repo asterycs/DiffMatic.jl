@@ -34,7 +34,7 @@ using LinearAlgebra: tr, diag, diagm, norm
     @test to_std(gradient(sum(2 * x), x)) == "2vec(1)"
     @test to_std(gradient(2 * sum(sin.(x)), x)) == "2cos(x)"
     @test to_std(gradient(sum(2 * sin.(x)), x)) == "2cos(x)"
-    @test to_std(gradient(diag(A)'*x, x)) == "(A ⊙ I)vec(1)" # TODO: Output 'diag(A)'
+    @test to_std(gradient(diag(A)'*x, x)) == "diag(A)"
     @test to_std(gradient(2 * sum(cos.(A * x + y)), x)) == "(-2)Aᵀsin(Ax + y)"
     @test to_std(gradient(sum(2 * cos.(A * x + y)), x)) == "(-2)Aᵀsin(Ax + y)"
     @test to_std(gradient(sum(x .^ 2), x)) == "2x"
@@ -103,7 +103,7 @@ end
     @test to_std(diagm(x') * vector(3)) == "3x"
 
     @test_broken to_std(jacobian(diag(A * diagm(x)), x)) == "(A ⊙ I)diagm(vec(1))I"
-    @test to_std(diag(A * B)) == "(AB ⊙ I)vec(1)"
+    @test to_std(diag(A * B)) == "diag(AB)"
 end
 
 @testset "test trace expressions in standard notation" begin

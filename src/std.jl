@@ -450,13 +450,13 @@ end
 function _to_std(format::Ir, arg)
     standardized = standardize(arg)
 
-    return to_ir(standardized)
+    return simplify(to_ir(standardized))
 end
 
 function _to_std(format::StdStr, arg)
     standardized = standardize(arg)
 
-    return to_std_str(to_ir(standardized))
+    return to_std_str(simplify(to_ir(standardized)))
 end
 
 function create_function_arguments(
@@ -496,7 +496,7 @@ end
 function _to_std(format::JuliaFunc, arg)
     standardized = standardize(arg)
 
-    ir = to_ir(standardized)
+    ir = simplify(to_ir(standardized))
     op = to_julia(ir)
 
     variables = DiffMatic.ir.get_variables(ir)

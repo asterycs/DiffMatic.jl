@@ -929,7 +929,7 @@ end
 
         jjac = eval(to_std(jacobian(f(A, x), x); format = dc.JuliaFunc()))
 
-        @test_broken jjac(Â) ≈ ForwardDiff.jacobian(x -> f(Â, x), x̂)
+        @test jjac(Â) ≈ ForwardDiff.jacobian(x -> f(Â, x), x̂)
     end
 
     @testset "graph: hessian of norm(A * x, 2)" begin

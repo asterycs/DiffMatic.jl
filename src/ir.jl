@@ -622,3 +622,64 @@ function is_trace(arg)
 
     return all(length.(get_free_indices.(terms)) .== 2) && isempty(get_free_indices(arg))
 end
+
+
+# Simplifying the IR:
+# 'to_ir' translates one node at a time and cannot identify patterns that span multiple factors.
+# This simplification pass is for recognizing multi-factor patterns like 'diagm(x) * ones -> x'.
+function is_ones(arg::ir.Vec)
+    return arg.id isa ir.Literal && arg.id.value == 1
+end
+
+function is_ones(arg)
+    return false
+end
+
+function hadamard_with_identity(l, r)
+    if l isa ir.Identity
+        return r
+    elseif r isa ir.Identity
+        return l
+    end
+
+    return nothing
+end
+
+function simplify(arg::ir.Product)
+    l, r = simplify(arg.l), simplify(arg.r)
+
+    # Diagm(x) * ones -> x
+    if l isa ir.Diagm && is_ones(r)
+        return l.arg
+    end
+
+    # ones' * Diagm(x) -> x'
+    if r isa ir.Diagm && l isa ir.Transpose && is_ones(l.arg)
+        return ir.Transpose(r.arg)
+    end
+
+    return ir.Product(l, r)
+end
+
+function simplify(arg::ir.HadamardProduct)
+    l, r = simplify(arg.l), simplify(arg.r)
+    m = hadamard_with_identity(l, r)
+
+    return isnothing(m) ? ir.HadamardProduct(l, r) : ir.Diagm(ir.Diag(m))
+end
+
+for op ∈ (:Add, :Sub)
+    @eval simplify(arg::ir.$op) = ir.$op(simplify(arg.l), simplify(arg.r))
+end
+
+for op ∈ (:Abs, :Sgn, :Sin, :Cos, :Log, :Exp, :Trace, :Diag, :Diagm, :Transpose, :Sum)
+    @eval simplify(arg::ir.$op) = ir.$op(simplify(arg.arg))
+end
+
+function simplify(arg::ir.Power)
+    return ir.Power(simplify(arg.base), arg.exponent)
+end
+
+function simplify(arg::ir.IR)
+    return arg
+end
