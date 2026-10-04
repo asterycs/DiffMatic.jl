@@ -505,6 +505,30 @@ function Base.broadcasted(
     return arg1 .* (arg2.λ * KrD(Upper(1), Lower(2)))
 end
 
+function Base.broadcasted(::typeof(+), arg1::T, arg2::Tensor) where {T<:Real}
+    ids = get_free_indices(arg2)
+
+    return Literal(arg1, ids...) + arg2
+end
+
+function Base.broadcasted(::typeof(+), arg1::Tensor, arg2::T) where {T<:Real}
+    ids = get_free_indices(arg1)
+
+    return arg1 + Literal(arg2, ids...)
+end
+
+function Base.broadcasted(::typeof(-), arg1::T, arg2::Tensor) where {T<:Real}
+    ids = get_free_indices(arg2)
+
+    return Literal(arg1, ids...) - arg2
+end
+
+function Base.broadcasted(::typeof(-), arg1::Tensor, arg2::T) where {T<:Real}
+    ids = get_free_indices(arg1)
+
+    return arg1 - Literal(arg2, ids...)
+end
+
 function Base.broadcasted(
     ::typeof(Base.literal_pow),
     f::Function,

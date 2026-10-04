@@ -106,6 +106,21 @@ end
     @test to_std(diag(A * B)) == "diag(AB)"
 end
 
+@testset "test broadcast addition and subtraction with a constant in standard notation" begin
+    @matrix A
+    @vector x
+
+    for op ∈ (+, -)
+        @test to_std(op.(x, 1)) == "x $(op) vec(1)"
+        @test to_std(op.(1, x)) == "vec(1) $(op) x"
+        @test to_std(op.(A, 1)) == "A $(op) mat(1)"
+        @test to_std(op.(2, A)) == "mat(2) $(op) A"
+        @test to_std(op.(x, -1)) == "x $(op) vec((-1))"
+        @test to_std(op.(x' * x, 1)) == "xᵀx $(op) 1"
+        @test to_std(gradient(sum(op.(x, 1)), x)) == "vec(1)"
+    end
+end
+
 @testset "test trace expressions in standard notation" begin
     @matrix A B
 
