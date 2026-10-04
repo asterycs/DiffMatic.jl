@@ -209,6 +209,14 @@ end
         @test jjac(Â, x̂, ŷ, ẑ) ≈ ForwardDiff.jacobian(x -> f(Â, x, ŷ, ẑ), x̂)
     end
 
+    @testset "jacobian of sin(A * x + y)" begin
+        f(A, x, y) = sin.(A * x + y)
+
+        jjac = eval(to_std(jacobian(f(A, x, y), x); format = dc.JuliaFunc()))
+
+        @test jjac(Â, x̂, ŷ) ≈ ForwardDiff.jacobian(x -> f(Â, x, ŷ), x̂)
+    end
+
     @testset "jacobian of (A .* B) * C * x)' * x * x" begin
         f(A, B, C, x) = ((A .* B) * C * x)' * x * x
 
@@ -223,6 +231,18 @@ end
         jjac = eval(to_std(jacobian(f(A, B, x), x); format = dc.JuliaFunc()))
 
         @test jjac(Â, B̂, x̂) ≈ ForwardDiff.jacobian(x -> f(Â, B̂, x), x̂)
+    end
+
+    @testset "derivative of tr(A)" begin
+        jder = eval(to_std(derivative(tr(A), A); format = dc.JuliaFunc()))
+
+        # The derivative contains no variable, so the function takes no argument.
+        @test jder() == I
+
+        expected =
+            reshape(ForwardDiff.gradient(a -> tr(reshape(a, size(Â))), vec(Â)), size(Â))
+
+        @test Matrix(jder(), size(Â)...) ≈ expected
     end
 
     @testset "hessian of sum(log.(x)) * x' * x" begin

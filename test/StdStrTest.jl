@@ -180,6 +180,7 @@ end
     @vector x y z
 
     @test to_std(derivative(diag(A)'*x, A)) == "Iᵀdiagm(x)"
+    @test to_std(derivative(tr(A), A)) == "I"
     @test to_std(derivative(sum(-y .* (X*z)), X)) == "(-1)zyᵀ"
     @test to_std(derivative(sum((A .* B) * C * x), x)) == "vec(1)ᵀ(A ⊙ B)C"
 end
