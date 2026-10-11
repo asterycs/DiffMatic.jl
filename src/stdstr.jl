@@ -75,20 +75,19 @@ function to_std_str(arg::ir.Identity)
     return "I"
 end
 
-function to_std_str(arg::ir.Abs)
-    return "abs(" * to_std_str(arg.arg) * ")"
-end
-
-function to_std_str(arg::ir.Sgn)
-    return "sgn(" * to_std_str(arg.arg) * ")"
-end
-
-function to_std_str(arg::ir.Sin)
-    return "sin(" * to_std_str(arg.arg) * ")"
-end
-
-function to_std_str(arg::ir.Cos)
-    return "cos(" * to_std_str(arg.arg) * ")"
+for (op, name) ∈ (
+    (:Abs, "abs"),
+    (:Sgn, "sgn"),
+    (:Sin, "sin"),
+    (:Cos, "cos"),
+    (:Log, "log"),
+    (:Exp, "exp"),
+    (:Trace, "tr"),
+    (:Diag, "diag"),
+    (:Diagm, "diagm"),
+    (:Sum, "sum"),
+)
+    @eval to_std_str(arg::ir.$op) = $name * "(" * to_std_str(arg.arg) * ")"
 end
 
 function to_std_str(arg::ir.Add)
@@ -128,18 +127,6 @@ function to_std_str(arg::ir.HadamardProduct)
     return parenthesize(arg, to_std_str, arg.l) *
            " ⊙ " *
            parenthesize(arg, to_std_str, arg.r)
-end
-
-function to_std_str(arg::ir.Log)
-    out = to_std_str(arg.arg)
-
-    return "log(" * out * ")"
-end
-
-function to_std_str(arg::ir.Exp)
-    out = to_std_str(arg.arg)
-
-    return "exp(" * out * ")"
 end
 
 function superscript(value::Rational)
@@ -188,22 +175,6 @@ function to_std_str(arg::ir.Power)
     return base * exponent
 end
 
-function to_std_str(arg::ir.Trace)
-    return "tr(" * to_std_str(arg.arg) * ")"
-end
-
-function to_std_str(arg::ir.Diagm)
-    return "diagm(" * to_std_str(arg.arg) * ")"
-end
-
-function to_std_str(arg::ir.Diag)
-    return "diag(" * to_std_str(arg.arg) * ")"
-end
-
 function to_std_str(arg::ir.Transpose)
     return parenthesize(arg, to_std_str, arg.arg) * "ᵀ"
-end
-
-function to_std_str(arg::ir.Sum)
-    return "sum(" * to_std_str(arg.arg) * ")"
 end
