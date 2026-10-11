@@ -36,7 +36,23 @@ x¹y¹z¹</code></pre><h4 id="Powers-and-Element-wise-Powers"><a class="docs-hea
 
 # output
 
-(A¹₄x⁴).^2</code></pre><h4 id="Trigonometric-Functions"><a class="docs-heading-anchor" href="#Trigonometric-Functions">Trigonometric Functions</a><a id="Trigonometric-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Trigonometric-Functions" title="Permalink"></a></h4><pre><code class="language-julia hljs">expr = sin.(A * x)
+(A¹₄x⁴).^2</code></pre><h4 id="Division-and-Element-wise-Division"><a class="docs-heading-anchor" href="#Division-and-Element-wise-Division">Division and Element-wise Division</a><a id="Division-and-Element-wise-Division-1"></a><a class="docs-heading-anchor-permalink" href="#Division-and-Element-wise-Division" title="Permalink"></a></h4><p>Division lowers to a multiplication with the reciprocal power, which shows in the index notation. <code>/</code> requires a scalar denominator, <code>./</code> divides element-wise.</p><pre><code class="language-julia hljs">expr = x ./ y
+
+# output
+
+x²y².^-1</code></pre><pre><code class="language-julia hljs">expr = (x .* (A * x)) / 2
+
+# output
+
+2.^-1x⁵A⁵₄x⁴</code></pre><pre><code class="language-julia hljs">expr = sum(x .* (A * x)) / sum(x .^ 2)
+
+# output
+
+x⁵A⁵₄x⁴1₅(x¹.^21₁).^-1</code></pre><pre><code class="language-julia hljs">expr = 2 ./ (x .^ 2 .+ 1)
+
+# output
+
+2²(x².^2 + 1²).^-1</code></pre><h4 id="Trigonometric-Functions"><a class="docs-heading-anchor" href="#Trigonometric-Functions">Trigonometric Functions</a><a id="Trigonometric-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Trigonometric-Functions" title="Permalink"></a></h4><pre><code class="language-julia hljs">expr = sin.(A * x)
 
 # output
 
@@ -144,7 +160,19 @@ B₉⁷C⁹₂B⁵₇A²₅</code></pre><h2 id="Derivatives-in-Standard-Notation
 
 # output
 
-&quot;Aᵀ(exp(Ax) ⊙ y)&quot;</code></pre><h3 id="Jacobian"><a class="docs-heading-anchor" href="#Jacobian">Jacobian</a><a id="Jacobian-1"></a><a class="docs-heading-anchor-permalink" href="#Jacobian" title="Permalink"></a></h3><pre><code class="language-julia hljs">to_std(jacobian(A * x, x))
+&quot;Aᵀ(exp(Ax) ⊙ y)&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(sum(x ./ y), x))
+
+# output
+
+&quot;vec(1) ⊘ y&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(sum(2 ./ (x .^ 2 .+ 1)), x))
+
+# output
+
+&quot;(-4)(x ⊘ (x² + vec(1))²)&quot;</code></pre><pre><code class="language-julia hljs">to_std(gradient(sum(x .* (A * x)) / sum(x .^ 2), x))
+
+# output
+
+&quot;(-1)xᵀAᵀx2sum(xᵀ²)⁻²x + vec(1) ⊘ sum(xᵀ²)Aᵀx + vec(1) ⊘ sum(xᵀ²)Ax&quot;</code></pre><h3 id="Jacobian"><a class="docs-heading-anchor" href="#Jacobian">Jacobian</a><a id="Jacobian-1"></a><a class="docs-heading-anchor-permalink" href="#Jacobian" title="Permalink"></a></h3><pre><code class="language-julia hljs">to_std(jacobian(A * x, x))
 
 # output
 
@@ -168,4 +196,4 @@ B₉⁷C⁹₂B⁵₇A²₅</code></pre><h2 id="Derivatives-in-Standard-Notation
 
 # output
 
-&quot;I&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../usage/">« Differentiating Matrix Expressions</a><a class="docs-footer-nextpage" href="../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Sunday 4 October 2026 20:30">Sunday 4 October 2026</span>. Using Julia version 1.13.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+&quot;I&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../usage/">« Differentiating Matrix Expressions</a><a class="docs-footer-nextpage" href="../api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Sunday 11 October 2026 20:44">Sunday 11 October 2026</span>. Using Julia version 1.13.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
