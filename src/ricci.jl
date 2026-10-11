@@ -194,32 +194,23 @@ function Base.:(==)(left::UnaryOperation{Op}, right::UnaryOperation{Op}) where {
     return left.arg == right.arg
 end
 
-function Base.sin(arg::Tensor)
-    if !isempty(get_free_indices(arg))
-        throw(
-            DomainError(arg, "Argument is not a scalar. Did you mean to use 'sin.(...)'?"),
-        )
+for (f, op, message) ∈ (
+    (:sin, :Sin, "Argument is not a scalar. Did you mean to use 'sin.(...)'?"),
+    (:cos, :Cos, "Argument is not a scalar. Did you mean to use 'cos.(...)'?"),
+    (:abs, :Abs, "Argument is not a scalar. Did you mean to use 'abs.(...)'?"),
+    (:sign, :Sgn, "Argument is not a scalar. Did you mean to use 'sign.(...)'?"),
+    (:log, :Log, "Argument is not a scalar, use log. for element-wise log."),
+    (:exp, :Exp, "Argument is not a scalar, use exp. for element-wise exp."),
+)
+    @eval function Base.$f(arg::Tensor)
+        if !isempty(get_free_indices(arg))
+            throw(DomainError(arg, $message))
+        end
+
+        return UnaryOperation{$op}(arg)
     end
 
-    return UnaryOperation{Sin}(arg)
-end
-
-function Base.broadcasted(::typeof(sin), arg::Tensor)
-    return UnaryOperation{Sin}(arg)
-end
-
-function Base.cos(arg::Tensor)
-    if !isempty(get_free_indices(arg))
-        throw(
-            DomainError(arg, "Argument is not a scalar. Did you mean to use 'cos.(...)'?"),
-        )
-    end
-
-    return UnaryOperation{Cos}(arg)
-end
-
-function Base.broadcasted(::typeof(cos), arg::Tensor)
-    return UnaryOperation{Cos}(arg)
+    @eval Base.broadcasted(::typeof($f), arg::Tensor) = UnaryOperation{$op}(arg)
 end
 
 function _eliminate_indices(arg::IndexList)
@@ -405,34 +396,6 @@ function Base.sum(arg::Tensor)
     return BinaryOperation{Mult}(arg, Literal(1, flip(only(free_ids))))
 end
 
-function Base.broadcasted(::typeof(abs), arg::Tensor)
-    return UnaryOperation{Abs}(arg)
-end
-
-function Base.abs(arg::Tensor)
-    if !isempty(get_free_indices(arg))
-        throw(
-            DomainError(arg, "Argument is not a scalar. Did you mean to use 'abs.(...)'?"),
-        )
-    end
-
-    return UnaryOperation{Abs}(arg)
-end
-
-function Base.broadcasted(::typeof(sign), arg::Tensor)
-    return UnaryOperation{Sgn}(arg)
-end
-
-function Base.sign(arg::Tensor)
-    if !isempty(get_free_indices(arg))
-        throw(
-            DomainError(arg, "Argument is not a scalar. Did you mean to use 'sign.(...)'?"),
-        )
-    end
-
-    return UnaryOperation{Sgn}(arg)
-end
-
 function Base.broadcasted(::typeof(*), arg1::Tensor, arg2::Tensor)
     # Sanity checks
     arg1_free_indices = get_free_indices(arg1)
@@ -556,30 +519,6 @@ function Base.literal_pow(f::typeof(^), base::Tensor, exponent::Val{E}) where {E
     end
 
     return Power(base, E)
-end
-
-function Base.log(arg::Tensor)
-    if !isempty(get_free_indices(arg))
-        throw(DomainError(arg, "Argument is not a scalar, use log. for element-wise log."))
-    end
-
-    return UnaryOperation{Log}(arg)
-end
-
-function Base.broadcasted(::typeof(log), arg::Tensor)
-    return UnaryOperation{Log}(arg)
-end
-
-function Base.exp(arg::Tensor)
-    if !isempty(get_free_indices(arg))
-        throw(DomainError(arg, "Argument is not a scalar, use exp. for element-wise exp."))
-    end
-
-    return UnaryOperation{Exp}(arg)
-end
-
-function Base.broadcasted(::typeof(exp), arg::Tensor)
-    return UnaryOperation{Exp}(arg)
 end
 
 function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
