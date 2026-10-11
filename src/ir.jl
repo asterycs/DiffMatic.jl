@@ -248,20 +248,8 @@ function to_ir(arg::Real)
     return ir.Scal(ir.Literal(arg))
 end
 
-function to_ir(arg::UnaryOperation{Abs})
-    return ir.Abs(to_ir(arg.arg))
-end
-
-function to_ir(arg::UnaryOperation{Sgn})
-    return ir.Sgn(to_ir(arg.arg))
-end
-
-function to_ir(arg::UnaryOperation{Sin})
-    return ir.Sin(to_ir(arg.arg))
-end
-
-function to_ir(arg::UnaryOperation{Cos})
-    return ir.Cos(to_ir(arg.arg))
+for op ∈ (:Abs, :Sgn, :Sin, :Cos, :Log, :Exp)
+    @eval to_ir(arg::UnaryOperation{$op}) = ir.$op(to_ir(arg.arg))
 end
 
 function to_ir(arg::BinaryOperation{Add})
@@ -487,14 +475,6 @@ function to_ir(arg::BinaryOperation{Mult})
     end
 
     throw_not_std(arg)
-end
-
-function to_ir(arg::UnaryOperation{Log})
-    return ir.Log(to_ir(arg.arg))
-end
-
-function to_ir(arg::UnaryOperation{Exp})
-    return ir.Exp(to_ir(arg.arg))
 end
 
 function to_ir(arg::Power)
