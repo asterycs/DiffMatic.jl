@@ -967,4 +967,94 @@ end
 
         @test jhess(Â, x̂) ≈ ForwardDiff.hessian(x -> f(Â, x), x̂)
     end
+
+    @testset "function sum(x ./ y)" begin
+        f(x, y) = sum(x ./ y)
+
+        jfun = eval(to_std(f(x, y); format = dc.JuliaFunc()))
+
+        @test only(jfun(x̂, ŷ)) ≈ f(x̂, ŷ)
+    end
+
+    @testset "function sum(A * x / 3)" begin
+        f(A, x) = sum(A * x / 3)
+
+        jfun = eval(to_std(f(A, x); format = dc.JuliaFunc()))
+
+        @test only(jfun(Â, x̂)) ≈ f(Â, x̂)
+    end
+
+    @testset "gradient of sum(x .^ 2) / 2" begin
+        f(x) = sum(x .^ 2) / 2
+
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
+    end
+
+    @testset "gradient of sum((A * x - y) .^ 2) / 2" begin
+        f(A, x, y) = sum((A * x - y) .^ 2) / 2
+
+        jgrad = eval(to_std(gradient(f(A, x, y), x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, x̂, ŷ) ≈ ForwardDiff.gradient(x -> f(Â, x, ŷ), x̂)
+    end
+
+    @testset "gradient of sum(log.(1 .+ exp.(A * x))) / 6" begin
+        f(A, x) = sum(log.(1 .+ exp.(A * x))) / 6
+
+        jgrad = eval(to_std(gradient(f(A, x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, x̂) ≈ ForwardDiff.gradient(x -> f(Â, x), x̂)
+    end
+
+    @testset "gradient of sum(x ./ y)" begin
+        f(x, y) = sum(x ./ y)
+
+        jgrad = eval(to_std(gradient(f(x, y), x); format = dc.JuliaFunc()))
+
+        @test jgrad(ŷ) ≈ ForwardDiff.gradient(x -> f(x, ŷ), x̂)
+    end
+
+    @testset "gradient of sum((x .^ 2) ./ 4)" begin
+        f(x) = sum((x .^ 2) ./ 4)
+
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
+    end
+
+    @testset "gradient of sum(x .* (A * x)) / sum(x .^ 2)" begin
+        f(A, x) = sum(x .* (A * x)) / sum(x .^ 2)
+
+        jgrad = eval(to_std(gradient(f(A, x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(Â, x̂) ≈ ForwardDiff.gradient(x -> f(Â, x), x̂)
+    end
+
+    @testset "hessian of sum(x .* (A * x)) / sum(x .^ 2)" begin
+        f(A, x) = sum(x .* (A * x)) / sum(x .^ 2)
+
+        jhess = eval(to_std(hessian(f(A, x), x); format = dc.JuliaFunc()))
+
+        @test jhess(Â, x̂) ≈ ForwardDiff.hessian(x -> f(Â, x), x̂)
+    end
+
+    # A constant gradient leaves no variable in the result, so the emitted function has
+    # an empty signature and cannot size its 'vec(1)'.
+    @testset "gradient of sum(x ./ 2) is constant" begin
+        f(x) = sum(x ./ 2)
+
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test_broken jgrad(x̂) ≈ 0.5 .* ones(3)
+    end
+
+    @testset "gradient of sum(2 ./ (x .^ 2 .+ 1))" begin
+        f(x) = sum(2 ./ (x .^ 2 .+ 1))
+
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
+    end
 end

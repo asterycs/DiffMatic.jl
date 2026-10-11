@@ -79,8 +79,8 @@ end
 
 ### Supported functions and operators
 
-- Basic operators `+`, `-`, `'`, `*`, `^`, `abs`, `sign`, `sin`, `cos`, `log` and `exp`
-- Element-wise operators `sin.`, `cos.`, `abs.`, `sign.`, `.*`, `.^`, `log.` and `exp.`
+- Basic operators `+`, `-`, `'`, `*`, `/`, `^`, `abs`, `sign`, `sin`, `cos`, `log` and `exp`
+- Element-wise operators `sin.`, `cos.`, `abs.`, `sign.`, `.*`, `./`, `.^`, `log.` and `exp.`
 - Diagonal matrix using `LinearAlgebra.diagm`
 - Vector of a matrix diagonal using `LinearAlgebra.diag`
 - Vector 1-norm and 2-norm using `LinearAlgebra.norm(..., 1)` and `LinearAlgebra.norm(..., 2)`

@@ -521,6 +521,47 @@ function Base.literal_pow(f::typeof(^), base::Tensor, exponent::Val{E}) where {E
     return Power(base, E)
 end
 
+function Base.:(/)(arg1::Tensor, arg2::Tensor)
+    if !isempty(get_free_indices(arg2))
+        throw(
+            DomainError(
+                arg2,
+                "Division by a non-scalar is not supported. Use './' for element-wise division.",
+            ),
+        )
+    end
+
+    return arg1 * Power(arg2, -1)
+end
+
+function Base.:(/)(arg1::Tensor, arg2::Real)
+    return arg1 * Power(Literal(arg2), -1)
+end
+
+function Base.:(/)(arg1::Real, arg2::Tensor)
+    if !isempty(get_free_indices(arg2))
+        throw(DomainError(arg2, "Division by a non-scalar is not supported."))
+    end
+
+    return Literal(arg1) * Power(arg2, -1)
+end
+
+function Base.broadcasted(::typeof(/), arg1::Tensor, arg2::T) where {T<:Real}
+    ids = get_free_indices(arg1)
+
+    return Base.broadcasted(*, arg1, Literal(inv(arg2), ids...))
+end
+
+function Base.broadcasted(::typeof(/), arg1::T, arg2::Tensor) where {T<:Real}
+    ids = get_free_indices(arg2)
+
+    return Base.broadcasted(*, Literal(arg1, ids...), Power(arg2, -1))
+end
+
+function Base.broadcasted(::typeof(/), arg1::Tensor, arg2::Tensor)
+    return Base.broadcasted(*, arg1, Base.broadcasted(^, arg2, -1))
+end
+
 function replace_letters(arg::BinaryOperation{Mult}, letter_map::Dict)
     return BinaryOperation{Mult}(
         replace_letters(arg.arg1, letter_map),

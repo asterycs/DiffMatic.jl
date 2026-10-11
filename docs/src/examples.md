@@ -73,6 +73,38 @@ expr = (A * x).^2
 (A¹₄x⁴).^2
 ```
 
+#### Division and Element-wise Division
+Division lowers to a multiplication with the reciprocal power, which shows in the index notation. `/` requires a scalar denominator, `./` divides element-wise.
+
+```jldoctest usage
+expr = x ./ y
+
+# output
+
+x²y².^-1
+```
+```jldoctest usage
+expr = (x .* (A * x)) / 2
+
+# output
+
+2.^-1x⁵A⁵₄x⁴
+```
+```jldoctest usage
+expr = sum(x .* (A * x)) / sum(x .^ 2)
+
+# output
+
+x⁵A⁵₄x⁴1₅(x¹.^21₁).^-1
+```
+```jldoctest usage
+expr = 2 ./ (x .^ 2 .+ 1)
+
+# output
+
+2²(x².^2 + 1²).^-1
+```
+
 #### Trigonometric Functions
 ```jldoctest usage
 expr = sin.(A * x)
@@ -272,6 +304,27 @@ to_std(gradient(y' * exp.(A * x), x))
 # output
 
 "Aᵀ(exp(Ax) ⊙ y)"
+```
+```jldoctest usage
+to_std(gradient(sum(x ./ y), x))
+
+# output
+
+"vec(1) ⊘ y"
+```
+```jldoctest usage
+to_std(gradient(sum(2 ./ (x .^ 2 .+ 1)), x))
+
+# output
+
+"(-4)(x ⊘ (x² + vec(1))²)"
+```
+```jldoctest usage
+to_std(gradient(sum(x .* (A * x)) / sum(x .^ 2), x))
+
+# output
+
+"(-1)xᵀAᵀx2sum(xᵀ²)⁻²x + vec(1) ⊘ sum(xᵀ²)Aᵀx + vec(1) ⊘ sum(xᵀ²)Ax"
 ```
 ### Jacobian
 ```jldoctest usage

@@ -557,6 +557,27 @@ end
     @test_throws DomainError T .* A
 end
 
+@testset "division lowers to a multiplication with the reciprocal" begin
+    x = Variable("x", Upper(1))
+    y = Variable("y", Upper(2))
+
+    @test x / 2 == x * dc.Power(Literal(2), -1)
+    @test typeof(x / 2) == dc.BinaryOperation{dc.Mult}
+
+    @test x ./ y == x .* dc.Power(y, -1)
+end
+
+@testset "division by a non-scalar fails" begin
+    x = Variable("x", Upper(1))
+    y = Variable("y", Upper(2))
+    A = Variable("A", Upper(3), Lower(4))
+    B = Variable("B", Upper(5), Lower(6))
+
+    @test_throws DomainError x / y
+    @test_throws DomainError A / B
+    @test_throws DomainError 2 / x
+end
+
 @testset "multiplication with UniformScaling 1" begin
     a = Variable("a")
     X = Variable("X", Upper(1), Lower(2))
