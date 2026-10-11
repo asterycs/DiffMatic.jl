@@ -47,20 +47,8 @@ function to_julia(arg::ir.Identity)
     return Symbol("I")
 end
 
-function to_julia(arg::ir.Sin)
-    return :(sin.($(to_julia(arg.arg))))
-end
-
-function to_julia(arg::ir.Cos)
-    return :(cos.($(to_julia(arg.arg))))
-end
-
-function to_julia(arg::ir.Log)
-    return :(log.($(to_julia(arg.arg))))
-end
-
-function to_julia(arg::ir.Exp)
-    return :(exp.($(to_julia(arg.arg))))
+for (op, f) ∈ ((:Sin, :sin), (:Cos, :cos), (:Log, :log), (:Exp, :exp))
+    @eval to_julia(arg::ir.$op) = Expr(:., $(QuoteNode(f)), Expr(:tuple, to_julia(arg.arg)))
 end
 
 # Add and Sub operands render differently depending on the operands.
@@ -165,22 +153,12 @@ function to_julia(arg::ir.Power)
     return :($(to_julia(arg.base)) .^ $(to_julia(arg.exponent)))
 end
 
-function to_julia(arg::ir.Trace)
-    return :(tr($(to_julia(arg.arg))))
-end
-
-function to_julia(arg::ir.Diag)
-    return :(diag($(to_julia(arg.arg))))
-end
-
-function to_julia(arg::ir.Diagm)
-    return :(diagm($(to_julia(arg.arg))))
-end
-
-function to_julia(arg::ir.Transpose)
-    return :(transpose($(to_julia(arg.arg))))
-end
-
-function to_julia(arg::ir.Sum)
-    return :(sum($(to_julia(arg.arg))))
+for (op, f) ∈ (
+    (:Trace, :tr),
+    (:Diag, :diag),
+    (:Diagm, :diagm),
+    (:Transpose, :transpose),
+    (:Sum, :sum),
+)
+    @eval to_julia(arg::ir.$op) = Expr(:call, $(QuoteNode(f)), to_julia(arg.arg))
 end
