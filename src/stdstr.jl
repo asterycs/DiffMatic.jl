@@ -7,24 +7,12 @@ function parenthesize(::ir.HadamardProduct, f, arg::Union{ir.Add,ir.Sub})
     return "(" * f(arg) * ")"
 end
 
-function parenthesize(::ir.HadamardProduct, f, arg)
-    return f(arg)
-end
-
-function parenthesize(::ir.Product, f, arg)
-    return f(arg)
+for op ∈ (:HadamardProduct, :Product, :Add, :Sub, :Transpose)
+    @eval parenthesize(::ir.$op, f, arg) = f(arg)
 end
 
 function parenthesize(::ir.Product, f, arg::Union{ir.HadamardProduct,ir.Add,ir.Sub})
     return "(" * f(arg) * ")"
-end
-
-function parenthesize(::ir.Add, f, arg)
-    return f(arg)
-end
-
-function parenthesize(::ir.Sub, f, arg)
-    return f(arg)
 end
 
 function parenthesize(::ir.Sub, f, arg::ir.Add)
@@ -37,10 +25,6 @@ function parenthesize(
     arg::Union{ir.Product,ir.HadamardProduct,ir.Power,ir.Add,ir.Sub},
 )
     return "(" * f(arg) * ")"
-end
-
-function parenthesize(::ir.Transpose, f, arg)
-    return f(arg)
 end
 
 function to_std_str(arg::ir.Mat)
