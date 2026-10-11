@@ -42,14 +42,11 @@ function same_to(old::Upper, letter::Letter)
     return Upper(letter)
 end
 
-function hash(arg::LowerOrUpperIndex)
-    h::UInt = 0
-
+function hash(arg::LowerOrUpperIndex, h::UInt)
+    val::UInt = 0
     if typeof(arg) == Lower
-        h |= 1
+        val |= 1
     end
-
-    h |= arg.letter << 1
-
-    h
+    val |= arg.letter << 1
+    hash(val, h)
 end
