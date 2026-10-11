@@ -98,16 +98,8 @@ struct Sum <: IR
     arg::IR
 end
 
-function _get_variables(arg::Mat)
-    return _get_variables(arg.id)
-end
-
-function _get_variables(arg::Vec)
-    return _get_variables(arg.id)
-end
-
-function _get_variables(arg::Scal)
-    return _get_variables(arg.id)
+for op ∈ (:Mat, :Vec, :Scal)
+    @eval _get_variables(arg::$op) = _get_variables(arg.id)
 end
 
 function _get_variables(arg::Var)
@@ -126,60 +118,16 @@ function _get_variables(arg::Identity)
     return nothing
 end
 
-function _get_variables(arg::Sin)
-    return _get_variables(arg.arg)
+for op ∈ (:Abs, :Sgn, :Sin, :Cos, :Log, :Exp, :Trace, :Diag, :Diagm, :Transpose, :Sum)
+    @eval _get_variables(arg::$op) = _get_variables(arg.arg)
 end
 
-function _get_variables(arg::Cos)
-    return _get_variables(arg.arg)
-end
-
-function _get_variables(arg::Log)
-    return _get_variables(arg.arg)
-end
-
-function _get_variables(arg::Exp)
-    return _get_variables(arg.arg)
-end
-
-function _get_variables(arg::Add)
-    return [_get_variables(arg.l); _get_variables(arg.r)]
-end
-
-function _get_variables(arg::Sub)
-    return [_get_variables(arg.l); _get_variables(arg.r)]
-end
-
-function _get_variables(arg::Product)
-    return [_get_variables(arg.l); _get_variables(arg.r)]
-end
-
-function _get_variables(arg::HadamardProduct)
-    return [_get_variables(arg.l); _get_variables(arg.r)]
+for op ∈ (:Add, :Sub, :Product, :HadamardProduct)
+    @eval _get_variables(arg::$op) = [_get_variables(arg.l); _get_variables(arg.r)]
 end
 
 function _get_variables(arg::Power)
     return [_get_variables(arg.base); _get_variables(arg.exponent)]
-end
-
-function _get_variables(arg::Trace)
-    return _get_variables(arg.arg)
-end
-
-function _get_variables(arg::Diag)
-    return _get_variables(arg.arg)
-end
-
-function _get_variables(arg::Diagm)
-    return _get_variables(arg.arg)
-end
-
-function _get_variables(arg::Transpose)
-    return _get_variables(arg.arg)
-end
-
-function _get_variables(arg::Sum)
-    return _get_variables(arg.arg)
 end
 
 function get_variables(arg::IR)
