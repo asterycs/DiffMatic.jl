@@ -43,6 +43,12 @@ function diff(arg::UnaryOperation{Abs}, wrt::Variable)
     return BinaryOperation{Mult}(UnaryOperation{Sgn}(outer), diff(arg.arg, wrt))
 end
 
+function diff(arg::UnaryOperation{Sgn}, wrt::Variable)
+    indices = union(get_indices(arg.arg), [flip(i) for i ∈ wrt.indices])
+
+    return Zero(unique(indices)...)
+end
+
 function diff(arg::UnaryOperation{Sin}, wrt::Variable)
     outer = replace_bound_letters(arg.arg, wrt)
 

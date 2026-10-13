@@ -47,7 +47,8 @@ function to_julia(arg::ir.Identity)
     return Symbol("I")
 end
 
-for (op, f) ∈ ((:Sin, :sin), (:Cos, :cos), (:Log, :log), (:Exp, :exp))
+for (op, f) ∈
+    ((:Sin, :sin), (:Cos, :cos), (:Log, :log), (:Exp, :exp), (:Abs, :abs), (:Sgn, :sign))
     @eval to_julia(arg::ir.$op) = Expr(:., $(QuoteNode(f)), Expr(:tuple, to_julia(arg.arg)))
 end
 

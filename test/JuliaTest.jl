@@ -1057,4 +1057,28 @@ end
 
         @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
     end
+
+    @testset "gradient of sum(abs.(x))" begin
+        f(x) = sum(abs.(x))
+
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
+    end
+
+    @testset "gradient of norm(x, 1)" begin
+        f(x) = norm(x, 1)
+
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
+    end
+
+    @testset "gradient of abs(x' * x)" begin
+        f(x) = abs(x' * x)
+
+        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
+
+        @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
+    end
 end
