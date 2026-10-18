@@ -505,6 +505,24 @@ function Base.broadcasted(::typeof(^), base::Tensor, exponent::Union{Int,Rationa
     return Power(base, exponent)
 end
 
+function Base.broadcasted(::typeof(^), base::Tensor, exponent::Real)
+    throw(
+        DomainError(
+            (base, exponent),
+            "Element-wise power requires an Int or Rational exponent, e.g. '.^ (1//2)'.",
+        ),
+    )
+end
+
+function Base.broadcasted(::typeof(^), base::Real, exponent::Tensor)
+    throw(
+        DomainError(
+            (base, exponent),
+            "Element-wise power requires an Int or Rational exponent, e.g. 'x .^ (1//2)'.",
+        ),
+    )
+end
+
 function Base.:(^)(base::Tensor, exponent::Union{Int,Rational{Int}})
     if !isempty(get_free_indices(base))
         throw(DomainError(base, "Argument is not a scalar, use .^ for element-wise power."))

@@ -578,6 +578,14 @@ end
     @test_throws DomainError 2 / x
 end
 
+@testset "element-wise power with a non-integer exponent fails" begin
+    x = Variable("x", Upper(1))
+
+    @test_throws DomainError x .^ 0.5
+    @test_throws DomainError 2 .^ x
+    @test x .^ (1//2) == dc.Power(x, 1//2)
+end
+
 @testset "multiplication with UniformScaling 1" begin
     a = Variable("a")
     X = Variable("X", Upper(1), Lower(2))
