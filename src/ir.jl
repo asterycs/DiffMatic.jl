@@ -551,6 +551,284 @@ function is_trace(arg)
     return all(length.(get_free_indices.(terms)) .== 2) && isempty(get_free_indices(arg))
 end
 
+# Bottom-up size propagation
+
+@enum Size begin
+    NoSize
+    Inferred
+    Scalar
+    Array
+end
+
+function get_size(::ir.Var)
+    return Scalar::Size
+end
+
+function get_size(::ir.Literal)
+    return Scalar::Size
+end
+
+function get_size(arg::ir.Scal)
+    return Scalar::Size
+end
+
+function get_size(arg::ir.Identity)
+    return Array::Size # Or introduce 'Scaling'
+end
+
+function get_size(arg::ir.Vec)
+    if arg.id isa ir.Literal
+        return Inferred::Size
+    end
+
+    return Array::Size
+end
+
+function get_size(arg::ir.Mat)
+    if arg.id isa ir.Literal
+        return Inferred::Size
+    end
+
+    return Array::Size
+end
+
+
+function get_size(arg::Union{ir.Transpose,ir.Abs,ir.Sgn,ir.Sin,ir.Cos,ir.Log,ir.Exp})
+    return get_size(arg.arg)
+end
+
+function get_size(arg::ir.Power)
+    return get_size(arg.base)
+end
+
+function get_size(arg::Union{ir.Add,ir.Sub,ir.HadamardProduct})
+    ls = get_size(arg.l)
+    rs = get_size(arg.r)
+
+    for (l, r) ∈ ((ls, rs), (rs, ls))
+        if l == Array::Size && r == Array::Size
+            return Array::Size
+        end
+        if l == Array::Size && r == Inferred::Size
+            return Array::Size
+        end
+        if l == Array::Size && r == Scalar::Size
+            return Array::Size
+        end
+        if l == Scalar::Size && r == Scalar::Size
+            return Scalar::Size
+        end
+    end
+
+    return NoSize::Size
+end
+
+function get_size(arg::ir.Product)
+    ls, rs = get_size(arg.l), get_size(arg.r)
+
+    if ls == NoSize::Size || rs == NoSize::Size
+        return NoSize::Size
+    end
+
+    kl, kr = get_kind(arg.l), get_kind(arg.r)
+    kres = product_kind(kl, kr)
+
+    # Scalar factors.
+    if ls == Scalar::Size && rs == Scalar::Size
+        return Scalar::Size
+    end
+
+    if ls == Scalar::Size && rs == Array::Size
+        return Array::Size
+    end
+
+    if ls == Array::Size && rs == Scalar::Size
+        return Array::Size
+    end
+
+    # Remaining: a scalar next to a bare literal — no size info anywhere.
+    if ls == Scalar::Size || rs == Scalar::Size
+        return NoSize::Size
+    end
+
+    # Two bare literals, e.g. 'matrix(2) * vector(1)'.
+    if ls == Inferred::Size && rs == Inferred::Size
+        return NoSize::Size
+    end
+
+    # One bare literal next to a sized sibling.
+    if ls == Inferred::Size || rs == Inferred::Size
+        if kl == ColVec::Kind && kr == RowVec::Kind
+            return NoSize::Size
+        end
+
+        if kres == Scal::Kind
+            return Scalar::Size
+        end
+
+        return Array::Size
+    end
+
+    # Inner product.
+    if kres == Scal::Kind
+        return Scalar::Size
+    end
+
+    return Array::Size
+end
+
+function get_size(arg::Union{ir.Trace,ir.Sum})
+    arg_sz = get_size(arg.arg)
+
+    if arg_sz == Array::Size
+        return Scalar::Size
+    end
+
+    return NoSize::Size
+end
+
+function get_size(arg::Union{ir.Diag,ir.Diagm})
+    arg_sz = get_size(arg.arg)
+
+    if arg_sz == Array::Size
+        return Array::Size
+    end
+
+    if arg_sz == Scalar::Size
+        return Scalar::Size
+    end
+
+    return NoSize::Size
+end
+
+# Sibling of get_size: get_kind
+
+@enum Kind begin
+    Scal
+    ColVec
+    RowVec
+    Mat
+    Scaling
+end
+
+function get_kind(::Union{ir.Var,ir.Literal,ir.Scal})
+    return Scal::Kind
+end
+
+function get_kind(::ir.Vec)
+    return ColVec::Kind
+end
+
+function get_kind(::ir.Mat)
+    return Mat::Kind
+end
+
+function get_kind(::ir.Identity)
+    return Scaling::Kind
+end
+
+function get_kind(arg::ir.Transpose)
+    k = get_kind(arg.arg)
+    if k == ColVec::Kind
+        return RowVec::Kind
+    end
+
+    if k == RowVec::Kind
+        return ColVec::Kind
+    end
+
+    return k
+end
+
+function get_kind(arg::Union{ir.Abs,ir.Sgn,ir.Sin,ir.Cos,ir.Log,ir.Exp})
+    return get_kind(arg.arg)
+end
+
+function get_kind(arg::ir.Power)
+    return get_kind(arg.base)
+end
+
+function get_kind(arg::Union{ir.Add,ir.Sub,ir.HadamardProduct})
+    kl, kr = get_kind(arg.l), get_kind(arg.r)
+    if kl == kr
+        return kl
+    end
+
+    if kl == Scal::Kind
+        return kr
+    end
+
+    if kr == Scal::Kind
+        return kl
+    end
+
+    if kl == Scaling::Kind
+        return kr
+    end
+
+    if kr == Scaling::Kind
+        return kl
+    end
+
+    # unreachable
+    throw(DomainError(arg, "Mismatched operand kinds"))
+end
+
+function product_kind(kl::Kind, kr::Kind)
+    if kl == Scal::Kind
+        return kr
+    end
+
+    if kr == Scal::Kind
+        return kl
+    end
+
+    if kl == Scaling::Kind
+        return kr
+    end
+
+    if kr == Scaling::Kind
+        return kl
+    end
+
+    if (kl, kr) == (Mat::Kind, Mat::Kind)
+        return Mat::Kind
+    end
+
+    if (kl, kr) == (Mat::Kind, ColVec::Kind)
+        return ColVec::Kind
+    end
+
+    if (kl, kr) == (RowVec::Kind, Mat::Kind)
+        return RowVec::Kind
+    end
+
+    if (kl, kr) == (RowVec::Kind, ColVec::Kind)
+        return Scal::Kind
+    end
+
+    if (kl, kr) == (ColVec::Kind, RowVec::Kind)
+        return Mat::Kind
+    end
+
+    throw(DomainError((kl, kr), "Ill-kinded product"))
+end
+
+function get_kind(arg::ir.Product)
+    return product_kind(get_kind(arg.l), get_kind(arg.r))
+end
+
+function get_kind(::Union{ir.Trace,ir.Sum})
+    return Scal::Kind
+end
+
+function get_kind(::ir.Diag)
+    return ColVec::Kind
+end
+
+function get_kind(::ir.Diagm)
+    return Mat::Kind
+end
 
 # Simplifying the IR:
 # 'to_ir' translates one node at a time and cannot identify patterns that span multiple factors.
