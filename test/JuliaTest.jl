@@ -1040,16 +1040,6 @@ end
         @test jhess(Â, x̂) ≈ ForwardDiff.hessian(x -> f(Â, x), x̂)
     end
 
-    # A constant gradient leaves no variable in the result, so the emitted function has
-    # an empty signature and cannot size its 'vec(1)'.
-    @testset "gradient of sum(x ./ 2) is constant" begin
-        f(x) = sum(x ./ 2)
-
-        jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
-
-        @test_broken jgrad(x̂) ≈ 0.5 .* ones(3)
-    end
-
     @testset "gradient of sum(2 ./ (x .^ 2 .+ 1))" begin
         f(x) = sum(2 ./ (x .^ 2 .+ 1))
 
@@ -1080,5 +1070,49 @@ end
         jgrad = eval(to_std(gradient(f(x), x); format = dc.JuliaFunc()))
 
         @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
+    end
+
+    @testset "unsized products are rejected" begin
+        @vector x
+
+        @test_throws DomainError to_std(x * vector(1)'; format = dc.JuliaFunc())
+        @test_throws DomainError to_std(2 * vector(1); format = dc.JuliaFunc())
+        @test_throws DomainError to_std(vector(1) * vector(1)'; format = dc.JuliaFunc())
+        @test_throws DomainError to_std(2 * vector(1)'; format = dc.JuliaFunc())
+        @test_throws DomainError to_std(matrix(2) * vector(1); format = dc.JuliaFunc())
+        @test_throws DomainError to_std(vector(1)' * matrix(2); format = dc.JuliaFunc())
+        @test_throws DomainError to_std(2 * matrix(3); format = dc.JuliaFunc())
+    end
+
+    @testset "row literal in product" begin
+        @matrix A
+
+        fun = eval(to_std(sin.(vector(1))' * A; format = dc.JuliaFunc()))
+
+        @test fun(Â) ≈ sin.(ones(3))' * Â
+    end
+
+    @testset "power-wrapped row literal in product" begin
+        @matrix A
+
+        fun = eval(to_std((vector(1) .^ 2)' * A; format = dc.JuliaFunc()))
+
+        @test fun(Â) ≈ (ones(3) .^ 2)' * Â
+    end
+
+    @testset "column literal in product" begin
+        @matrix A
+
+        fun = eval(to_std(A * sin.(vector(1)); format = dc.JuliaFunc()))
+
+        @test fun(Â) ≈ Â * sin.(ones(3))
+    end
+
+    @testset "power-wrapped column literal in product" begin
+        @matrix A
+
+        fun = eval(to_std(A * (vector(1) .^ 2); format = dc.JuliaFunc()))
+
+        @test fun(Â) ≈ Â * (ones(3) .^ 2)
     end
 end

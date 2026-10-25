@@ -52,76 +52,11 @@ for (op, f) ∈
     @eval to_julia(arg::ir.$op) = Expr(:., $(QuoteNode(f)), Expr(:tuple, to_julia(arg.arg)))
 end
 
-# Add and Sub operands render differently depending on the operands.
-#
-# - An operand of only literal values renders as a number that gets broadcast.
-#
-# - An Identity operand renders as a UniformScaling, which supports + and -
-#   with arrays but no broadcasting.
-#
-# - Anything containing a variable renders as an array, which works with both.
-#
-# The operator is therefore chosen per node using 'is_uniform' and 'is_scaling'.
-function is_uniform(arg::Union{ir.Literal,ir.Real})
-    return true
-end
-
-function is_uniform(arg::Union{ir.Var,ir.Identity})
-    return false
-end
-
-function is_uniform(arg::Union{ir.Mat,ir.Vec,ir.Scal})
-    return is_uniform(arg.id)
-end
-
-function is_uniform(arg::Union{ir.Add,ir.Sub,ir.Product,ir.HadamardProduct})
-    return is_uniform(arg.l) && is_uniform(arg.r)
-end
-
-function is_uniform(arg::ir.Power)
-    return is_uniform(arg.base)
-end
-
-function is_uniform(arg::ir.IR)
-    return is_uniform(arg.arg)
-end
-
-function is_scaling(arg::ir.Identity)
-    return true
-end
-
-function is_scaling(arg::Union{ir.Literal,ir.Real,ir.Var})
-    return false
-end
-
-function is_scaling(arg::Union{ir.Mat,ir.Vec,ir.Scal})
-    return is_scaling(arg.id)
-end
-
-function is_scaling(arg::Union{ir.Add,ir.Sub,ir.HadamardProduct})
-    return is_scaling(arg.l) || is_scaling(arg.r)
-end
-
-function is_scaling(arg::ir.Product)
-    if is_scaling(arg.l)
-        return is_scaling(arg.r) || is_uniform(arg.r)
-    elseif is_scaling(arg.r)
-        return is_uniform(arg.l)
-    end
-
-    return false
-end
-
-function is_scaling(arg::ir.Power)
-    return is_scaling(arg.base)
-end
-
-function is_scaling(arg::ir.IR)
-    return is_scaling(arg.arg)
-end
-
 function to_julia(arg::ir.Add)
-    if (is_uniform(arg.l) || is_uniform(arg.r)) && !(is_scaling(arg.l) || is_scaling(arg.r))
+    if get_size(arg.l) == Scalar::Size ||
+       get_size(arg.l) == Inferred::Size ||
+       get_size(arg.r) == Scalar::Size ||
+       get_size(arg.r) == Inferred::Size
         return :($(to_julia(arg.l)) .+ $(to_julia(arg.r)))
     end
 
@@ -129,7 +64,10 @@ function to_julia(arg::ir.Add)
 end
 
 function to_julia(arg::ir.Sub)
-    if (is_uniform(arg.l) || is_uniform(arg.r)) && !(is_scaling(arg.l) || is_scaling(arg.r))
+    if get_size(arg.l) == Scalar::Size ||
+       get_size(arg.l) == Inferred::Size ||
+       get_size(arg.r) == Scalar::Size ||
+       get_size(arg.r) == Inferred::Size
         return :($(to_julia(arg.l)) .- $(to_julia(arg.r)))
     end
 
@@ -137,10 +75,27 @@ function to_julia(arg::ir.Sub)
 end
 
 function to_julia(arg::ir.Product)
-    if arg.l isa ir.Transpose && arg.l.arg isa ir.Vec && arg.l.arg.id isa ir.Literal
-        return :($(to_julia(arg.l.arg.id)) .* (sum($(to_julia(arg.r)), dims = 1)))
-    elseif arg.r isa ir.Vec && arg.r.id isa ir.Literal
-        return :($(to_julia(arg.r.id)) .* vec(sum($(to_julia(arg.l)), dims = 2)))
+    if get_size(arg) == NoSize::Size
+        throw(
+            DomainError(
+                arg,
+                "Unable to generate julia code; Couldn't infer size of one or more operands",
+            ),
+        )
+    end
+
+    if get_size(arg.l) == Array::Size &&
+       get_size(arg.r) == Inferred::Size &&
+       get_kind(arg.l) == Mat::Kind &&
+       get_kind(arg.r) == ColVec::Kind
+        return :($(to_julia(arg.r)) .* vec(sum($(to_julia(arg.l)), dims = 2)))
+    end
+
+    if get_size(arg.l) == Inferred::Size &&
+       get_size(arg.r) == Array::Size &&
+       get_kind(arg.l) == RowVec::Kind &&
+       get_kind(arg.r) == Mat::Kind
+        return :($(to_julia(arg.l)) .* (sum($(to_julia(arg.r)), dims = 1)))
     end
 
     return :($(to_julia(arg.l)) * $(to_julia(arg.r)))
