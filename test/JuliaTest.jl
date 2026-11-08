@@ -1092,6 +1092,21 @@ end
         @test fun_r(Â) ≈ 2 .* Â
     end
 
+    @testset "constant matrix in product" begin
+        @matrix A
+        @vector x
+
+        mat_l = eval(to_std(matrix(2) * A; format = dc.JuliaFunc()))
+        mat_r = eval(to_std(A * matrix(2); format = dc.JuliaFunc()))
+        vec_l = eval(to_std(matrix(2) * x; format = dc.JuliaFunc()))
+        vec_r = eval(to_std(x' * matrix(2); format = dc.JuliaFunc()))
+
+        @test mat_l(Â) ≈ fill(2, 3, 3) * Â
+        @test mat_r(Â) ≈ Â * fill(2, 3, 3)
+        @test vec_l(x̂) ≈ fill(2, 3, 3) * x̂
+        @test vec_r(x̂) ≈ x̂' * fill(2, 3, 3)
+    end
+
     @testset "row literal in product" begin
         @matrix A
 

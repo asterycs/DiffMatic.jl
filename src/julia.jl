@@ -101,18 +101,44 @@ end
 function to_julia(arg::ir.Product)
     ensure_size(arg)
 
-    if get_size(arg.l) == Array::Size &&
-       get_size(arg.r) == Inferred::Size &&
-       get_kind(arg.l) == Mat::Kind &&
-       get_kind(arg.r) == ColVec::Kind
+    ls, rs = get_size(arg.l), get_size(arg.r)
+    kl, kr = get_kind(arg.l), get_kind(arg.r)
+
+    if ls == Array::Size && rs == Inferred::Size && kl == Mat::Kind && kr == ColVec::Kind
         return :($(to_julia_broadcast(arg.r)) .* vec(sum($(to_julia(arg.l)), dims = 2)))
     end
 
-    if get_size(arg.l) == Inferred::Size &&
-       get_size(arg.r) == Array::Size &&
-       get_kind(arg.l) == RowVec::Kind &&
-       get_kind(arg.r) == Mat::Kind
+    if ls == Inferred::Size && rs == Array::Size && kl == RowVec::Kind && kr == Mat::Kind
         return :($(to_julia_broadcast(arg.l)) .* (sum($(to_julia(arg.r)), dims = 1)))
+    end
+
+    if ls == Inferred::Size && rs == Array::Size && kl == Mat::Kind && kr == Mat::Kind
+        return :(
+            fill($(to_julia_broadcast(arg.l)), size($(to_julia(arg.r)), 1), 1) *
+            sum($(to_julia(arg.r)), dims = 1)
+        )
+    end
+
+    if ls == Array::Size && rs == Inferred::Size && kl == Mat::Kind && kr == Mat::Kind
+        return :(
+            sum($(to_julia(arg.l)), dims = 2) *
+            fill($(to_julia_broadcast(arg.r)), 1, size($(to_julia(arg.l)), 2))
+        )
+    end
+
+    if ls == Inferred::Size && rs == Array::Size && kl == Mat::Kind && kr == ColVec::Kind
+        return :(fill(
+            $(to_julia_broadcast(arg.l)) * sum($(to_julia(arg.r))),
+            length($(to_julia(arg.r))),
+        ))
+    end
+
+    if ls == Array::Size && rs == Inferred::Size && kl == RowVec::Kind && kr == Mat::Kind
+        return :(fill(
+            $(to_julia_broadcast(arg.r)) * sum($(to_julia(arg.l))),
+            1,
+            length($(to_julia(arg.l))),
+        ))
     end
 
     return :($(to_julia(arg.l)) * $(to_julia(arg.r)))
