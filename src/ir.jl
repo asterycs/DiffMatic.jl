@@ -368,6 +368,16 @@ function to_ir(arg::BinaryOperation{Mult})
         return ir.Trace(ir.Product(to_ir(arg.arg1), to_ir(arg.arg2)))
     end
 
+    if isempty(get_free_indices(arg))
+        # Check for 'adjoint(vector(1)) * A * vector(1)'
+        if arg.arg2 isa Literal &&
+           arg.arg1 isa BinaryOperation{Mult} &&
+           arg.arg1.arg2 isa Literal &&
+           length(get_free_indices(arg.arg1.arg1)) == 2
+            return ir.Sum(to_ir(arg.arg1.arg1))
+        end
+    end
+
     if isempty(target_indices) && (first(terms) isa Literal || last(terms) isa Literal)
         tensor = if first(terms) isa Literal
             last(terms)

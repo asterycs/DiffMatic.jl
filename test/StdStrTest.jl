@@ -133,10 +133,24 @@ end
 end
 
 @testset "matrix sum" begin
-    @matrix A
+    @matrix A B
 
-    @test_broken to_std(sum(A)) == "sum(A)" # TODO: Could be sum(sum(A)) as well to not overload sum
-    @test_broken to_std(sum(A .* B)) == "sum(A ⊙ B)"
+    @test to_std(sum(A)) == "sum(Aᵀ)" # TODO: Remove the transpose
+    @test to_std(sum(A .* B)) == "sum(Aᵀ ⊙ Bᵀ)" # TODO: Remove the transpose
+end
+
+@testset "matrix sums in derivatives" begin
+    @matrix A B
+    @vector x y w
+
+    @test to_std(derivative(sum(A), A)) == "vec(1)vec(1)ᵀ"
+    @test to_std(derivative(sum(A * B), A)) == "Bvec(1)vec(1)ᵀ"
+    @test to_std(gradient(sum(A .* diagm(x)), x)) == "diag(A)"
+    @test to_std(gradient(sum(A * diagm(x) * B), x)) == "Bvec(1) ⊙ Aᵀvec(1)"
+    @test to_std(hessian(sum(diagm(x) * A * diagm(x)), x)) == "Aᵀ + A"
+    @test to_std(jacobian(sum(A * diagm(x) * B) * x, x)) ==
+          "vec(1)ᵀA(Bvec(1) ⊙ x)I + x(vec(1)ᵀA ⊙ vec(1)ᵀBᵀ)"
+    @test to_std(gradient(sum(y * w'), w)) == "sum(yᵀ)vec(1)"
 end
 
 @testset "test a contracted vector of ones is not dropped" begin

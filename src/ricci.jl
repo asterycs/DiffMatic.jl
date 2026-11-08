@@ -389,11 +389,16 @@ end
 function Base.sum(arg::Tensor)
     free_ids = get_free_indices(arg)
 
-    if length(free_ids) != 1
-        throw(DomainError("Sum is defined only for vectors"))
+    if length(free_ids) == 1
+        return BinaryOperation{Mult}(arg, Literal(1, flip(only(free_ids))))
+    elseif length(free_ids) == 2
+        return BinaryOperation{Mult}(
+            BinaryOperation{Mult}(arg, Literal(1, flip(last(free_ids)))),
+            Literal(1, flip(first(free_ids))),
+        )
     end
 
-    return BinaryOperation{Mult}(arg, Literal(1, flip(only(free_ids))))
+    throw(DomainError("Sum is defined only for vectors and matrices"))
 end
 
 function Base.broadcasted(::typeof(*), arg1::Tensor, arg2::Tensor)

@@ -984,6 +984,26 @@ end
         @test only(jfun(Â, x̂)) ≈ f(Â, x̂)
     end
 
+    @testset "sum of matrices" begin
+        @matrix A B
+        @vector y w
+
+        f(A) = sum(A)
+        jf = eval(to_std(f(A); format = dc.JuliaFunc()))
+
+        @test only(jf(Â)) ≈ f(Â)
+
+        f(A, B) = sum(A .* B)
+        jg = eval(to_std(f(A, B); format = dc.JuliaFunc()))
+
+        @test only(jg(Â, B̂)) ≈ f(Â, B̂)
+
+        f(y, w) = sum(y * w')
+        jh = eval(to_std(f(y, w); format = dc.JuliaFunc()))
+
+        @test only(jh(x̂, ŷ)) ≈ f(ŷ, x̂)
+    end
+
     @testset "gradient of sum(x .^ 2) / 2" begin
         f(x) = sum(x .^ 2) / 2
 
