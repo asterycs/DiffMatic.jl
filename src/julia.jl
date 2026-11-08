@@ -72,30 +72,30 @@ function to_julia_broadcast(arg)
     return to_julia(arg)
 end
 
-function to_julia(arg::ir.Add)
-    ensure_size(arg)
-
-    if get_size(arg.l) == Scalar::Size ||
-       get_size(arg.l) == Inferred::Size ||
-       get_size(arg.r) == Scalar::Size ||
-       get_size(arg.r) == Inferred::Size
-        return :($(to_julia_broadcast(arg.l)) .+ $(to_julia_broadcast(arg.r)))
-    end
-
-    return :($(to_julia(arg.l)) + $(to_julia(arg.r)))
+function addsub_needs_broadcast(ls::Size, rs::Size)
+    return ls == Scalar::Size ||
+           ls == Inferred::Size ||
+           rs == Scalar::Size ||
+           rs == Inferred::Size
 end
 
-function to_julia(arg::ir.Sub)
-    ensure_size(arg)
+for (op, bop, pop) ∈ ((:Add, Symbol(".+"), :+), (:Sub, Symbol(".-"), :-))
+    @eval function to_julia(arg::ir.$op)
+        ensure_size(arg)
 
-    if get_size(arg.l) == Scalar::Size ||
-       get_size(arg.l) == Inferred::Size ||
-       get_size(arg.r) == Scalar::Size ||
-       get_size(arg.r) == Inferred::Size
-        return :($(to_julia_broadcast(arg.l)) .- $(to_julia_broadcast(arg.r)))
+        ls, rs = get_size(arg.l), get_size(arg.r)
+
+        if addsub_needs_broadcast(ls, rs)
+            return Expr(
+                :call,
+                $(QuoteNode(bop)),
+                to_julia_broadcast(arg.l),
+                to_julia_broadcast(arg.r),
+            )
+        end
+
+        return Expr(:call, $(QuoteNode(pop)), to_julia(arg.l), to_julia(arg.r))
     end
-
-    return :($(to_julia(arg.l)) - $(to_julia(arg.r)))
 end
 
 function to_julia(arg::ir.Product)
