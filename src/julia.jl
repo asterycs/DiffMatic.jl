@@ -11,27 +11,18 @@ function to_julia(arg::ir.Literal)
     return :($(arg.value))
 end
 
-function to_julia(arg::ir.Mat)
+function to_julia(arg::Union{ir.Mat,ir.Vec})
     if arg.id isa ir.Var
         return to_julia(arg.id)
     end
 
+    # Rendering a bare constant would be invalid Julia.
+    # Broadcast operands are rendered with to_julia_broadcast instead.
     throw(
-        ArgumentError("Unable to generate julia code for constant matrix of unknown size"),
-    )
-end
-
-function to_julia(arg::ir.Vec)
-    if arg.id isa ir.Var
-        return to_julia(arg.id)
-    end
-
-    if arg.id isa ir.Literal
-        return to_julia(arg.id)
-    end
-
-    throw(
-        ArgumentError("Unable to generate julia code for constant vector of unknown size"),
+        DomainError(
+            arg,
+            "Unable to generate julia code; Couldn't infer size of one or more operands",
+        ),
     )
 end
 
@@ -50,31 +41,11 @@ end
 for (op, f) ∈
     ((:Sin, :sin), (:Cos, :cos), (:Log, :log), (:Exp, :exp), (:Abs, :abs), (:Sgn, :sign))
     @eval to_julia(arg::ir.$op) = Expr(:., $(QuoteNode(f)), Expr(:tuple, to_julia(arg.arg)))
+    @eval to_julia_broadcast(arg::ir.$op) =
+        Expr(:., $(QuoteNode(f)), Expr(:tuple, to_julia_broadcast(arg.arg)))
 end
 
-function to_julia(arg::ir.Add)
-    if get_size(arg.l) == Scalar::Size ||
-       get_size(arg.l) == Inferred::Size ||
-       get_size(arg.r) == Scalar::Size ||
-       get_size(arg.r) == Inferred::Size
-        return :($(to_julia(arg.l)) .+ $(to_julia(arg.r)))
-    end
-
-    return :($(to_julia(arg.l)) + $(to_julia(arg.r)))
-end
-
-function to_julia(arg::ir.Sub)
-    if get_size(arg.l) == Scalar::Size ||
-       get_size(arg.l) == Inferred::Size ||
-       get_size(arg.r) == Scalar::Size ||
-       get_size(arg.r) == Inferred::Size
-        return :($(to_julia(arg.l)) .- $(to_julia(arg.r)))
-    end
-
-    return :($(to_julia(arg.l)) - $(to_julia(arg.r)))
-end
-
-function to_julia(arg::ir.Product)
+function ensure_size(arg)
     if get_size(arg) == NoSize::Size
         throw(
             DomainError(
@@ -83,26 +54,74 @@ function to_julia(arg::ir.Product)
             ),
         )
     end
+end
+
+function to_julia_broadcast(arg::Union{ir.Mat,ir.Vec})
+    return to_julia(arg.id)
+end
+
+function to_julia_broadcast(arg::ir.Transpose)
+    return Expr(:call, :transpose, to_julia_broadcast(arg.arg))
+end
+
+function to_julia_broadcast(arg::ir.Power)
+    return :($(to_julia_broadcast(arg.base)) .^ $(arg.exponent))
+end
+
+function to_julia_broadcast(arg)
+    return to_julia(arg)
+end
+
+function to_julia(arg::ir.Add)
+    ensure_size(arg)
+
+    if get_size(arg.l) == Scalar::Size ||
+       get_size(arg.l) == Inferred::Size ||
+       get_size(arg.r) == Scalar::Size ||
+       get_size(arg.r) == Inferred::Size
+        return :($(to_julia_broadcast(arg.l)) .+ $(to_julia_broadcast(arg.r)))
+    end
+
+    return :($(to_julia(arg.l)) + $(to_julia(arg.r)))
+end
+
+function to_julia(arg::ir.Sub)
+    ensure_size(arg)
+
+    if get_size(arg.l) == Scalar::Size ||
+       get_size(arg.l) == Inferred::Size ||
+       get_size(arg.r) == Scalar::Size ||
+       get_size(arg.r) == Inferred::Size
+        return :($(to_julia_broadcast(arg.l)) .- $(to_julia_broadcast(arg.r)))
+    end
+
+    return :($(to_julia(arg.l)) - $(to_julia(arg.r)))
+end
+
+function to_julia(arg::ir.Product)
+    ensure_size(arg)
 
     if get_size(arg.l) == Array::Size &&
        get_size(arg.r) == Inferred::Size &&
        get_kind(arg.l) == Mat::Kind &&
        get_kind(arg.r) == ColVec::Kind
-        return :($(to_julia(arg.r)) .* vec(sum($(to_julia(arg.l)), dims = 2)))
+        return :($(to_julia_broadcast(arg.r)) .* vec(sum($(to_julia(arg.l)), dims = 2)))
     end
 
     if get_size(arg.l) == Inferred::Size &&
        get_size(arg.r) == Array::Size &&
        get_kind(arg.l) == RowVec::Kind &&
        get_kind(arg.r) == Mat::Kind
-        return :($(to_julia(arg.l)) .* (sum($(to_julia(arg.r)), dims = 1)))
+        return :($(to_julia_broadcast(arg.l)) .* (sum($(to_julia(arg.r)), dims = 1)))
     end
 
     return :($(to_julia(arg.l)) * $(to_julia(arg.r)))
 end
 
 function to_julia(arg::ir.HadamardProduct)
-    return :($(to_julia(arg.l)) .* $(to_julia(arg.r)))
+    ensure_size(arg)
+
+    return :($(to_julia_broadcast(arg.l)) .* $(to_julia_broadcast(arg.r)))
 end
 
 function to_julia(arg::ir.Power)

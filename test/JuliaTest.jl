@@ -1072,16 +1072,24 @@ end
         @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
     end
 
-    @testset "unsized products are rejected" begin
-        @vector x
+    @testset "constant in broadcast addition" begin
+        @matrix A
 
-        @test_throws DomainError to_std(x * vector(1)'; format = dc.JuliaFunc())
-        @test_throws DomainError to_std(2 * vector(1); format = dc.JuliaFunc())
-        @test_throws DomainError to_std(vector(1) * vector(1)'; format = dc.JuliaFunc())
-        @test_throws DomainError to_std(2 * vector(1)'; format = dc.JuliaFunc())
-        @test_throws DomainError to_std(matrix(2) * vector(1); format = dc.JuliaFunc())
-        @test_throws DomainError to_std(vector(1)' * matrix(2); format = dc.JuliaFunc())
-        @test_throws DomainError to_std(2 * matrix(3); format = dc.JuliaFunc())
+        fun_l = eval(to_std(A .+ 2; format = dc.JuliaFunc()))
+        fun_r = eval(to_std(2 .+ A; format = dc.JuliaFunc()))
+
+        @test fun_l(Â) ≈ Â .+ 2
+        @test fun_r(Â) ≈ 2 .+ Â
+    end
+
+    @testset "constant matrix in elementwise multiplication" begin
+        @matrix A
+
+        fun_l = eval(to_std(A .* matrix(2); format = dc.JuliaFunc()))
+        fun_r = eval(to_std(matrix(2) .* A; format = dc.JuliaFunc()))
+
+        @test fun_l(Â) ≈ Â .* 2
+        @test fun_r(Â) ≈ 2 .* Â
     end
 
     @testset "row literal in product" begin
