@@ -1092,6 +1092,25 @@ end
         @test jgrad(x̂) ≈ ForwardDiff.gradient(f, x̂)
     end
 
+    @testset "unsized products are rejected" begin
+        @vector x
+
+        @test_throws DomainError to_std(x * vector(1)'; format = dc.JuliaFunc())
+        @test_throws DomainError to_std(2 * vector(1); format = dc.JuliaFunc())
+        @test_throws DomainError to_std(vector(1) * vector(1)'; format = dc.JuliaFunc())
+        @test_throws DomainError to_std(2 * vector(1)'; format = dc.JuliaFunc())
+        @test_throws DomainError to_std(matrix(2) * vector(1); format = dc.JuliaFunc())
+        @test_throws DomainError to_std(vector(1)' * matrix(2); format = dc.JuliaFunc())
+        @test_throws DomainError to_std(2 * matrix(3); format = dc.JuliaFunc())
+    end
+
+    @testset "unsized results are rejected" begin
+        @test_throws DomainError to_std(sum(vector(1)); format = dc.JuliaFunc())
+        @test_throws DomainError to_std(vector(1) .* vector(1); format = dc.JuliaFunc())
+        @test_throws DomainError to_std(sin.(vector(1)); format = dc.JuliaFunc())
+        @test_throws DomainError to_std(vector(1)'; format = dc.JuliaFunc())
+    end
+
     @testset "constant in broadcast addition" begin
         @matrix A
 
