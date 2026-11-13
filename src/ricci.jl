@@ -964,10 +964,6 @@ function script(index::Lower)
         push!(text, Char(0x2080 + d))
     end
 
-    if index.letter < 0
-        pushfirst!(text, "₋")
-    end
-
     return join(text)
 end
 

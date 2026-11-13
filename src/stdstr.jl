@@ -110,9 +110,6 @@ end
 
 function to_std_str(arg::ir.HadamardProduct)
     t = arg
-    if t isa ir.Transpose
-        t = arg.arg
-    end
 
     if t.l isa ir.Power && t.l.exponent < 0
         return parenthesize(arg, to_std_str, t.r) *
