@@ -993,15 +993,15 @@ end
 
         @test only(jf(Â)) ≈ f(Â)
 
-        f(A, B) = sum(A .* B)
-        jg = eval(to_std(f(A, B); format = dc.JuliaFunc()))
+        g(A, B) = sum(A .* B)
+        jg = eval(to_std(g(A, B); format = dc.JuliaFunc()))
 
-        @test only(jg(Â, B̂)) ≈ f(Â, B̂)
+        @test only(jg(Â, B̂)) ≈ g(Â, B̂)
 
-        f(y, w) = sum(y * w')
-        jh = eval(to_std(f(y, w); format = dc.JuliaFunc()))
+        h(y, w) = sum(y * w')
+        jh = eval(to_std(h(y, w); format = dc.JuliaFunc()))
 
-        @test only(jh(x̂, ŷ)) ≈ f(ŷ, x̂)
+        @test only(jh(x̂, ŷ)) ≈ h(ŷ, x̂)
     end
 
     @testset "gradient of sum(x .^ 2) / 2" begin
