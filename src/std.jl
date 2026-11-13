@@ -261,19 +261,11 @@ end
 function to_standard(term::KrD)
     ids = get_indices(term)
 
-    if length(ids) == 2
-        if typeof(last(ids)) == Lower
-            return typeof(term)(Upper(ids[1].letter), Lower(ids[2].letter))
-        else
-            return typeof(term)(Lower(ids[1].letter), Upper(ids[2].letter))
-        end
-    elseif length(ids) == 1
-        return term
-    elseif isempty(ids)
-        return typeof(term)()
+    if typeof(last(ids)) == Lower
+        return KrD(Upper(ids[1].letter), Lower(ids[2].letter))
+    else
+        return KrD(Lower(ids[1].letter), Upper(ids[2].letter))
     end
-
-    throw_not_std(term)
 end
 
 function to_standard(term::Zero)
