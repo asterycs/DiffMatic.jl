@@ -119,42 +119,6 @@ function simplify(::Mult, arg1::Tensor, arg2::BinaryOperation{Mult})
     return simplify(Mult(), arg2, arg1)
 end
 
-function can_apply(l::BinaryOperation{Mult}, r::KrD)
-    return can_contract(l.arg1, r) || can_contract(l.arg2, r)
-end
-
-function can_apply(l::KrD, r::BinaryOperation{Mult})
-    return can_contract(l, r.arg1) || can_contract(l, r.arg2)
-end
-
-function can_apply(l::BinaryOperation{Mult}, r::BinaryOperation{Mult})
-    return can_apply(l, r.arg1) || can_apply(l, r.arg2)
-end
-
-function can_apply(l::BinaryOperation{Mult}, r::Tensor)
-    return can_contract(l.arg1, r) || can_contract(l.arg2, r)
-end
-
-function can_apply(l::Tensor, r::BinaryOperation{Mult})
-    return can_contract(l, r.arg1) || can_contract(l, r.arg2)
-end
-
-function can_apply(l::Tensor, r::KrD)
-    return can_contract(l, r)
-end
-
-function can_apply(l::KrD, r::Tensor)
-    return can_contract(l, r)
-end
-
-function can_apply(l::KrD, r::KrD)
-    return can_contract(l, r)
-end
-
-function can_apply(l, r)
-    return false
-end
-
 function build_graph(factors)
     pendants = Dict{Int,Vector{Any}}()
     edges = Vector{Tuple{Any,Vector{Int}}}()
