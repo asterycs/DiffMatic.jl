@@ -3,7 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-using LinearAlgebra: tr, diag, diagm, norm
+using LinearAlgebra: tr, diag, diagm, norm, I
 
 @testset "test gradient in standard notation" begin
     @scalar a b
@@ -257,4 +257,28 @@ end
     @test to_std(hessian(sin.(A * x)' * B * cos.(C * x), x)) ==
           "(-1)(Cᵀdiagm(sin(Cx))Bᵀdiagm(cos(Ax))A + Cᵀdiagm(Bᵀsin(Ax) ⊙ cos(Cx))C) + (-1)Aᵀdiagm(Bcos(Cx) ⊙ sin(Ax))A + (-1)Aᵀdiagm(cos(Ax))Bdiagm(sin(Cx))C"
 
+end
+
+@testset "standard-notation rendering of reciprocals and transposes" begin
+    @matrix A B
+    @vector x y
+
+    @test to_std((x .^ -1) .* y) == "y ⊘ x"
+    @test to_std(y ./ x) == "y ⊘ x"
+    @test to_std(1 ./ x') == "vec(1)ᵀ ⊘ xᵀ"
+    @test to_std(sum((x') .^ -1)) == "sum(vec(1)ᵀ ⊘ xᵀ)"
+    @test to_std((A .* B)' * x) == "(Aᵀ ⊙ Bᵀ)x"
+    @test to_std(x - x) == "vec(0)"
+end
+
+@testset "Kronecker-delta products via diagm/diag" begin
+    @matrix A
+    @vector x y
+
+    @test to_std(diag(diagm(x) * diagm(y))) == "y ⊙ x"
+    @test to_std(diag(diagm(x') * diagm(y))) == "y ⊙ x"
+    @test to_std(diagm(x) * diagm(y) * vector(1)) == "y ⊙ x"
+    @test to_std(vector(1)' * diagm(x)) == "xᵀ"
+    @test to_std(diagm(x') * vector(1)) == "x"
+    @test to_std(A .* I) == "diagm(diag(A))"
 end

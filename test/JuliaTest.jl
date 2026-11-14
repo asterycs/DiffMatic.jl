@@ -1177,4 +1177,29 @@ end
 
         @test fun(Â) ≈ Â * (ones(3) .^ 2)
     end
+
+    @testset "emitted function matches input" begin
+        cases = [
+            ((A,) -> 2 * A, (A,), (Â,)),
+            ((A,) -> A * 2, (A,), (Â,)),
+            ((A,) -> A * I, (A,), (Â,)),
+            ((A,) -> diag(A), (A,), (Â,)),
+            ((A,) -> tr(A), (A,), (Â,)),
+            ((A, B) -> tr(A * B), (A, B), (Â, B̂)),
+            ((x,) -> norm(x, 2), (x,), (x̂,)),
+            ((x, A) -> x' * A, (x, A), (x̂, Â)),
+            ((x,) -> (2 * x)', (x,), (x̂,)),
+            ((A, x) -> (A * x) .^ 2, (A, x), (Â, x̂)),
+            ((x,) -> x .^ 2, (x,), (x̂,)),
+            ((x,) -> (x .^ 2)', (x,), (x̂,)),
+            ((A, x) -> diagm(x) * A, (A, x), (Â, x̂)),
+            ((A, x) -> A * diagm(x), (A, x), (Â, x̂)),
+            ((A, x) -> sin.(A * x), (A, x), (Â, x̂)),
+        ]
+
+        for (f, syms, vals) in cases
+            jfun = eval(to_std(f(syms...); format = dc.JuliaFunc()))
+            @test all(jfun(vals...) .≈ f(vals...))
+        end
+    end
 end

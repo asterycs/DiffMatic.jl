@@ -107,6 +107,29 @@ end
     @test dc.evaluate(e) == expected
 end
 
+@testset "evaluate product of sums and differences" begin
+    A = Variable("A", Upper(1), Lower(2))
+    B = Variable("B", Upper(1), Lower(2))
+    C = Variable("C", Upper(2), Lower(3))
+    D = Variable("D", Upper(2), Lower(3))
+
+    mul = (l, r) -> dc.BinaryOperation{dc.Mult}(l, r)
+    add = (l, r) -> dc.BinaryOperation{dc.Add}(l, r)
+    sub = (l, r) -> dc.BinaryOperation{dc.Sub}(l, r)
+
+    # (A - B)(C - D) = AC - AD + BD - BC
+    @test dc.evaluate(mul(sub(A, B), sub(C, D))) ==
+          add(sub(mul(A, C), mul(A, D)), sub(mul(B, D), mul(B, C)))
+
+    # (A - B)(C + D) = CA - CB + DA - DB
+    @test dc.evaluate(mul(sub(A, B), add(C, D))) ==
+          add(sub(mul(C, A), mul(C, B)), sub(mul(D, A), mul(D, B)))
+
+    # (A + B)(C - D) = AC - AD + BC - BD
+    @test dc.evaluate(mul(add(A, B), sub(C, D))) ==
+          add(sub(mul(A, C), mul(A, D)), sub(mul(B, C), mul(B, D)))
+end
+
 @testset "evaluate trivially simplifiable quotient" begin
     x = Variable("x", Upper(1))
     d = KrD(Upper(2), Lower(1))

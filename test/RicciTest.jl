@@ -1011,3 +1011,21 @@ end
     @test dc.to_string(-a) == "-a"
     @test dc.to_string(-c) == "-2"
 end
+
+@testset "error branches reachable from the public API" begin
+    @matrix A
+    @vector x y
+    @scalar a
+
+    @test_throws DomainError norm(x, 3)
+    @test_throws DomainError norm(A, 2)
+    @test_throws DomainError A^2
+    @test_throws DomainError A^(1//2)
+    @test_throws DomainError (x')^(-1)
+    @test_throws DomainError 1 / x
+    @test_throws DomainError x + y'
+    @test_throws DomainError x + A
+    @test_throws DomainError diag(x)
+    @test_throws DomainError diag(A, 1)            # k-th diagonal
+    @test_throws DomainError diagm(A)
+end

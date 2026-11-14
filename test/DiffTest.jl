@@ -230,3 +230,12 @@ end
 
     @test equivalent(dc.evaluate(D), 3 * A)
 end
+
+@testset "derivative of sign is zero" begin
+    @vector x
+    @scalar a
+
+    @test to_std(jacobian(sign.(x), x)) == "mat(0)"
+    @test to_std(derivative(sign.(x), x)) == "mat(0)"
+    @test to_std(derivative(sign(a), x)) == "vec(0)ᵀ"
+end
