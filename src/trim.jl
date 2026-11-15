@@ -42,12 +42,6 @@ function is_elementwise_multiplication(arg1, arg2)
     return !isempty(indices_in_common(arg1, arg2))
 end
 
-function is_all_elementwise(arg1, arg2)
-    num_common_ids = length(indices_in_common(arg1, arg2))
-    return num_common_ids == length(get_free_indices(arg1)) &&
-           num_common_ids == length(get_free_indices(arg2))
-end
-
 """
 Detect an element-wise product with a ones-vector. Matches e.g.
 
