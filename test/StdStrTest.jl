@@ -225,7 +225,7 @@ end
           "(-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))BAᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)cos(cos(xᵀBAᵀx))BAᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)BAᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ + (-1)sin(xᵀBAᵀx)cos(cos(xᵀBAᵀx))ABᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀABᵀ + (-1)cos(cos(xᵀBAᵀx))ABᵀxcos(xᵀBAᵀx)xᵀBAᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀABᵀ + (-1)sin(xᵀBAᵀx)ABᵀxsin(xᵀBAᵀx)sin(cos(xᵀBAᵀx))xᵀBAᵀ"
     @test to_std(hessian(x' * sin.(A * x), x)) ==
           "diagm(cos(Ax))A + Aᵀdiagm(cos(Ax)) + (-1)Aᵀdiagm(x ⊙ sin(Ax))A"
-    @test_broken to_std(hessian(tr(A), x)) == "mat(0)"
+    @test to_std(hessian(tr(A), x)) == "mat(0)ᵀ" # TODO: Drop the transpose
 
     # These reach an order-3 intermediate.
     @test to_std(hessian((A * x)' * sin.(B * x), x)) ==

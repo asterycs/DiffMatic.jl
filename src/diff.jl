@@ -37,6 +37,12 @@ function diff(arg::Real, wrt::Variable)
     return Zero([flip(i) for i ∈ wrt.indices]...)
 end
 
+function diff(arg::Zero, wrt::Variable)
+    indices = union(arg.indices, [flip(i) for i ∈ wrt.indices])
+
+    return Zero([flip(i) for i ∈ indices]...)
+end
+
 function diff(arg::UnaryOperation{Abs}, wrt::Variable)
     outer = replace_bound_letters(arg.arg, wrt)
 
