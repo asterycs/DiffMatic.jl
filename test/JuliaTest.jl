@@ -1198,8 +1198,8 @@ end
         ]
 
         for (f, syms, vals) in cases
-            jfun = eval(to_std(f(syms...); format = dc.JuliaFunc()))
-            @test all(jfun(vals...) .≈ f(vals...))
+            jfun = eval(to_std(f(syms...); format = dc.JuliaFunc([syms...])))
+            @test all(Base.invokelatest(jfun, vals...) .≈ f(vals...))
         end
     end
 end
